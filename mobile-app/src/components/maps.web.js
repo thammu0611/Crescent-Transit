@@ -11,7 +11,7 @@ export const ll = (p) => ({ latitude: p.lat, longitude: p.lng });
 export const MapBox = forwardRef(function MapBox({ style }, ref) {
   useImperativeHandle(ref, () => ({ fit: () => {}, focus: () => {} }));
   return (
-    <View style={[{ flex: 1, backgroundColor: '#dfe8e4', alignItems: 'center', justifyContent: 'center' }, style]}>
+    <View style={[{ flex: 1, backgroundColor: '#eceeef', alignItems: 'center', justifyContent: 'center' }, style]}>
       <Text style={{ color: C.muted, fontWeight: '700' }}>Map (shown on the phone)</Text>
     </View>
   );

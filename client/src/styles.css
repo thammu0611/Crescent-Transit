@@ -209,7 +209,7 @@ details.panel summary { cursor: pointer; color: var(--navy); font-weight: 600; }
 /* ---- Badges and stats ------------------------------------------------------------ */
 .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
 .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.badge.live { background: var(--live-50); color: #1d6b4b; }
+.badge.live { background: var(--live-50); color: #1f6b2f; }
 .badge.delayed { background: var(--delayed-50); color: #8a6220; }
 .badge.offline { background: var(--offline-50); color: #4b5563; }
 .badge.danger { background: var(--danger-50); color: #a02022; }
@@ -455,7 +455,7 @@ details.panel summary { cursor: pointer; color: var(--navy); font-weight: 600; }
 .checklist li span { display: inline-flex; align-items: center; gap: 8px; }
 .checklist li a { font-size: 12.5px; font-weight: 600; }
 .checklist li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; font-size: 14px; border-radius: 9px; margin-bottom: 4px; }
-.checklist li.ok { color: #1d6b4b; background: var(--live-50); }
+.checklist li.ok { color: #1f6b2f; background: var(--live-50); }
 .checklist li.no { color: var(--muted); background: var(--surface); }
 .otp { margin-top: 10px; }
 .scanner { width: 100%; border-radius: 12px; background: #000; }
@@ -482,7 +482,7 @@ details.panel summary { cursor: pointer; color: var(--navy); font-weight: 600; }
 .driver-hero .btn.primary:hover { background: #f9d27a; }
 .driver-hero .stat { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); }
 .driver-hero .stat b { color: #fff; }
-.driver-hero .stat.live b { color: #4ade80; }
+.driver-hero .stat.live b { color: #61ce70; }
 .driver-hero .stat span { color: #b9bdc9; }
 .driver-hero .tx-dot { color: #b9bdc9; }
 .driver-hero .error { background: rgba(184, 66, 74,0.2); color: #ffd1d3; }

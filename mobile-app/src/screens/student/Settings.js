@@ -142,9 +142,9 @@ export default function Settings() {
   });
 
   const chip = (icon, label, on) => (
-    <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: on ? 'rgba(94,240,178,0.16)' : 'rgba(255,255,255,0.12)', borderRadius: 99, paddingHorizontal: 11, paddingVertical: 5, maxWidth: '100%' }}>
+    <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: on ? 'rgba(97, 206, 112,0.16)' : 'rgba(255,255,255,0.12)', borderRadius: 99, paddingHorizontal: 11, paddingVertical: 5, maxWidth: '100%' }}>
       <Icon name={icon} size={13} color={C.gold} />
-      <Text style={{ color: on ? '#d6fbe9' : 'rgba(255,255,255,0.85)', fontSize: 12.5, ...F[600], flexShrink: 1 }} numberOfLines={1}>{label}</Text>
+      <Text style={{ color: on ? '#b6ecbe' : 'rgba(255,255,255,0.85)', fontSize: 12.5, ...F[600], flexShrink: 1 }} numberOfLines={1}>{label}</Text>
     </View>
   );
 

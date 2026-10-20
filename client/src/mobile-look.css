@@ -258,7 +258,7 @@ a { color: var(--link); }
 
 /* ---- Messages ---------------------------------------------------------------------------------- */
 .error { background: var(--danger-50); border: 1px solid #ecc9cc; color: #a02022; border-radius: 16px; padding: 10px 14px; font-weight: 600; }
-.notice { background: var(--emerald-50); border: 1px solid #cfe3d8; border-left-width: 1px; color: var(--emerald-700); border-radius: 16px; font-weight: 600; }
+.notice { background: var(--emerald-50); border: 1px solid #c5e9cb; border-left-width: 1px; color: var(--emerald-700); border-radius: 16px; font-weight: 600; }
 
 /* ---- Modal: ivory bottom-sheet feel --------------------------------------------------------- */
 .modal { border-radius: 32px; background: var(--bg); }

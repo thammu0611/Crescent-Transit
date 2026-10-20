@@ -217,7 +217,7 @@ export function useTabBarSpace() {
 /** The crest: a crimson emblem inside a fine gold ring. */
 export const BrandMark = ({ size = 38 }) => (
   <View style={{ width: size + 6, height: size + 6, borderRadius: (size + 6) / 2, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(247,188,49,0.55)', backgroundColor: 'rgba(247,188,49,0.08)' }}>
-    <LinearGradient colors={['#c4373a', '#8a1a1c']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' }}>
+    <LinearGradient colors={['#b5282a', '#8a1a1c']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' }}>
       <Icon name="bus" size={Math.round(size * 0.48)} color="#fff" />
     </LinearGradient>
   </View>
@@ -425,7 +425,7 @@ export const ErrorText = ({ children }) => (children ? (
   </View>
 ) : null);
 export const Notice = ({ children }) => (children ? (
-  <View style={[s.alert, { backgroundColor: C.emerald50, borderColor: '#bfe9da' }]}>
+  <View style={[s.alert, { backgroundColor: C.emerald50, borderColor: '#c5e9cb' }]}>
     <Icon name="check" size={16} color={C.emerald700} />
     <Text style={[s.alertText, { color: C.emerald700 }]}>{children}</Text>
   </View>

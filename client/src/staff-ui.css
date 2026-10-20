@@ -114,12 +114,12 @@
 .drive-card .error { background: rgba(255, 255, 255, 0.92); color: #a02022; }
 .btn.start-trip, .btn.end-trip { width: 100%; min-height: 58px; border-radius: 18px; font-size: 17px; margin-top: 14px; }
 .btn.start-trip { background: #fff; color: var(--dark); box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16); }
-.btn.start-trip:hover { background: #f5fff9; }
+.btn.start-trip:hover { background: #f0faf1; }
 .btn.end-trip { background: var(--dark); color: #fff; box-shadow: 0 10px 22px rgba(20, 37, 72, 0.3); }
 .driver-controls .panel h3 { margin-bottom: 12px; }
 .tile, .occ { border-radius: 18px; border-color: var(--line); background: #fff; box-shadow: 0 2px 8px rgba(20, 37, 72, 0.05); }
 .tile:hover:not(:disabled), .occ:hover { border-color: var(--indigo); }
-.tile.sos { background: linear-gradient(135deg, #e5484d, var(--danger)); }
+.tile.sos { background: linear-gradient(135deg, #b5282a, var(--danger)); }
 .boarding-code { border-radius: 18px; flex-wrap: wrap; }
 .boarding-code img { width: 120px; height: 120px; flex-shrink: 0; }
 .boarding-code > div { min-width: 0; flex: 1 1 140px; }
@@ -159,7 +159,7 @@ textarea.full { height: auto !important; min-height: 150px; padding: 12px 14px !
 .be-figures > span { font-size: 14px; color: #2f3545; display: flex; flex-direction: column; }
 .be-figures small { color: var(--muted); font-size: 12px; margin-top: 2px; }
 .be-track { margin-top: 14px; height: 12px; border-radius: 99px; background: #ebebeb; overflow: hidden; }
-.be-track i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--indigo), #8b8ef5); transition: width 0.6s var(--ease); }
+.be-track i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--indigo), #6ec1e4); transition: width 0.6s var(--ease); }
 .be-scale { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11.5px; color: var(--muted); font-weight: 700; }
 .money-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .money-bars li { display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr) auto; gap: 12px; align-items: center; }

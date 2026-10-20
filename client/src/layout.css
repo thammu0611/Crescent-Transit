@@ -184,7 +184,7 @@
 .stat .stat-icon { background: linear-gradient(135deg, #2a4378, #1c315e); color: var(--gold); }
 .stat.live .stat-icon { background: linear-gradient(135deg, #61ce70, #2b8a3e); color: #fff; }
 .stat.delayed .stat-icon { background: linear-gradient(135deg, #d9a54e, #9b6a26); color: #fff; }
-.stat.danger .stat-icon { background: linear-gradient(135deg, #c4373a, #8a1a1c); color: #fff; }
+.stat.danger .stat-icon { background: linear-gradient(135deg, #b5282a, #8a1a1c); color: #fff; }
 
 /* Fleet map: status-coloured tiles and bus cards, and a clear selected bus. */
 .live-layout .stat-row .stat { border-top: 3px solid var(--navy-100, #d9dee8); }
