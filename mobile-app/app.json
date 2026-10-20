@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "Crescent Transit",
+    "slug": "crescent-transit",
+    "scheme": "crescenttransit",
+    "version": "1.0.2",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "edu.crescent.transit",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Your location is used to show when to leave for your stop, to share a driver's bus position during a trip, and - only with your consent and inside your travel window - to confirm attendance. Student locations are never stored.",
+        "NSCameraUsageDescription": "The camera scans the boarding QR code shown on the driver's phone."
+      }
+    },
+    "android": {
+      "package": "edu.crescent.transit",
+      "adaptiveIcon": {
+        "backgroundColor": "#1c315e",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "VIBRATE"
+      ],
+      "versionCode": 3
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-sharing",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Your location is used to show when to leave for your stop, to share a driver's bus position during a trip, and - only with your consent and inside your travel window - to confirm attendance. Student locations are never stored."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "The camera scans the boarding QR code shown on the driver's phone."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#1c315e",
+          "defaultChannel": "alerts"
+        }
+      ],
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 260,
+          "resizeMode": "contain",
+          "backgroundColor": "#1c315e"
+        }
+      ]
+    ],
+    "backgroundColor": "#1c315e"
+  }
+}

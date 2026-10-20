@@ -1,0 +1,194 @@
+/* Liquid glass: the last style layer, loaded after every other sheet.
+   A soft glowing backdrop sits behind the whole app; every card, panel,
+   table, control and dialog becomes translucent frosted glass with a bright
+   edge and a faint gloss, so the glow shows through. The mobile app uses the
+   same look (mobile-app/src/components/ui.js: GlassBackdrop, Frost, Sheen). */
+
+:root {
+  --bg: #e9edf5;
+  --line: rgba(28, 49, 94, 0.14);
+  --line-2: rgba(28, 49, 94, 0.09);
+  --surface: rgba(255, 255, 255, 0.5);
+  --glass: rgba(255, 255, 255, 0.66);
+  --glass-strong: rgba(255, 255, 255, 0.82);
+  --glass-edge: rgba(28, 49, 94, 0.10); /* hairline outline; the white top edge is an inset highlight */
+  --glass-hi: rgba(255, 255, 255, 0.95);
+  --glass-dark: rgba(22, 40, 82, 0.88);
+  --glass-blur: blur(22px) saturate(180%);
+  --glass-gloss: linear-gradient(160deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.28) 45%, rgba(255, 255, 255, 0.18) 100%);
+  --glass-shadow: 0 12px 32px rgba(20, 37, 72, 0.09), 0 2px 6px rgba(20, 37, 72, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(20, 37, 72, 0.04);
+  --glass-shadow-hover: 0 18px 44px rgba(20, 37, 72, 0.14), 0 2px 6px rgba(20, 37, 72, 0.05), inset 0 1px 0 #fff, inset 0 -1px 0 rgba(20, 37, 72, 0.05);
+}
+
+/* ---- Backdrop ------------------------------------------------------------------- */
+html, body { background: var(--bg); }
+.app {
+  background:
+    radial-gradient(42% 38% at 8% 6%, rgba(58, 90, 168, 0.26), transparent 70%),
+    radial-gradient(36% 34% at 96% 22%, rgba(247, 188, 49, 0.22), transparent 70%),
+    radial-gradient(40% 40% at 10% 78%, rgba(111, 182, 232, 0.24), transparent 70%),
+    radial-gradient(34% 30% at 92% 96%, rgba(200, 106, 122, 0.14), transparent 70%),
+    linear-gradient(135deg, #eef2f9 0%, #e6ebf4 55%, #f2efe8 100%);
+  background-attachment: fixed;
+}
+.masthead { background: transparent; }
+.screen, .page, .app-page { background: transparent; }
+
+/* ---- Glass surfaces ------------------------------------------------------------- */
+.panel, .soft-card, .kit-block, .kit-profile, .stat, .kpi-grid .stat, .kit-stats .stat, .kpi-strip .stat,
+.map-card, .kit-day, .kit-shortcut, .kit-bus, .kit-row, .route-tile, .feature, .bus-card, .schedule-card,
+.select-route, .steps li, .empty-hero, .float-card, .notice-list > li, .timetable {
+  background: var(--glass-gloss), var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}
+.panel, .soft-card, .kit-block, .kit-profile, .map-card { border-radius: 24px; }
+.kit-row:hover, button.kit-row:hover, .kit-bus:hover:not(:disabled), .kit-shortcut:hover, .route-tile:hover, .feature:hover {
+  box-shadow: var(--glass-shadow-hover);
+  border-color: rgba(28, 49, 94, 0.16);
+}
+.feed li { background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(28, 49, 94, 0.07); }
+.feed li.hot { border-color: rgba(255, 255, 255, 0.25); }
+/* Icon chips, counters and avatars keep a tinted fill so they stand out on glass. */
+.feed-icon, .kit-shortcut span, .kit-back { background: #fff; border: 1px solid rgba(28, 49, 94, 0.10); box-shadow: 0 2px 6px rgba(20, 37, 72, 0.06); }
+.kit-count, .kit-avatar { background: linear-gradient(180deg, #f3f5fa, #e3e8f2); border: 1px solid rgba(28, 49, 94, 0.14); box-shadow: inset 0 1px 0 #fff; }
+.feed li.hot .feed-icon { background: #fff; }
+.stat-icon { box-shadow: 0 6px 14px rgba(20, 37, 72, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.panel-head { border-bottom-color: var(--line-2); }
+.kit-divider { background: var(--line-2); }
+
+/* ---- Navy surfaces get a liquid sheen ----------------------------------------------- */
+.topbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 60%), var(--glass-dark);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 40px rgba(20, 37, 72, 0.22);
+}
+.page > .page-head, .app-greet, .kit-fleet, .route-card, .fleet-card, .drive-card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 40px rgba(20, 37, 72, 0.2);
+}
+.kit-fleet, .app-greet { overflow: hidden; }
+.kit-fleet::after, .app-greet::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.03) 38%, rgba(255, 255, 255, 0) 60%);
+}
+.kit-fleet > *, .app-greet > * { position: relative; z-index: 1; }
+.bottom-tabs {
+  background: var(--glass-dark);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 16px 36px rgba(20, 37, 72, 0.25);
+}
+
+/* ---- Controls ---------------------------------------------------------------------- */
+.field input, .field select, .field textarea, .search-box, .full, .inline-form input, textarea.full {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(28, 49, 94, 0.16);
+  box-shadow: inset 0 1px 2px rgba(20, 37, 72, 0.06);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.field input:focus, .field select:focus, .field textarea:focus, .full:focus, .search-box:focus-within {
+  background: var(--glass-strong);
+  border-color: var(--navy);
+  box-shadow: 0 0 0 4px rgba(28, 49, 94, 0.10), inset 0 1px 2px rgba(20, 37, 72, 0.04);
+}
+.segmented { width: fit-content; max-width: 100%; align-self: flex-start; }
+.segmented, .kit-chips button {
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(28, 49, 94, 0.12);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.segmented button.on, .kit-chips button.on {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 60%), var(--navy);
+  border-color: var(--navy);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 16px rgba(20, 37, 72, 0.25);
+}
+.btn.ghost, .btn.light, .btn.soft {
+  background: var(--glass-strong);
+  border: 1px solid rgba(28, 49, 94, 0.14);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 12px rgba(20, 37, 72, 0.06);
+}
+.btn.primary, .btn.indigo, .btn.dark, .btn.danger, .btn.red, .btn.emerald {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 10px 22px rgba(20, 37, 72, 0.22);
+}
+
+/* ---- Tables ------------------------------------------------------------------------- */
+.table-wrap {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(28, 49, 94, 0.10);
+  border-radius: 16px;
+  overflow: auto;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.table { background: transparent; }
+.table thead th { background: rgba(28, 49, 94, 0.06); color: var(--navy); border-bottom: 1px solid var(--line-2); }
+.table tbody tr { background: transparent; transition: background 0.15s; }
+.table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.28); }
+.table tbody tr:hover { background: rgba(255, 255, 255, 0.6); }
+.table td { border-bottom: 1px solid var(--line-2); }
+
+/* ---- Dialogs and drill-down panels ----------------------------------------------------- */
+.modal-backdrop { background: rgba(20, 37, 72, 0.32); -webkit-backdrop-filter: blur(10px) saturate(140%); backdrop-filter: blur(10px) saturate(140%); }
+.modal {
+  background: var(--glass-gloss), rgba(240, 243, 250, 0.78);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 #fff, 0 30px 70px rgba(20, 37, 72, 0.28);
+}
+.kit-detail {
+  background:
+    radial-gradient(50% 30% at 90% 0%, rgba(247, 188, 49, 0.14), transparent 70%),
+    radial-gradient(50% 40% at 0% 60%, rgba(111, 182, 232, 0.16), transparent 70%),
+    rgba(236, 240, 248, 0.82);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+  border-left: 1px solid rgba(255, 255, 255, 0.9);
+}
+.kit-detail-head {
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(28, 49, 94, 0.10);
+}
+
+/* ---- Small pieces ---------------------------------------------------------------------- */
+.badge { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6); }
+.route-code { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 3px 8px rgba(20, 37, 72, 0.18); }
+.kit-hbars-track, .kit-column-track i { box-shadow: inset 0 1px 1px rgba(20, 37, 72, 0.06); }
+.kit-hbars-track { background: rgba(28, 49, 94, 0.08); }
+.skeleton-block, .skeleton { background: linear-gradient(90deg, rgba(255, 255, 255, 0.35) 25%, rgba(255, 255, 255, 0.7) 50%, rgba(255, 255, 255, 0.35) 75%); background-size: 200% 100%; }
+
+/* Browsers without backdrop-filter: a more opaque glass keeps text readable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel, .soft-card, .kit-block, .kit-profile, .stat, .map-card, .kit-day, .kit-row, .kit-bus, .modal, .kit-detail { background-color: rgba(255, 255, 255, 0.9); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .panel, .soft-card, .kit-block, .kit-profile, .stat, .map-card, .kit-day, .kit-row, .kit-bus, .modal, .kit-detail { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* ---- Structure fixes ---------------------------------------------------------------------- */
+/* The fleet card fills its row: the big figure on top, the day's figures at the bottom. */
+.kit-fleet { justify-content: flex-start; }
+.kit-fleet hr { margin-top: auto; }
+/* Live dot on a driver's avatar sits on the avatar's edge. */
+.kit-live-dot { display: inline-flex; position: relative; }
+/* Sign-in page keeps its own two-panel design; only its card becomes glass. */
+.auth-main { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.auth-card, .auth-main .panel { background: var(--glass-gloss), rgba(255, 255, 255, 0.82); }
+.auth-main .field input { background: #fff; }
+
+/* Dashboard first row: the four figures fill the height beside the fleet card. */
+.kit-grid-3 > .kit-stack { justify-content: stretch; }
+.kit-grid-3 > .kit-stack > .kit-stats.two { flex: 1; grid-auto-rows: 1fr; }

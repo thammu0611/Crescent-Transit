@@ -1,0 +1,38 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mobile-web-preview",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd mobile-app && npx expo start --web --port 8082"
+      ],
+      "port": 8082
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 4000
+    },
+    {
+      "name": "web-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:client"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "cresoline",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "process.chdir('C:/Users/THAMEEM BASHA/OneDrive/Desktop/cresoline/cresoline'); process.argv = [process.argv[0], 'vite', '--port', '5180', '--strictPort']; import('file:///C:/Users/THAMEEM%20BASHA/OneDrive/Desktop/cresoline/cresoline/node_modules/vite/bin/vite.js')"
+      ],
+      "port": 5180
+    }
+  ]
+}

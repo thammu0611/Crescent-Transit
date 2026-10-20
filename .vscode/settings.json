@@ -1,0 +1,16 @@
+{
+  // On many Windows PCs PowerShell refuses to run npm ("running scripts is disabled
+  // on this system"). Command Prompt is not affected, so this project's terminals
+  // open in it. Delete this line to go back to PowerShell.
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "files.exclude": {
+    "**/node_modules": true,
+    "client/dist": true,
+    "mobile-app/android": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "client/dist": true,
+    "mobile-app/android": true
+  }
+}

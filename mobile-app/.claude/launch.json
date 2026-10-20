@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mobile-web-preview",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "npx expo start --web --port 8082"],
+      "port": 8082
+    }
+  ]
+}

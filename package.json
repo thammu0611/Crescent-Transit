@@ -1,0 +1,42 @@
+{
+  "name": "university-bus-tracking",
+  "version": "1.0.0",
+  "private": true,
+  "description": "University Bus Tracking System: real-time GPS tracking, Rs 60 subscription with online payment, and GPS-linked automatic attendance (Node.js, PostgreSQL, Socket.IO, React)",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "start": "node server/index.js",
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "vite",
+    "simulate": "node scripts/simulate.js",
+    "simulate:riders": "node scripts/simulate.js --riders",
+    "simulate:trackers": "node scripts/simulate-trackers.js",
+    "measure": "node scripts/measure-latency.js",
+    "load-test": "node scripts/load-test.js",
+    "test": "node scripts/test.js",
+    "reset-db": "node scripts/reset-db.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "bcryptjs": "^3.0.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "leaflet": "^1.9.4",
+    "leaflet.gridlayer.googlemutant": "^0.16.0",
+    "pg": "^8.23.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-leaflet": "^5.0.0",
+    "socket.io": "^4.8.4",
+    "socket.io-client": "^4.8.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.3.1"
+  }
+}
