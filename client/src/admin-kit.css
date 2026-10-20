@@ -127,14 +127,15 @@ button.kit-row:hover { border-color: #c8cfdd; box-shadow: 0 8px 22px rgba(20, 37
 .kit-shortcut span { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: #eef1f6; color: var(--navy); }
 
 /* Drill-down view */
-.kit-detail-backdrop { place-items: stretch end; padding: 0; }
-.kit-detail { width: min(860px, 100vw); height: 100vh; background: var(--bg); display: flex; flex-direction: column; outline: none; box-shadow: var(--shadow-lg); animation: kit-slide 0.25s var(--ease); }
-.kit-detail-head { display: flex; align-items: center; gap: 14px; padding: 16px 24px; background: #fff; border-bottom: 1px solid var(--line); }
+/* Full screen over the page; the content keeps a readable width in the middle. */
+.kit-detail-backdrop { place-items: stretch; padding: 0; }
+.kit-detail { --detail-pad: max(24px, calc((100vw - 1200px) / 2)); width: 100%; height: 100vh; height: 100dvh; background: var(--bg); display: flex; flex-direction: column; outline: none; box-shadow: var(--shadow-lg); animation: kit-slide 0.25s var(--ease); }
+.kit-detail-head { display: flex; align-items: center; gap: 14px; padding: 16px var(--detail-pad); background: #fff; border-bottom: 1px solid var(--line); }
 .kit-detail-head h2 { margin: 0; font-size: 18px; color: var(--ink); }
 .kit-detail-head p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 .kit-back { width: 38px; height: 38px; border-radius: 50%; border: 0; background: #eef1f6; color: var(--navy); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
 .kit-back:hover { background: #d9dee8; }
-.kit-detail-body { flex: 1; overflow-y: auto; padding: 22px 24px 40px; display: flex; flex-direction: column; gap: 16px; }
+.kit-detail-body { flex: 1; overflow-y: auto; padding: 22px var(--detail-pad) 40px; display: flex; flex-direction: column; gap: 16px; }
 @keyframes kit-slide { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* Fleet card on the dashboard */

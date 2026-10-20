@@ -138,8 +138,8 @@ export default function PublicHome({ navigation }) {
           Live positions for every BSACIST bus, arrival estimates for your stop, alerts, and attendance that marks itself. Routes, stops and timings are free for everyone.
         </Text>
         <Button title="Sign in or register" variant="red" icon="arrow" onPress={() => navigation.navigate('Login')} />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-          {[[routes.data?.length ?? '—', 'routes'], [stops || '—', 'boarding points'], ['≈ 1,150', 'students carried']].map(([v, l]) => (
+        <View style={{ flexDirection: 'row', gap: 40, marginTop: 4 }}>
+          {[[routes.data?.length ?? '—', 'routes'], [stops || '—', 'boarding points']].map(([v, l]) => (
             <View key={l}>
               <Text style={{ color: '#fff', fontSize: 22, ...F.display }}>{v}</Text>
               <Text style={{ color: 'rgba(249, 210, 122,0.8)', fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase', ...F[600] }}>{l}</Text>

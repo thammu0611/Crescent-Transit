@@ -151,10 +151,9 @@ html, body { background: var(--bg); }
   background:
     radial-gradient(50% 30% at 90% 0%, rgba(247, 188, 49, 0.14), transparent 70%),
     radial-gradient(50% 40% at 0% 60%, rgba(110, 193, 228, 0.16), transparent 70%),
-    rgba(241, 241, 241, 0.84);
+    rgba(241, 241, 241, 0.97);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
   backdrop-filter: blur(30px) saturate(180%);
-  border-left: 1px solid rgba(255, 255, 255, 0.9);
 }
 .kit-detail-head {
   background: var(--glass-strong);

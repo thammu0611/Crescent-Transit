@@ -3,7 +3,7 @@ import { Pressable, Switch, View } from 'react-native';
 import { ChangePasswordSheet } from '../../components/ChangePassword.js';
 import Icon from '../../components/Icon.js';
 import {
-  Avatar, Badge, Button, Collapsible, ErrorText, FoldCard, IconBubble, KV, Notice, PageHead, Panel, Screen, SectionTitle, Select, Text, TextField, Txt,
+  Avatar, Badge, Button, Collapsible, confirm, ErrorText, FoldCard, IconBubble, KV, Notice, PageHead, Panel, Screen, SectionTitle, Select, Text, TextField, Txt,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
 import { useAsync } from '../../lib/hooks.js';
@@ -278,7 +278,6 @@ export default function Settings() {
         </View>
         <Txt muted small>To correct your name, register number or department, contact the transport office. Changing your password signs you out on every other device.</Txt>
         <Button title="Change password" variant="ghost" icon="lock" onPress={() => setChangingPassword(true)} />
-        <Button title="Sign out" variant="ghost" icon="logout" onPress={signOut} textStyle={{ color: C.danger }} />
       </FoldCard>
 
       <FoldCard icon="phone" title="Help and support" summary="Contacts and common questions">
@@ -306,6 +305,15 @@ export default function Settings() {
           <KV k="Access" v={entitlement?.required ? 'Monthly subscription' : 'Live tracking, alerts and attendance are free for students'} />
         </View>
       </FoldCard>
+
+      <Button
+        title="Sign out"
+        variant="ghost"
+        icon="logout"
+        style={{ marginTop: 6, borderColor: 'rgba(160,32,34,0.28)' }}
+        textStyle={{ color: C.danger }}
+        onPress={async () => (await confirm('Sign out?', 'You can sign in again any time.', 'Sign out')) && signOut()}
+      />
       <ChangePasswordSheet visible={changingPassword} onClose={() => setChangingPassword(false)} />
     </Screen>
   );

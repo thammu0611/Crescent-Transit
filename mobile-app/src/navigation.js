@@ -6,13 +6,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createNavigationContainerRef } from '@react-navigation/native';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AttendancePrompt from './components/AttendancePrompt.js';
 import BoardingCheck from './components/BoardingCheck.js';
 import { ChangePasswordButton, ChangePasswordSheet } from './components/ChangePassword.js';
+import GlassTabBar from './components/GlassTabBar.js';
 import Icon from './components/Icon.js';
 import {
-  Frost, Avatar, Button, confirm, GradientCard, IconBubble, PillHeader, PillIconButton, Screen, SectionTitle, Text, Txt,
+  Avatar, Button, confirm, GradientCard, IconBubble, PillHeader, PillIconButton, Screen, SectionTitle, Text, Txt,
 } from './components/ui.js';
 import { onNotificationOpened, registerForPush } from './lib/notify.js';
 import { startSampler, stopSampler } from './lib/sampler.js';
@@ -38,7 +38,7 @@ import Schedule from './screens/student/Schedule.js';
 import Settings from './screens/student/Settings.js';
 import StudentHome from './screens/student/StudentHome.js';
 import Subscription from './screens/student/Subscription.js';
-import { C, F, G, shadow, shadowLg } from './theme.js';
+import { C, F, G, shadow } from './theme.js';
 
 const Stack = createNativeStackNavigator();
 // Lets a tapped notification open a screen from outside the navigators (App.js passes it in).
@@ -61,34 +61,22 @@ function SignOutButton() {
 /** Header buttons for roles without a settings screen: change password, sign out. */
 const AccountButtons = () => <><ChangePasswordButton /><SignOutButton /></>;
 
-/** Tab icon; the active one glows red in a soft pill under a short red rule. */
-const TabIcon = ({ name, focused }) => (
-  <View style={{ width: 50, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? 'rgba(247, 188, 49,0.14)' : 'transparent' }}>
-    {focused ? <View style={{ position: 'absolute', top: -5, width: 18, height: 2, borderRadius: 1, backgroundColor: C.gold }} /> : null}
-    <Icon name={name} size={19} color={focused ? C.gold : 'rgba(255,255,255,0.5)'} strokeWidth={focused ? 2.2 : 1.8} />
-  </View>
-);
+/** The signed-in user's initials, as the profile tab's icon. */
+function ProfileTabIcon() {
+  const { user } = useSession();
+  return <Avatar name={user?.name} size={27} light />;
+}
 
 /**
- * The tab bar floats as a rounded pill above the bottom edge, like the web app's
- * phone tab bar. Navigators pass safeAreaInsets={{ bottom: 0 }} so the bar adds no
- * inset padding of its own; screens leave room for it (useTabBarSpace in ui.js).
+ * The tab bar floats as a dark glass capsule above the bottom edge (GlassTabBar).
+ * Navigators pass safeAreaInsets={{ bottom: 0 }} so the bar adds no inset padding
+ * of its own; screens leave room for it (useTabBarSpace in ui.js).
  */
-const tabOptions = (icons, insets) => ({ route }) => ({
+const tabBar = (icons) => function TabBar(props) { return <GlassTabBar {...props} icons={icons} />; };
+const tabOptions = {
   ...header,
   sceneStyle: { backgroundColor: C.bg },
-  tabBarActiveTintColor: C.gold,
-  tabBarInactiveTintColor: 'rgba(255,255,255,0.55)',
-  tabBarLabelStyle: { fontSize: 10, ...F[600], letterSpacing: 0.1 },
-  tabBarStyle: {
-    position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 10, height: 66, paddingTop: 8, paddingBottom: 8,
-    borderRadius: 30, borderTopWidth: 1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)', borderTopColor: 'rgba(255,255,255,0.28)',
-    backgroundColor: 'rgba(20,37,72,0.62)', overflow: 'hidden', ...shadowLg, elevation: 0,
-  },
-  // Liquid glass tab bar: frosted, with a bright top edge.
-  tabBarBackground: () => <Frost tint="dark" intensity={60} style={{ borderRadius: 30 }} />,
-  tabBarIcon: ({ focused }) => <TabIcon name={icons[route.name]} focused={focused} />,
-});
+};
 
 // ---- Guest: the free view and sign-in ------------------------------------------------
 
@@ -103,12 +91,11 @@ function GuestNav() {
 
 // ---- Student: five tabs used daily, like the web app's phone tab bar ---------------------
 
-const STUDENT_ICONS = { Home: 'home', Track: 'map', Schedule: 'clock', Attendance: 'check', Profile: 'users' };
+const STUDENT_ICONS = { Home: 'home', Track: 'map', Schedule: 'clock', Attendance: 'check', Profile: ProfileTabIcon };
 
 function StudentTabs() {
-  const insets = useSafeAreaInsets();
   return (
-    <Tab.Navigator safeAreaInsets={{ bottom: 0 }} screenOptions={tabOptions(STUDENT_ICONS, insets)}>
+    <Tab.Navigator safeAreaInsets={{ bottom: 0 }} tabBar={tabBar(STUDENT_ICONS)} screenOptions={tabOptions}>
       <Tab.Screen name="Home" component={StudentHome} options={{ title: 'Home', headerShown: false }} />
       <Tab.Screen name="Track" component={LiveMap} options={{ title: 'Live map', tabBarLabel: 'Track' }} />
       <Tab.Screen name="Schedule" component={Schedule} />
@@ -193,9 +180,8 @@ function MoreMenu({ navigation }) {
 }
 
 function AdminTabs() {
-  const insets = useSafeAreaInsets();
   return (
-    <Tab.Navigator safeAreaInsets={{ bottom: 0 }} screenOptions={tabOptions(ADMIN_ICONS, insets)}>
+    <Tab.Navigator safeAreaInsets={{ bottom: 0 }} tabBar={tabBar(ADMIN_ICONS)} screenOptions={tabOptions}>
       <Tab.Screen name="Dashboard" component={Dashboard} options={{ title: 'Dashboard', headerShown: false }} />
       <Tab.Screen name="FleetMap" component={LiveMap} options={{ title: 'Fleet map' }} />
       <Tab.Screen name="Trips" component={Trips} options={{ headerShown: false }} />
@@ -222,9 +208,8 @@ function AdminNav() {
 const FINANCE_ICONS = { Collections: 'wallet', Payments: 'card', Students: 'users', Reconcile: 'shield' };
 
 function FinanceNav() {
-  const insets = useSafeAreaInsets();
   return (
-    <Tab.Navigator safeAreaInsets={{ bottom: 0 }} screenOptions={(p) => ({ ...tabOptions(FINANCE_ICONS, insets)(p), headerRight: () => <AccountButtons /> })}>
+    <Tab.Navigator safeAreaInsets={{ bottom: 0 }} tabBar={tabBar(FINANCE_ICONS)} screenOptions={{ ...tabOptions, headerRight: () => <AccountButtons /> }}>
       <Tab.Screen name="Collections" component={Collections} options={{ title: 'Collections', headerShown: false }} />
       <Tab.Screen name="Payments" component={Payments} options={{ headerTitle: '' }} />
       <Tab.Screen name="Students" component={FinanceStudents} options={{ headerTitle: '' }} />
