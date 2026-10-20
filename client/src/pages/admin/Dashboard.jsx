@@ -14,7 +14,7 @@ const URGENT = ['SOS', 'EMERGENCY', 'BREAKDOWN', 'CAPACITY_BREACH'];
 const titleCase = (k) => k.replaceAll('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
 const ACTIVITY = {
-  trip_started: { icon: 'arrow', color: '#2c8a63', text: (a) => `Trip started · route ${a.route_code}`, sub: (a) => `${a.fleet_code}${a.who ? ` · ${a.who}` : ''}` },
+  trip_started: { icon: 'arrow', color: '#2b8a3e', text: (a) => `Trip started · route ${a.route_code}`, sub: (a) => `${a.fleet_code}${a.who ? ` · ${a.who}` : ''}` },
   trip_ended: { icon: 'check', color: '#1c315e', text: (a) => `Trip completed · route ${a.route_code}`, sub: (a) => `${a.fleet_code}${a.who ? ` · ${a.who}` : ''}` },
   incident: { icon: 'alert', color: '#a02022', text: (a) => titleCase(a.who ?? 'Incident'), sub: (a) => [a.fleet_code ?? (a.route_code && `route ${a.route_code}`), a.detail].filter(Boolean).join(' · ') || 'No details given' },
 };
@@ -74,7 +74,7 @@ export default function Dashboard() {
               <span>buses on trip<small>of {tot.buses ?? '—'} in the fleet</small></span>
             </div>
             <div className="kit-fleet-pills">
-              <span><i style={{ background: '#5ef0b2' }} /> {counts.live ?? 0} live</span>
+              <span><i style={{ background: '#61ce70' }} /> {counts.live ?? 0} live</span>
               <span><i style={{ background: '#b9832a' }} /> {counts.delayed ?? 0} delayed</span>
               <span><i style={{ background: '#8b909b' }} /> {counts.offline ?? 0} offline</span>
             </div>
@@ -109,7 +109,7 @@ export default function Dashboard() {
             caption={weekTotal == null ? ' ' : `${weekTotal} ${trend === 'present' ? 'students boarded' : 'trips run'} this week`}
             actions={<Segmented value={trend} onChange={setTrend} options={[{ value: 'present', label: 'Riders' }, { value: 'trips', label: 'Trips' }]} />}
           >
-            <ColumnChart data={series} color={trend === 'present' ? '#1c315e' : '#2a7d63'} />
+            <ColumnChart data={series} color={trend === 'present' ? '#1c315e' : '#2b8a3e'} />
           </Block>
           <Block title="Fleet status" caption="Buses on trip by signal, and active buses waiting" actions={<a className="btn ghost inline" href="#/map"><Icon name="map" size={14} />Fleet map</a>}>
             {ready && o ? (
@@ -117,7 +117,7 @@ export default function Dashboard() {
                 caption="buses"
                 center={tot.buses_active ?? buses.length}
                 segments={[
-                  { label: 'Live', value: counts.live ?? 0, color: '#2c8a63' },
+                  { label: 'Live', value: counts.live ?? 0, color: '#2b8a3e' },
                   { label: 'Delayed signal', value: counts.delayed ?? 0, color: '#b9832a' },
                   { label: 'Offline', value: counts.offline ?? 0, color: '#8b909b' },
                   { label: 'Not on trip', value: idle, color: '#d9dee8' },

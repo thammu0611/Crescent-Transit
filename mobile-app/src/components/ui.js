@@ -67,13 +67,13 @@ export function GlassBackdrop({ offset = 0 }) {
   const { height } = useWindowDimensions();
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: -offset, height: Math.max(height, 640) }}>
-      <LinearGradient colors={['#eef2f9', '#e6ebf4', '#f2efe8']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#f4f4f4', '#eceeef', '#f1f1f1']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
         <Defs>
-          <RadialGradient id="gNavy" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#3a5aa8" stopOpacity="0.30" /><Stop offset="1" stopColor="#3a5aa8" stopOpacity="0" /></RadialGradient>
+          <RadialGradient id="gNavy" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#1c315e" stopOpacity="0.30" /><Stop offset="1" stopColor="#1c315e" stopOpacity="0" /></RadialGradient>
           <RadialGradient id="gGold" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#f7bc31" stopOpacity="0.26" /><Stop offset="1" stopColor="#f7bc31" stopOpacity="0" /></RadialGradient>
-          <RadialGradient id="gSky" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#6fb6e8" stopOpacity="0.26" /><Stop offset="1" stopColor="#6fb6e8" stopOpacity="0" /></RadialGradient>
-          <RadialGradient id="gRose" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#c86a7a" stopOpacity="0.14" /><Stop offset="1" stopColor="#c86a7a" stopOpacity="0" /></RadialGradient>
+          <RadialGradient id="gSky" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#6ec1e4" stopOpacity="0.26" /><Stop offset="1" stopColor="#6ec1e4" stopOpacity="0" /></RadialGradient>
+          <RadialGradient id="gRose" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#a02022" stopOpacity="0.14" /><Stop offset="1" stopColor="#a02022" stopOpacity="0" /></RadialGradient>
         </Defs>
         <Ellipse cx="40" cy="90" rx="260" ry="230" fill="url(#gNavy)" />
         <Ellipse cx="380" cy="300" rx="230" ry="210" fill="url(#gGold)" />
@@ -175,7 +175,7 @@ export function FadeIn({ children, delay = 0, style }) {
 }
 
 /** A status dot with an expanding ring, for things that are live right now. */
-export function LivePulse({ color = '#5ef0b2', size = 10 }) {
+export function LivePulse({ color = '#61ce70', size = 10 }) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(Animated.timing(v, { toValue: 1, duration: 1600, easing: Easing.out(Easing.quad), useNativeDriver: native }));

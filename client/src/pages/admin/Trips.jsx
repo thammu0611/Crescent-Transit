@@ -44,7 +44,7 @@ function Replay({ path }) {
           <BaseTiles />
           <FitPath path={path} />
           <Polyline positions={path.map((x) => [x.lat, x.lng])} pathOptions={{ color: '#142548', weight: 3, opacity: 0.3 }} />
-          <Polyline positions={path.slice(0, i + 1).map((x) => [x.lat, x.lng])} pathOptions={{ color: '#2c8a63', weight: 4 }} />
+          <Polyline positions={path.slice(0, i + 1).map((x) => [x.lat, x.lng])} pathOptions={{ color: '#2b8a3e', weight: 4 }} />
           <CircleMarker center={[p.lat, p.lng]} radius={9} pathOptions={{ color: '#fff', weight: 3, fillColor: '#8f2430', fillOpacity: 1 }} />
         </MapContainer>
       </div>

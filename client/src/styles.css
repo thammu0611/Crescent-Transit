@@ -17,15 +17,17 @@
   --red-600: #a02022;
   --red-50: #f9e9e9;
   --crimson: #a02022;
+  --link: #0170b9; /* crescent.education link blue */
+  --sky: #6ec1e4;
   --bg: #f1f1f1;
   --card: #ffffff;
   --surface: #f7f7f7;
   --ink: #141414;
-  --muted: #5b5f66;
+  --muted: #54595f;
   --line: #e0e0e0;
   --line-2: #ebebeb;
-  --live: #2c8a63;
-  --live-50: #e9f4ee;
+  --live: #2b8a3e;
+  --live-50: #e9f7eb;
   --delayed: #b9832a;
   --delayed-50: #f9f0de;
   --offline: #8b909b;
@@ -39,9 +41,9 @@
   --shadow-lg: 0 24px 60px rgba(20, 37, 72, 0.20);
   --ease: cubic-bezier(0.2, 0, 0, 1);
 
-  --emerald: #2a7d63;
-  --emerald-700: #1d5c48;
-  --emerald-50: #e8f2ec;
+  --emerald: #2b8a3e;
+  --emerald-700: #1f6b2f;
+  --emerald-50: #e9f7eb;
   --indigo: #454e70;
   --indigo-700: #363e5a;
   --indigo-50: #eceef3;

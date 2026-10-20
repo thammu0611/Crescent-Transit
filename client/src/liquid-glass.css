@@ -5,7 +5,7 @@
    same look (mobile-app/src/components/ui.js: GlassBackdrop, Frost, Sheen). */
 
 :root {
-  --bg: #e9edf5;
+  --bg: #f1f1f1;
   --line: rgba(28, 49, 94, 0.14);
   --line-2: rgba(28, 49, 94, 0.09);
   --surface: rgba(255, 255, 255, 0.5);
@@ -13,7 +13,7 @@
   --glass-strong: rgba(255, 255, 255, 0.82);
   --glass-edge: rgba(28, 49, 94, 0.10); /* hairline outline; the white top edge is an inset highlight */
   --glass-hi: rgba(255, 255, 255, 0.95);
-  --glass-dark: rgba(22, 40, 82, 0.88);
+  --glass-dark: rgba(28, 49, 94, 0.9);
   --glass-blur: blur(22px) saturate(180%);
   --glass-gloss: linear-gradient(160deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.28) 45%, rgba(255, 255, 255, 0.18) 100%);
   --glass-shadow: 0 12px 32px rgba(20, 37, 72, 0.09), 0 2px 6px rgba(20, 37, 72, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(20, 37, 72, 0.04);
@@ -24,11 +24,11 @@
 html, body { background: var(--bg); }
 .app {
   background:
-    radial-gradient(42% 38% at 8% 6%, rgba(58, 90, 168, 0.26), transparent 70%),
+    radial-gradient(42% 38% at 8% 6%, rgba(28, 49, 94, 0.26), transparent 70%),
     radial-gradient(36% 34% at 96% 22%, rgba(247, 188, 49, 0.22), transparent 70%),
-    radial-gradient(40% 40% at 10% 78%, rgba(111, 182, 232, 0.24), transparent 70%),
-    radial-gradient(34% 30% at 92% 96%, rgba(200, 106, 122, 0.14), transparent 70%),
-    linear-gradient(135deg, #eef2f9 0%, #e6ebf4 55%, #f2efe8 100%);
+    radial-gradient(40% 40% at 10% 78%, rgba(110, 193, 228, 0.24), transparent 70%),
+    radial-gradient(34% 30% at 92% 96%, rgba(160, 32, 34, 0.14), transparent 70%),
+    linear-gradient(135deg, #f4f4f4 0%, #eceeef 55%, #f1f1f1 100%);
   background-attachment: fixed;
 }
 .masthead { background: transparent; }
@@ -150,8 +150,8 @@ html, body { background: var(--bg); }
 .kit-detail {
   background:
     radial-gradient(50% 30% at 90% 0%, rgba(247, 188, 49, 0.14), transparent 70%),
-    radial-gradient(50% 40% at 0% 60%, rgba(111, 182, 232, 0.16), transparent 70%),
-    rgba(236, 240, 248, 0.82);
+    radial-gradient(50% 40% at 0% 60%, rgba(110, 193, 228, 0.16), transparent 70%),
+    rgba(241, 241, 241, 0.84);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
   backdrop-filter: blur(30px) saturate(180%);
   border-left: 1px solid rgba(255, 255, 255, 0.9);

@@ -10,7 +10,7 @@ import Icon from './Icon.js';
 import { Empty, Screen, Sheen, Skeleton, Text, Txt } from './ui.js';
 
 /** Series colours: navy, gold, emerald, crimson, slate, sky - readable on white. */
-export const SERIES = [C.navy, C.gold, C.emerald, C.red, C.slate, '#6b8fc7'];
+export const SERIES = [C.navy, C.gold, C.emerald, C.red, C.slate, '#6ec1e4'];
 
 const compact = (n) => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 

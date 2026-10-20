@@ -107,7 +107,7 @@ export default function Dashboard({ navigation }) {
         <Row style={{ justifyContent: 'space-between' }}>
           <Text style={{ color: C.gold, fontSize: 11, ...F[700], letterSpacing: 1.8 }}>FLEET NOW</Text>
           <Row gap={6}>
-            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#5ef0b2' }} />
+            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#61ce70' }} />
             <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>Live</Text>
           </Row>
         </Row>
@@ -121,7 +121,7 @@ export default function Dashboard({ navigation }) {
         <Row gap={8} wrap>
           {['live', 'delayed', 'offline'].map((f) => (
             <Row key={f} gap={6} style={{ backgroundColor: 'rgba(255,255,255,0.10)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: f === 'live' ? '#5ef0b2' : FRESH_COLOR[f] }} />
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: f === 'live' ? '#61ce70' : FRESH_COLOR[f] }} />
               <Text style={{ color: '#fff', fontSize: 12.5, ...F[600] }}>{counts[f] ?? 0} {f}</Text>
             </Row>
           ))}
