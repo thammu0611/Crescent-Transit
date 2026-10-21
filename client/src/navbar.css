@@ -111,3 +111,46 @@
 /* Every navigation label in the same face, on every screen width. */
 .topbar .tabs a, .topbar .user-meta, .bottom-tabs a span { font-family: var(--nav-font); }
 .topbar .user-meta b { font-weight: 700; }
+
+/* ---- Enhanced bar: link track, gliding pill, condensing on scroll ---------------------- */
+/* Below the wide layout the track is invisible (links stack in the menu as before). */
+.nav-track { display: contents; }
+.nav-glider { display: none; }
+@media (min-width: 1061px) {
+  /* The links sit in a recessed glass track, like the phone app's tab bar... */
+  .nav-track {
+    position: relative; display: flex; align-items: center; gap: 2px; padding: 5px; align-self: center;
+    border-radius: 999px; background: rgba(6, 12, 28, 0.32);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  /* ...and the current page's pill glides to whichever link is active. */
+  .nav-glider {
+    display: block; position: absolute; top: 5px; bottom: 5px; left: 0; border-radius: 999px; pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 6px 14px rgba(0, 0, 0, 0.28);
+    transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .nav-glider::after {
+    content: ''; position: absolute; left: 50%; bottom: 3px; width: 14px; height: 2px; margin-left: -7px; border-radius: 2px;
+    background: var(--gold); box-shadow: 0 0 8px rgba(247, 188, 49, 0.8);
+  }
+  .tabs a { z-index: 1; padding: 8px 14px; }
+  .tabs a.active { background: none; box-shadow: none; }
+  .tabs a.active::after { display: none; }
+  .tabs a .icon { display: inline-block; opacity: 0.65; transition: opacity 0.2s, color 0.2s, transform 0.2s; }
+  .tabs a:hover .icon { opacity: 1; transform: translateY(-1px); }
+  .tabs a.active .icon { opacity: 1; color: var(--gold); }
+  .tabs a:not(.active):not(.nav-cta):hover { background: rgba(255, 255, 255, 0.05); }
+}
+/* Room for icons only on wide screens; the transport office has eight links. */
+@media (min-width: 1061px) and (max-width: 1400px) {
+  .tabs a .icon { display: none; }
+  .tabs a { padding: 8px 11px; }
+}
+
+/* Condensed once the page scrolls: a slimmer bar with a deeper shadow. */
+.topbar { transition: min-height 0.28s var(--ease), box-shadow 0.28s var(--ease), border-radius 0.28s var(--ease); }
+.brand-icon, .brand-text strong { transition: transform 0.28s var(--ease), font-size 0.28s var(--ease); }
+.app.scrolled .topbar { min-height: 58px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 22px 48px rgba(20, 37, 72, 0.34), 0 2px 8px rgba(20, 37, 72, 0.16); }
+.app.scrolled .brand-icon { transform: scale(0.88); }
+@media (prefers-reduced-motion: reduce) { .nav-glider { transition: none; } }

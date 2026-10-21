@@ -226,6 +226,9 @@ export default function StudentAttendance() {
   const [month, setMonth] = useState(thisMonth());
   const [disputing, setDisputing] = useState(null);
   const record = useAsync(() => (entitlement?.active ? api(`/api/attendance/me?month=${month}`, { token }) : Promise.resolve(null)), [token, month, entitlement?.active]);
+  // Only the latest three trips at first (the server sends newest first); the rest fold away.
+  const [showAll, setShowAll] = useState(false);
+  const records = record.data?.records ?? [];
 
   useEffect(() => {
     const reload = () => record.reload();
@@ -250,7 +253,7 @@ export default function StudentAttendance() {
               <>
                 <ErrorText>{record.error?.message}</ErrorText>
                 <Table
-                  rows={record.data?.records}
+                  rows={record.data ? (showAll ? records : records.slice(0, 3)) : undefined}
                   rowKey={(r) => r.attendance_id}
                   empty="No trips recorded this month."
                   columns={[
@@ -260,6 +263,12 @@ export default function StudentAttendance() {
                     { key: 'x', label: '', render: (r) => (r.canDispute ? <button className="link" onClick={() => setDisputing(r)}>Dispute</button> : <small>{r.dispute?.resolution ?? ''}</small>) },
                   ]}
                 />
+                {records.length > 3 && (
+                  <button type="button" className="btn ghost small show-more" onClick={() => setShowAll((v) => !v)}>
+                    <Icon name={showAll ? 'up' : 'down'} size={14} />
+                    {showAll ? 'Show the latest 3 only' : `Show all ${records.length} trips`}
+                  </button>
+                )}
                 <p className="fine-print">Disputes can be raised within 7 days. Records are locked each night at 23:30; the transport office can still correct them.</p>
               </>
             )}

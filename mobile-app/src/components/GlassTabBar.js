@@ -40,7 +40,12 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
     >
       <Frost tint="dark" intensity={55} style={{ borderRadius: s.bar.borderRadius }} />
       <View pointerEvents="none" style={s.sheen} />
-      {tabW ? <Animated.View pointerEvents="none" style={[s.active, { width: tabW, transform: [{ translateX: x }] }]} /> : null}
+      {tabW ? (
+        <Animated.View pointerEvents="none" style={[s.active, { width: tabW, transform: [{ translateX: x }] }]}>
+          {/* A short gold bar under the active tab, as under the web bar's current link. */}
+          <View style={s.activeBar} />
+        </Animated.View>
+      ) : null}
       {state.routes.map((route, i) => {
         const { options } = descriptors[route.key];
         const focused = state.index === i;
@@ -70,7 +75,7 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
                 : <Icon name={icon} size={25} color="#fff" strokeWidth={focused ? 2.1 : 1.8} />}
               <View style={s.badgeAt}><Badge value={options.tabBarBadge} /></View>
             </View>
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.label, { opacity: focused ? 1 : 0.88 }]}>{label}</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.label, state.routes.length > 4 && s.labelTight, { opacity: focused ? 1 : 0.88 }]}>{label}</Text>
           </Pressable>
         );
       })}
@@ -91,8 +96,11 @@ const s = StyleSheet.create({
     position: 'absolute', top: PAD, bottom: PAD, left: PAD, borderRadius: 31,
     backgroundColor: 'rgba(6,10,20,0.5)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
+  activeBar: { position: 'absolute', bottom: 4, alignSelf: 'center', width: 16, height: 2.5, borderRadius: 2, backgroundColor: '#f7bc31', shadowColor: '#f7bc31', shadowOpacity: 0.8, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
   label: { color: '#fff', fontSize: 11.5, ...F.nav },
+  // Five tabs: a size that fits "Attendance" on a narrow phone.
+  labelTight: { fontSize: 10.5, letterSpacing: 0 },
   badgeAt: { position: 'absolute', top: -5, left: 17 },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#61ce70', borderWidth: 1.5, borderColor: 'rgba(24,30,44,0.9)', marginTop: 3 },
   count: { minWidth: 22, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#61ce70', borderWidth: 1.5, borderColor: 'rgba(24,30,44,0.9)' },

@@ -59,6 +59,24 @@
   .bottom-tabs a:active { transform: scale(0.94); }
 }
 
+/* ---- Map pages on phones and tablets ---------------------------------------------------- */
+/* One column that scrolls as a whole: the map as a rounded card with the page's
+   side margins, then the panels with the same margins (the old two-row grid
+   squeezed the panels into a fixed 55vh row). */
+@media (max-width: 900px) {
+  .live-layout, .driver-layout { display: flex; flex-direction: column; gap: 14px; padding: 12px 16px 24px; overflow-y: auto; }
+  .live-layout > .map-wrap, .driver-layout > .map-wrap {
+    order: -1; flex: none; height: clamp(260px, 46vh, 520px); border-radius: 24px; overflow: hidden;
+    border: 1px solid rgba(28, 49, 94, 0.12); box-shadow: 0 14px 32px rgba(20, 37, 72, 0.14);
+  }
+  .live-layout > .map-wrap .map, .driver-layout > .map-wrap .map { height: 100%; }
+  .live-layout > .sidebar, .driver-layout > .driver-controls { flex: none; padding: 0; overflow: visible; background: transparent; border: 0; }
+  .live-layout .legend { bottom: 10px; }
+}
+
+/* ---- Attendance: show more ------------------------------------------------------------- */
+.show-more { display: inline-flex; align-items: center; gap: 6px; align-self: center; margin: 10px auto 0; }
+
 /* ---- Finance switched off ------------------------------------------------------------- */
 .finance-off { max-width: 520px; text-align: center; display: flex; flex-direction: column; gap: 10px; padding: 28px; }
 .finance-off h2 { margin: 6px 0 0; font-size: 20px; color: var(--navy); }

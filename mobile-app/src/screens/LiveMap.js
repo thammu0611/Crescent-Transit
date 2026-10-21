@@ -110,13 +110,14 @@ export default function LiveMap({ navigation }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <View style={{ height: Math.round(height * 0.42) }}>
+      {/* The map as a rounded card with the same side margins as the panels below. */}
+      <View style={{ height: Math.round(Math.min(Math.max(height * 0.4, 260), 520)), marginHorizontal: 14, marginTop: 6, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: C.glassEdge, backgroundColor: C.surface }}>
         <MapBox ref={map} fitPoints={route?.stops ?? []} fitKey={route?.code}>
           <CampusPin />
           <RouteLayer stops={route?.stops} highlightSeq={stopSeq ?? selected?.nearestStop?.seq} />
           {list.map((b) => <BusPin key={b.busId} bus={b} selected={b.busId === selectedBusId} onPress={selectBus} />)}
         </MapBox>
-        <View style={{ position: 'absolute', left: 8, bottom: 8, flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+        <View style={{ position: 'absolute', left: 10, right: 10, bottom: 10, flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
           {Object.entries(STATE_LABEL).map(([k, label]) => (
             <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3 }}>
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: FRESH_COLOR[k] }} />

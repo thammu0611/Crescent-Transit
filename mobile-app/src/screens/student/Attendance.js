@@ -225,6 +225,9 @@ export default function StudentAttendance({ navigation }) {
   const { refreshing, onRefresh } = useRefresh(record, refreshPlan);
 
   const reload = record.reload;
+  // Only the latest three trips at first (the server sends newest first); the rest fold away.
+  const [showAll, setShowAll] = useState(false);
+  const records = record.data?.records ?? [];
   useEffect(() => on(ATTENDANCE_CHANGED, () => reload()), [reload]);
 
   return (
@@ -246,7 +249,7 @@ export default function StudentAttendance({ navigation }) {
           <>
             <ErrorText>{record.error?.message}</ErrorText>
             <DataList
-              rows={record.data?.records}
+              rows={record.data ? (showAll ? records : records.slice(0, 3)) : undefined}
               keyOf={(r) => r.attendance_id}
               empty="No trips recorded this month."
               render={(r) => (
@@ -263,6 +266,15 @@ export default function StudentAttendance({ navigation }) {
                 </ItemCard>
               )}
             />
+            {records.length > 3 ? (
+              <Button
+                small
+                variant="ghost"
+                icon={showAll ? 'up' : 'down'}
+                title={showAll ? 'Show the latest 3 only' : `Show all ${records.length} trips`}
+                onPress={() => setShowAll((v) => !v)}
+              />
+            ) : null}
             <Txt muted small>Disputes can be raised within 7 days. Records are locked each night at 23:30; the transport office can still correct them.</Txt>
           </>
         )}

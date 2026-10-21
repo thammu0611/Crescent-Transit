@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import BrandMark from './components/BrandMark.jsx';
 import RouteBackdrop from './components/RouteBackdrop.jsx';
 import AttendancePrompt from './components/AttendancePrompt.jsx';
@@ -111,6 +111,10 @@ function Shell() {
   const { user, token, signOut, entitlement } = useSession();
   const [path, setPath] = useState(currentPath);
   const [menuOpen, setMenuOpen] = useState(false);
+  // The bar condenses once the page scrolls; the active link's pill glides between links.
+  const [scrolled, setScrolled] = useState(false);
+  const track = useRef(null);
+  const [glider, setGlider] = useState(null);
   const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
@@ -136,8 +140,26 @@ function Shell() {
   const entry = nav.find(([p]) => p === path) ?? (role === 'guest' && wantsDriver ? NAV.guest[1] : nav[0]);
   const Screen = entry[2];
 
+  useEffect(() => {
+    const onScroll = (e) => setScrolled((e.target.scrollTop ?? 0) > 8);
+    document.addEventListener('scroll', onScroll, true);
+    return () => document.removeEventListener('scroll', onScroll, true);
+  }, []);
+  useEffect(() => setScrolled(false), [entry[0]]);
+
+  useLayoutEffect(() => {
+    const place = () => {
+      const a = track.current?.querySelector('a.active');
+      setGlider(a && a.offsetWidth ? { left: a.offsetLeft, width: a.offsetWidth } : null);
+    };
+    place();
+    document.fonts?.ready.then(place);
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [entry[0], role, nav.length]);
+
   return (
-    <div className="app">
+    <div className={`app${scrolled ? ' scrolled' : ''}`}>
       <RouteBackdrop />
       {/* Contact strip and the floating navigation pill. */}
       <div className="masthead">
@@ -162,18 +184,21 @@ function Shell() {
             <Icon name="menu" size={22} />
           </button>
           <nav className={`tabs${menuOpen ? ' open' : ''}`} aria-label="Main">
-            {nav.map(([p, label, , icon]) => (
-              <a
-                key={p}
-                href={`#${p}`}
-                // A guest's "Sign in" is the bar's call to action.
-                className={[entry[0] === p && 'active', role === 'guest' && p === '/login' && 'nav-cta'].filter(Boolean).join(' ')}
-                aria-current={entry[0] === p ? 'page' : undefined}
-              >
-                <Icon name={icon} size={16} />
-                {label}
-              </a>
-            ))}
+            <span className="nav-track" ref={track}>
+              {glider && <span className="nav-glider" aria-hidden="true" style={{ transform: `translateX(${glider.left}px)`, width: glider.width }} />}
+              {nav.map(([p, label, , icon]) => (
+                <a
+                  key={p}
+                  href={`#${p}`}
+                  // A guest's "Sign in" is the bar's call to action.
+                  className={[entry[0] === p && 'active', role === 'guest' && p === '/login' && 'nav-cta'].filter(Boolean).join(' ')}
+                  aria-current={entry[0] === p ? 'page' : undefined}
+                >
+                  <Icon name={icon} size={16} />
+                  {label}
+                </a>
+              ))}
+            </span>
             {user && (
               <span className="user-chip">
                 <span className="avatar" aria-hidden="true">{initials(user.name)}</span>

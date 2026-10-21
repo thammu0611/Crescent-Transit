@@ -379,7 +379,13 @@ export function NavPill({ title, onBack, right, glass, style }) {
       {!glass ? <Sheen radius={R.pill} dark /> : null}
       {!glass ? <View pointerEvents="none" style={s.pillGold} /> : null}
       {onBack ? <PillIconButton icon="back" label="Back" onPress={onBack} /> : <BrandMark size={42} />}
-      {title ? <Text style={s.pillTitle} numberOfLines={1}>{title}</Text> : <Wordmark style={{ flex: 1 }} />}
+      {title ? (
+        // The screen's name under a small gold app name, as the web bar's wordmark.
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Text style={s.pillEyebrow} numberOfLines={1}>CRESCENT TRANSIT</Text>
+          <Text style={s.pillTitle} numberOfLines={1}>{title}</Text>
+        </View>
+      ) : <Wordmark style={{ flex: 1 }} />}
       {right ? <View style={s.pillRight}>{right}</View> : null}
     </View>
   );
@@ -1069,7 +1075,8 @@ export const s = StyleSheet.create({
   pillGold: { position: 'absolute', left: 28, right: 28, bottom: 0, height: 1, backgroundColor: 'rgba(247,188,49,0.45)' },
   pillSolid: { backgroundColor: C.glassDark, borderColor: 'rgba(255,255,255,0.22)', overflow: 'hidden', ...shadowLg, shadowOpacity: 0.22, elevation: 0 },
   pillGlass: { backgroundColor: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.14)' },
-  pillTitle: { flex: 1, color: '#fff', fontSize: 16.5, ...F.navBold },
+  pillTitle: { color: '#fff', fontSize: 16.5, lineHeight: 21, ...F.navBold },
+  pillEyebrow: { color: C.gold, fontSize: 8.5, lineHeight: 11, letterSpacing: 2.4, ...F.navBold },
   pillRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pillBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' },
   pillCta: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: C.gold, ...glow(C.gold), shadowOpacity: 0.3 },
