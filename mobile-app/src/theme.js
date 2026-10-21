@@ -146,7 +146,10 @@ export const F = {
   display: { fontFamily: 'Poppins_600SemiBold', fontWeight: 'normal', letterSpacing: -0.3 },
   displayBold: { fontFamily: 'Poppins_700Bold', fontWeight: 'normal', letterSpacing: -0.3 },
   // The app name: a refined serif wordmark.
-  brand: { fontFamily: 'PlayfairDisplay_700Bold', fontWeight: 'normal', letterSpacing: 0.2 },
+  // The app name and navigation labels: Montserrat, as in the web app's navbar.
+  brand: { fontFamily: 'Montserrat_800ExtraBold', fontWeight: 'normal', letterSpacing: -0.2 },
+  nav: { fontFamily: 'Montserrat_600SemiBold', fontWeight: 'normal', letterSpacing: 0.2 },
+  navBold: { fontFamily: 'Montserrat_700Bold', fontWeight: 'normal', letterSpacing: 0.1 },
 };
 
 /** The Inter family for a fontWeight ('bold', '600', 500 ...). */

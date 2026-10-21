@@ -8,13 +8,13 @@ import { useIsFocused } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { createContext, forwardRef, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo, ActivityIndicator, Alert, Animated, Easing, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, Platform, Pressable, RefreshControl,
   ScrollView, StyleSheet, Text as RNText, TextInput, useWindowDimensions, View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Defs, Ellipse, G as SvgG, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, G as SvgG, LinearGradient as SvgLinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { monthName, shiftMonth, thisMonth } from '../lib/format.js';
 import { tickPress, tickSelect } from '../lib/haptics.js';
 import { ACCENT, C, F, G, HAIRLINE, R, TONE, glass, glow, interFor, shadow, shadowLg } from '../theme.js';
@@ -297,18 +297,47 @@ export function useTabBarSpace() {
   return barHeight ? barHeight + insets.bottom + 10 : 0;
 }
 
-/** The app's mark: the red round bus badge, as in the web app's navigation. */
-/** The crest: a crimson emblem inside a fine gold ring. */
-export const BrandMark = ({ size = 38 }) => (
-  <View style={{ width: size + 6, height: size + 6, borderRadius: (size + 6) / 2, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(247,188,49,0.55)', backgroundColor: 'rgba(247,188,49,0.08)' }}>
-    <LinearGradient colors={['#b5282a', '#8a1a1c']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' }}>
-      <Icon name="bus" size={Math.round(size * 0.48)} color="#fff" />
-    </LinearGradient>
-  </View>
-);
+/**
+ * The app's mark, drawn as the launcher icon: a gold bus on a navy rounded
+ * square with a fine gold edge. The web navbar draws the same shapes
+ * (client/src/components/BrandMark.jsx).
+ */
+export function BrandMark({ size = 42 }) {
+  // Gradient ids of their own: a copy in a hidden screen must not be the one referenced.
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '');
+  // Inside a View: on the web a bare svg would paint under the pill's frosted layer.
+  return (
+    <View style={{ width: size, height: size }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Svg width={size} height={size} viewBox="0 0 48 48">
+        <Defs>
+          <SvgLinearGradient id={`brandBg${id}`} x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#2a4787" />
+            <Stop offset="1" stopColor="#162a52" />
+          </SvgLinearGradient>
+          <SvgLinearGradient id={`brandBus${id}`} x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#fbcd5a" />
+            <Stop offset="1" stopColor="#f2b12a" />
+          </SvgLinearGradient>
+        </Defs>
+        <Rect x={0.75} y={0.75} width={46.5} height={46.5} rx={13} fill={`url(#brandBg${id})`} stroke="rgba(247,188,49,0.65)" strokeWidth={1.5} />
+        <SvgG x={12} y={10}>
+          <Rect x={-1.6} y={6} width={2.4} height={4.4} rx={1} fill="#c4860b" />
+          <Rect x={23.2} y={6} width={2.4} height={4.4} rx={1} fill="#c4860b" />
+          <Rect x={2} y={23} width={4.4} height={3.6} rx={1.2} fill="#c4860b" />
+          <Rect x={17.6} y={23} width={4.4} height={3.6} rx={1.2} fill="#c4860b" />
+          <Rect x={0.6} y={0} width={22.8} height={24.4} rx={5.4} fill={`url(#brandBus${id})`} />
+          <Rect x={5.6} y={2.2} width={12.8} height={2.6} rx={1.3} fill="#1e3360" />
+          <Rect x={3} y={6.8} width={18} height={8.4} rx={2.4} fill="#1e3360" />
+          <Circle cx={6.4} cy={19.2} r={1.9} fill="#13213f" />
+          <Circle cx={17.6} cy={19.2} r={1.9} fill="#13213f" />
+          <Rect x={9.6} y={18.3} width={4.8} height={1.8} rx={0.9} fill="#13213f" />
+        </SvgG>
+      </Svg>
+    </View>
+  );
+}
 
-/** CRESCENT TRANSIT in tracked capitals. */
-/** The app name: "Crescent" in a serif, "TRANSIT" in small spaced gold capitals beneath. */
+/** The app name: "Crescent" in Montserrat, "TRANSIT" in small spaced gold capitals beneath. */
 export const Wordmark = ({ style, dark }) => (
   <View style={[{ justifyContent: 'center' }, style]} accessibilityRole="header" accessibilityLabel="Crescent Transit">
     <Text style={[s.wordmark, dark && { color: C.navy }]} numberOfLines={1}>Crescent</Text>
@@ -349,7 +378,7 @@ export function NavPill({ title, onBack, right, glass, style }) {
       {!glass ? <Frost tint="dark" intensity={55} style={{ borderRadius: R.pill }} /> : null}
       {!glass ? <Sheen radius={R.pill} dark /> : null}
       {!glass ? <View pointerEvents="none" style={s.pillGold} /> : null}
-      {onBack ? <PillIconButton icon="back" label="Back" onPress={onBack} /> : <BrandMark size={36} />}
+      {onBack ? <PillIconButton icon="back" label="Back" onPress={onBack} /> : <BrandMark size={42} />}
       {title ? <Text style={s.pillTitle} numberOfLines={1}>{title}</Text> : <Wordmark style={{ flex: 1 }} />}
       {right ? <View style={s.pillRight}>{right}</View> : null}
     </View>
@@ -1033,14 +1062,14 @@ export const s = StyleSheet.create({
   routeCode: { borderRadius: R.sm, paddingHorizontal: 9, paddingVertical: 5, minWidth: 44, alignItems: 'center', borderWidth: 1, borderColor: HAIRLINE.gold },
   routeCodeText: { color: C.gold, ...F[700], fontSize: 14, letterSpacing: 0.5 },
   monthBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.navy50, alignItems: 'center', justifyContent: 'center' },
-  wordmark: { color: '#fff', ...F.brand, fontSize: 19, lineHeight: 22 },
-  wordmarkSub: { color: C.gold, ...F[600], fontSize: 8.5, letterSpacing: 3.2, lineHeight: 11 },
+  wordmark: { color: '#fff', ...F.brand, fontSize: 18, lineHeight: 22 },
+  wordmarkSub: { color: C.gold, ...F.navBold, fontSize: 8.5, letterSpacing: 3.6, lineHeight: 11 },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60, paddingLeft: 7, paddingRight: 8, borderRadius: R.pill, borderWidth: 1 },
   // A fine gold line along the pill's lower edge.
   pillGold: { position: 'absolute', left: 28, right: 28, bottom: 0, height: 1, backgroundColor: 'rgba(247,188,49,0.45)' },
   pillSolid: { backgroundColor: C.glassDark, borderColor: 'rgba(255,255,255,0.22)', overflow: 'hidden', ...shadowLg, shadowOpacity: 0.22, elevation: 0 },
   pillGlass: { backgroundColor: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.14)' },
-  pillTitle: { flex: 1, color: '#fff', fontSize: 17, ...F[600], letterSpacing: 0.2 },
+  pillTitle: { flex: 1, color: '#fff', fontSize: 16.5, ...F.navBold },
   pillRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pillBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' },
   pillCta: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: C.gold, ...glow(C.gold), shadowOpacity: 0.3 },

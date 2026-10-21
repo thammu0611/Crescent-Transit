@@ -92,7 +92,7 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(6,10,20,0.5)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
-  label: { color: '#fff', fontSize: 12, letterSpacing: 0.1, ...F[700] },
+  label: { color: '#fff', fontSize: 11.5, ...F.nav },
   badgeAt: { position: 'absolute', top: -5, left: 17 },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#61ce70', borderWidth: 1.5, borderColor: 'rgba(24,30,44,0.9)', marginTop: 3 },
   count: { minWidth: 22, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#61ce70', borderWidth: 1.5, borderColor: 'rgba(24,30,44,0.9)' },

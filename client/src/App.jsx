@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import BrandMark from './components/BrandMark.jsx';
 import RouteBackdrop from './components/RouteBackdrop.jsx';
 import AttendancePrompt from './components/AttendancePrompt.jsx';
 import BoardingCheck from './components/BoardingCheck.jsx';
@@ -150,7 +151,7 @@ function Shell() {
         </div>
         <header className="topbar">
           <a className="brand" href="#/" aria-label="Crescent Transit - home">
-            <span className="brand-mark" aria-hidden="true"><span className="brand-crest"><Icon name="bus" size={19} /></span></span>
+            <BrandMark size={44} />
             <span className="brand-text">
               <strong>Crescent</strong>
               <span className="brand-sub">Transit</span>

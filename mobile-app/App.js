@@ -14,7 +14,7 @@ import { C } from './src/theme.js';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Only the weights the app uses (the package indexes would bundle every cut):
-// Inter for the interface, Poppins for large headings, Playfair Display for the app name.
+// Inter for the interface, Poppins for large headings, Montserrat for the app name and navigation.
 const FONTS = {
   Inter_400Regular: require('@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf'),
   Inter_500Medium: require('@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf'),
@@ -22,7 +22,11 @@ const FONTS = {
   Inter_700Bold: require('@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf'),
   Poppins_600SemiBold: require('@expo-google-fonts/poppins/600SemiBold/Poppins_600SemiBold.ttf'),
   Poppins_700Bold: require('@expo-google-fonts/poppins/700Bold/Poppins_700Bold.ttf'),
-  // The app name's wordmark.
+  // Montserrat (crescent.education's heading face): the app name and the navigation, as on the web.
+  Montserrat_600SemiBold: require('@expo-google-fonts/montserrat/600SemiBold/Montserrat_600SemiBold.ttf'),
+  Montserrat_700Bold: require('@expo-google-fonts/montserrat/700Bold/Montserrat_700Bold.ttf'),
+  Montserrat_800ExtraBold: require('@expo-google-fonts/montserrat/800ExtraBold/Montserrat_800ExtraBold.ttf'),
+  // Serif headings kept for older screens.
   PlayfairDisplay_600SemiBold: require('@expo-google-fonts/playfair-display/600SemiBold/PlayfairDisplay_600SemiBold.ttf'),
   PlayfairDisplay_700Bold: require('@expo-google-fonts/playfair-display/700Bold/PlayfairDisplay_700Bold.ttf'),
 };
