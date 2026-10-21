@@ -53,7 +53,7 @@ export default function Login() {
             ['map', 'Students', 'Live bus, arrival estimates, attendance'],
             ['bus', 'Drivers', 'Start a trip and share location'],
             ['chart', 'Transport office', 'Fleet, trips, registers, reports'],
-            ['wallet', 'Finance office', 'Collections and reconciliation'],
+            // ['wallet', 'Finance office', 'Collections and reconciliation'], (finance app switched off)
           ].map(([icon, title, text]) => (
             <li key={title}>
               <span className="contact-avatar"><Icon name={icon} size={17} /></span>
@@ -71,7 +71,7 @@ export default function Login() {
         <Segmented value={mode} onChange={setMode} options={[{ value: 'signin', label: 'Sign in' }, { value: 'register', label: 'New student' }]} />
         {mode === 'signin' ? (
           <>
-            <p className="muted">Students, drivers, the transport office and the finance office all sign in here.</p>
+            <p className="muted">Students, drivers and the transport office all sign in here.</p>
             <Field label="Username or email" icon="user"><input value={form.username} onChange={set('username')} autoComplete="username" required /></Field>
             <Field label="Password" icon="lock"><input type="password" value={form.password} onChange={set('password')} autoComplete="current-password" required /></Field>
             <details className="demo-accounts">
@@ -79,7 +79,7 @@ export default function Login() {
               <p className="muted">
                 Password for all: the server's <code>DEMO_PASSWORD</code> (default <code>Demo@2026</code>).<br />
                 Students <code>stu001</code>–<code>stu024</code> · drivers <code>drv118</code>, <code>drv119</code>… ·
-                <code>admin</code> · <code>finance</code>
+                <code>admin</code>
               </p>
             </details>
           </>

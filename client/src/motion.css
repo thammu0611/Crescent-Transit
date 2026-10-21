@@ -1,0 +1,69 @@
+/* Backdrop and motion: the last style layer. The route-map backdrop
+   (components/RouteBackdrop.jsx), screens that glide in, gentle press
+   feedback, and the student's dark glass tab bar, as in the phone app.
+   Everything stands still for people who ask for reduced motion. */
+
+/* ---- Route-map backdrop ------------------------------------------------------------ */
+/* Behind every screen: .app makes its own stacking context, so the map paints
+   over the app's glow but under all content. */
+.app { isolation: isolate; }
+.route-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.route-bg svg { width: 100%; height: 100%; display: block; }
+.route-bg-line path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.route-bg-line .casing { stroke: rgba(255, 255, 255, 0.55); stroke-width: 10; }
+.route-bg-line .line { stroke-width: 3; }
+.route-bg-line.navy .line { stroke: rgba(28, 49, 94, 0.13); }
+.route-bg-line.sky .line { stroke: rgba(110, 193, 228, 0.38); }
+.route-bg-line.gold .line { stroke: rgba(247, 188, 49, 0.55); stroke-dasharray: 2 12; animation: route-flow 14s linear infinite; }
+.route-bg-stop circle { fill: #fff; stroke: rgba(28, 49, 94, 0.28); stroke-width: 2; }
+.route-bg-stop .halo { fill: rgba(247, 188, 49, 0.14); stroke: none; }
+.route-bg-bus { filter: drop-shadow(0 2px 3px rgba(20, 37, 72, 0.25)); opacity: 0.85; }
+@keyframes route-flow { to { stroke-dashoffset: -280; } }
+/* Dark hero cards are see-through glass; give them a solid navy base so the
+   map's lines never show through their text. */
+.page > .page-head, .app-greet, .app-title, .kit-fleet, .route-card, .fleet-card, .drive-card { background-color: #1c315e; }
+/* Sign-in and the public home bring their own navy art; keep the map faint there. */
+.app:has(.auth, .land-hero) .route-bg { opacity: 0.5; }
+
+/* ---- Screens glide in ------------------------------------------------------------------ */
+/* .screen is re-mounted on every navigation (App.jsx keys it by route). */
+.screen > * { animation: screen-in 0.38s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes screen-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.page { scroll-behavior: smooth; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+
+/* ---- Press feedback ------------------------------------------------------------------- */
+.btn, .kit-bus, .kit-row, .kit-shortcut, .stat, .tabs a, .bottom-tabs a, .chip, .segmented button, .icon-btn, .kit-back {
+  transition: transform 0.18s var(--ease), box-shadow 0.22s var(--ease), background-color 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active:not(:disabled), .kit-bus:active:not(:disabled), .kit-row:active, .kit-shortcut:active,
+.chip:active, .segmented button:active, .icon-btn:active, .kit-back:active { transform: scale(0.97); }
+@media (hover: hover) {
+  .kit-bus:hover:not(:disabled), .kit-row:hover, .stat:hover { transform: translateY(-2px); }
+}
+
+/* ---- Student tab bar: dark glass capsule, as in the phone app ------------------------- */
+@media (max-width: 900px) {
+  .bottom-tabs {
+    height: 72px; border-radius: 36px; padding: 6px;
+    background: rgba(24, 30, 44, 0.74);
+    -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+  .bottom-tabs a { border-radius: 30px; color: #fff; opacity: 0.88; font-size: 11.5px; gap: 4px; }
+  .bottom-tabs a .icon { color: #fff; }
+  .bottom-tabs a.active { opacity: 1; background: rgba(6, 10, 20, 0.5); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); color: #fff; }
+  .bottom-tabs a.active .icon { color: #fff; }
+  .bottom-tabs a.active::before, .bottom-tabs a.active::after { display: none; }
+  .bottom-tabs a:active { transform: scale(0.94); }
+}
+
+/* ---- Finance switched off ------------------------------------------------------------- */
+.finance-off { max-width: 520px; text-align: center; display: flex; flex-direction: column; gap: 10px; padding: 28px; }
+.finance-off h2 { margin: 6px 0 0; font-size: 20px; color: var(--navy); }
+.finance-off p { margin: 0; line-height: 1.5; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

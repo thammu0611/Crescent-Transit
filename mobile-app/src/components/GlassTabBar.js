@@ -6,6 +6,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { F } from '../theme.js';
+import { tickSelect } from '../lib/haptics.js';
 import Icon from './Icon.js';
 import { Frost } from './ui.js';
 
@@ -48,7 +49,10 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
         const CustomIcon = typeof icon === 'function' ? icon : null;
         const onPress = () => {
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+          if (!focused && !event.defaultPrevented) {
+            tickSelect();
+            navigation.navigate(route.name, route.params);
+          }
         };
         return (
           <Pressable

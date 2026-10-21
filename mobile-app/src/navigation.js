@@ -25,10 +25,12 @@ import Reports from './screens/admin/Reports.js';
 import RoutesAdmin from './screens/admin/RoutesAdmin.js';
 import Trips from './screens/admin/Trips.js';
 import DriverApp from './screens/DriverApp.js';
-import Collections from './screens/finance/Collections.js';
-import FinanceStudents from './screens/finance/FinanceStudents.js';
-import Payments from './screens/finance/Payments.js';
-import Reconcile from './screens/finance/Reconcile.js';
+// The finance office app is switched off for now. To bring it back, restore
+// these imports, FinanceNav below and its entry in BY_ROLE.
+// import Collections from './screens/finance/Collections.js';
+// import FinanceStudents from './screens/finance/FinanceStudents.js';
+// import Payments from './screens/finance/Payments.js';
+// import Reconcile from './screens/finance/Reconcile.js';
 import LiveMap from './screens/LiveMap.js';
 import Login from './screens/Login.js';
 import PublicHome from './screens/PublicHome.js';
@@ -51,6 +53,9 @@ const ROLE_LABEL = { student: 'Student', driver: 'Driver', admin: 'Transport adm
 const header = {
   header: (props) => <PillHeader {...props} />,
   contentStyle: { backgroundColor: C.bg },
+  // Screens slide in from the right and follow the finger back, on both platforms.
+  animation: 'ios_from_right',
+  gestureEnabled: true,
 };
 
 function SignOutButton() {
@@ -76,6 +81,8 @@ const tabBar = (icons) => function TabBar(props) { return <GlassTabBar {...props
 const tabOptions = {
   ...header,
   sceneStyle: { backgroundColor: C.bg },
+  // Tab screens slide a little and fade as you switch between them.
+  animation: 'shift',
 };
 
 // ---- Guest: the free view and sign-in ------------------------------------------------
@@ -84,7 +91,7 @@ function GuestNav() {
   return (
     <Stack.Navigator screenOptions={header}>
       <Stack.Screen name="PublicHome" component={PublicHome} options={{ title: 'Crescent Transit', headerShown: false }} />
-      <Stack.Screen name="Login" component={Login} options={{ title: 'Sign in', headerShown: false }} />
+      <Stack.Screen name="Login" component={Login} options={{ title: 'Sign in', headerShown: false, animation: 'fade_from_bottom' }} />
     </Stack.Navigator>
   );
 }
@@ -203,22 +210,45 @@ function AdminNav() {
   );
 }
 
-// ---- Finance officer: four tabs, no live locations ------------------------------------------
+// // ---- Finance officer: four tabs, no live locations ------------------------------------------
 
-const FINANCE_ICONS = { Collections: 'wallet', Payments: 'card', Students: 'users', Reconcile: 'shield' };
+// const FINANCE_ICONS = { Collections: 'wallet', Payments: 'card', Students: 'users', Reconcile: 'shield' };
 
-function FinanceNav() {
+// function FinanceNav() {
+//   return (
+//     <Tab.Navigator safeAreaInsets={{ bottom: 0 }} tabBar={tabBar(FINANCE_ICONS)} screenOptions={{ ...tabOptions, headerRight: () => <AccountButtons /> }}>
+//       <Tab.Screen name="Collections" component={Collections} options={{ title: 'Collections', headerShown: false }} />
+//       <Tab.Screen name="Payments" component={Payments} options={{ headerTitle: '' }} />
+//       <Tab.Screen name="Students" component={FinanceStudents} options={{ headerTitle: '' }} />
+//       <Tab.Screen name="Reconcile" component={Reconcile} options={{ title: 'Reconciliation', tabBarLabel: 'Reconcile', headerTitle: '' }} />
+//     </Tab.Navigator>
+//   );
+// }
+
+/** What a finance account sees while the finance app is switched off. */
+function FinanceOff() {
   return (
-    <Tab.Navigator safeAreaInsets={{ bottom: 0 }} tabBar={tabBar(FINANCE_ICONS)} screenOptions={{ ...tabOptions, headerRight: () => <AccountButtons /> }}>
-      <Tab.Screen name="Collections" component={Collections} options={{ title: 'Collections', headerShown: false }} />
-      <Tab.Screen name="Payments" component={Payments} options={{ headerTitle: '' }} />
-      <Tab.Screen name="Students" component={FinanceStudents} options={{ headerTitle: '' }} />
-      <Tab.Screen name="Reconcile" component={Reconcile} options={{ title: 'Reconciliation', tabBarLabel: 'Reconcile', headerTitle: '' }} />
-    </Tab.Navigator>
+    <Screen>
+      <GradientCard colors={G.navy}>
+        <View style={{ alignItems: 'center', gap: 10, paddingVertical: 8 }}>
+          <IconBubble name="wallet" accent="amber" size={56} />
+          <Text style={{ color: '#fff', fontSize: 20, textAlign: 'center', ...F.display }}>The finance office app is switched off</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.75)', textAlign: 'center', lineHeight: 20 }}>Collections, payments and reconciliation are not available right now. Sign out with the button at the top, or contact the transport office.</Text>
+        </View>
+      </GradientCard>
+    </Screen>
   );
 }
 
-const BY_ROLE = { student: StudentNav, driver: DriverNav, admin: AdminNav, finance: FinanceNav };
+function FinanceOffNav() {
+  return (
+    <Stack.Navigator screenOptions={header}>
+      <Stack.Screen name="FinanceOff" component={FinanceOff} options={{ title: 'Finance office', headerRight: () => <AccountButtons /> }} />
+    </Stack.Navigator>
+  );
+}
+
+const BY_ROLE = { student: StudentNav, driver: DriverNav, admin: AdminNav, finance: FinanceOffNav };
 
 // Where a tapped notification leads, by role: route alerts to the alerts list,
 // an SOS to the transport office's incident log. The boarding questions need

@@ -10,12 +10,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { createContext, forwardRef, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Animated, Easing, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl,
+  AccessibilityInfo, ActivityIndicator, Alert, Animated, Easing, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, Platform, Pressable, RefreshControl,
   ScrollView, StyleSheet, Text as RNText, TextInput, useWindowDimensions, View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, G as SvgG, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { monthName, shiftMonth, thisMonth } from '../lib/format.js';
+import { tickPress, tickSelect } from '../lib/haptics.js';
 import { ACCENT, C, F, G, HAIRLINE, R, TONE, glass, glow, interFor, shadow, shadowLg } from '../theme.js';
 import Icon from './Icon.js';
 
@@ -65,8 +66,10 @@ function useAndroidKeyboard() {
  */
 export function GlassBackdrop({ offset = 0 }) {
   const { height } = useWindowDimensions();
+  // Shifted up behind the header, so it is that much taller to still reach the bottom edge.
+  const tall = Math.max(height, 640) + offset;
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: -offset, height: Math.max(height, 640) }}>
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: -offset, height: tall }}>
       <LinearGradient colors={['#f4f4f4', '#eceeef', '#f1f1f1']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
         <Defs>
@@ -79,8 +82,89 @@ export function GlassBackdrop({ offset = 0 }) {
         <Ellipse cx="380" cy="300" rx="230" ry="210" fill="url(#gGold)" />
         <Ellipse cx="60" cy="560" rx="250" ry="230" fill="url(#gSky)" />
         <Ellipse cx="360" cy="760" rx="240" ry="200" fill="url(#gRose)" />
+        {/* A faint map of bus routes and stops, as on the web app. */}
+        {BACK_ROUTES.map(([d, stroke], i) => (
+          <SvgG key={i}>
+            <Path d={d} fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth={7} strokeLinecap="round" />
+            <Path d={d} fill="none" stroke={stroke} strokeWidth={2.2} strokeLinecap="round" />
+          </SvgG>
+        ))}
+        {BACK_STOPS.map(([x, y]) => (
+          <SvgG key={`${x},${y}`}>
+            <Circle cx={x} cy={y} r={7} fill="rgba(247,188,49,0.14)" />
+            <Circle cx={x} cy={y} r={3.4} fill="#fff" stroke="rgba(28,49,94,0.28)" strokeWidth={1.5} />
+          </SvgG>
+        ))}
       </Svg>
+      <RouteBus height={tall} />
     </View>
+  );
+}
+
+const BACK_ROUTES = [
+  ['M-40 150 C 60 110, 120 230, 220 190 S 360 110, 440 170', 'rgba(28,49,94,0.13)'],
+  ['M90 -20 C 120 120, 40 260, 120 380 S 210 600, 150 820', 'rgba(110,193,228,0.38)'],
+  ['M330 -20 C 300 140, 380 280, 320 420 S 250 640, 310 820', 'rgba(28,49,94,0.11)'],
+];
+const BACK_STOPS = [[30, 128], [220, 190], [380, 140], [96, 300], [120, 380], [344, 300], [318, 440]];
+
+// The road the little bus drives: a gentle wave across the screen, as
+// fractions of the backdrop's width and height. The bus follows it point to
+// point on the native driver, so it costs nothing on the JavaScript thread.
+const ROAD = Array.from({ length: 15 }, (_, i) => {
+  const x = -0.12 + i * 0.09;
+  return [x, 0.64 + 0.03 * Math.sin(x * Math.PI * 2.4)];
+});
+
+/** The gold dashed road and a small bus gliding along it, every 40 seconds. */
+function RouteBus({ height }) {
+  const { width } = useWindowDimensions();
+  const [t] = useState(() => new Animated.Value(0));
+  const [still, setStill] = useState(false);
+  useEffect(() => {
+    let loop;
+    AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
+      setStill(reduce);
+      if (reduce) return;
+      loop = Animated.loop(Animated.timing(t, { toValue: 1, duration: 40000, easing: Easing.linear, useNativeDriver: true }));
+      loop.start();
+    }).catch(() => {});
+    return () => loop?.stop();
+  }, [t]);
+
+  const pts = ROAD.map(([fx, fy]) => [fx * width, fy * height]);
+  const input = pts.map((_, i) => i / (pts.length - 1));
+  const angle = pts.map((p, i) => {
+    const a = pts[Math.max(0, i - 1)];
+    const b = pts[Math.min(pts.length - 1, i + 1)];
+    return `${(Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI}deg`;
+  });
+  const d = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+  return (
+    <>
+      <Svg style={StyleSheet.absoluteFill} width={width} height={height}>
+        <Path d={d} fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth={8} strokeLinecap="round" strokeLinejoin="round" />
+        <Path d={d} fill="none" stroke="rgba(247,188,49,0.6)" strokeWidth={2.4} strokeDasharray="2 10" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+      {still ? null : (
+        <Animated.View
+          style={{
+            position: 'absolute', left: -15, top: -8, width: 30, height: 16, opacity: 0.85,
+            transform: [
+              { translateX: t.interpolate({ inputRange: input, outputRange: pts.map((p) => p[0]) }) },
+              { translateY: t.interpolate({ inputRange: input, outputRange: pts.map((p) => p[1]) }) },
+              { rotate: t.interpolate({ inputRange: input, outputRange: angle }) },
+            ],
+          }}
+        >
+          <Svg width={30} height={16} viewBox="-15 -8 30 16">
+            <Rect x={-15} y={-8} width={30} height={16} rx={5} fill={C.gold} />
+            <Rect x={6} y={-6} width={6} height={12} rx={2} fill={C.navy} />
+            <Rect x={-11} y={-5} width={14} height={10} rx={2} fill="rgba(28,49,94,0.55)" />
+          </Svg>
+        </Animated.View>
+      )}
+    </>
   );
 }
 
@@ -482,6 +566,7 @@ export function Button({ title, onPress, variant = 'primary', icon, disabled, bu
       accessibilityState={{ disabled: off }}
       disabled={off}
       onPress={onPress}
+      onPressIn={tickPress}
       style={({ pressed }) => [
         { borderRadius: small ? R.sm : R.md },
         v.colors && !off && !small ? glow(v.glow) : null,
@@ -622,7 +707,7 @@ export function Segmented({ value, onChange, options }) {
   const items = options.map((o) => {
     const on = value === o.value;
     return (
-      <Pressable key={String(o.value)} onPress={() => onChange(o.value)} style={[s.seg, fill && { flex: 1, alignItems: 'center' }, on && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: on }}>
+      <Pressable key={String(o.value)} onPress={() => { if (!on) tickSelect(); onChange(o.value); }} style={[s.seg, fill && { flex: 1, alignItems: 'center' }, on && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: on }}>
         <Text style={[s.segText, on && s.segTextOn]} numberOfLines={1}>{o.label}</Text>
       </Pressable>
     );
@@ -835,6 +920,9 @@ export function DateField({ label, value, onChange, mode = 'date', clearable }) 
 }
 
 /** Expandable section (the web's <details>). */
+/** Folding sections ease open and shut instead of jumping. */
+const foldNext = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+
 /**
  * A card that folds away: icon, title and a one-line summary always show;
  * the body opens on tap. Keeps secondary sections compact.
@@ -844,7 +932,7 @@ export function FoldCard({ icon, title, summary, badge, children, initiallyOpen 
   return (
     <View style={[s.panel, { gap: open ? 14 : 0 }]}>
       <Sheen />
-      <Pressable onPress={() => setOpen((o) => !o)} style={[s.row, { gap: 12 }]} accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={title}>
+      <Pressable onPress={() => { foldNext(); setOpen((o) => !o); }} style={[s.row, { gap: 12 }]} accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={title}>
         {icon ? <IconBubble name={icon} colors={G.navy} size={36} iconSize={18} /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.h3} numberOfLines={1}>{title}</Text>
@@ -862,7 +950,7 @@ export function Collapsible({ title, children, initiallyOpen = false }) {
   const [open, setOpen] = useState(initiallyOpen);
   return (
     <View>
-      <Pressable onPress={() => setOpen((o) => !o)} style={[s.row, { gap: 8, paddingVertical: 4 }]} accessibilityRole="button" accessibilityState={{ expanded: open }}>
+      <Pressable onPress={() => { foldNext(); setOpen((o) => !o); }} style={[s.row, { gap: 8, paddingVertical: 4 }]} accessibilityRole="button" accessibilityState={{ expanded: open }}>
         <View style={[s.monthBtn, { width: 24, height: 24 }]}><Icon name={open ? 'down' : 'arrow'} size={13} color={C.navy} /></View>
         <Text style={[s.bold, { color: C.navy, flex: 1 }]} numberOfLines={1}>{title}</Text>
       </Pressable>

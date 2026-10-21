@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import RouteBackdrop from './components/RouteBackdrop.jsx';
 import AttendancePrompt from './components/AttendancePrompt.jsx';
 import BoardingCheck from './components/BoardingCheck.jsx';
 import ChangePassword from './components/ChangePassword.jsx';
@@ -22,10 +23,12 @@ import Trips from './pages/admin/Trips.jsx';
 import AttendanceAdmin from './pages/admin/AttendanceAdmin.jsx';
 import Reports from './pages/admin/Reports.jsx';
 import Notices from './pages/admin/Notices.jsx';
-import Collections from './pages/finance/Collections.jsx';
-import Payments from './pages/finance/Payments.jsx';
-import FinanceStudents from './pages/finance/FinanceStudents.jsx';
-import Reconcile from './pages/finance/Reconcile.jsx';
+// The finance office app is switched off for now. To bring it back, restore
+// these imports and the finance NAV entry below.
+// import Collections from './pages/finance/Collections.jsx';
+// import Payments from './pages/finance/Payments.jsx';
+// import FinanceStudents from './pages/finance/FinanceStudents.jsx';
+// import Reconcile from './pages/finance/Reconcile.jsx';
 
 // Four roles, four entirely different sets of screens (doc section 4).
 // [path, label, screen, icon]
@@ -55,13 +58,27 @@ const NAV = {
     ['/notices', 'Alerts', Notices, 'bell'],
     ['/reports', 'Reports', Reports, 'list'],
   ],
-  finance: [
-    ['/', 'Collections', Collections, 'wallet'],
-    ['/payments', 'Payments', Payments, 'card'],
-    ['/students', 'Students', FinanceStudents, 'users'],
-    ['/reconcile', 'Reconciliation', Reconcile, 'shield'],
-  ],
+  // finance: [
+  //   ['/', 'Collections', Collections, 'wallet'],
+  //   ['/payments', 'Payments', Payments, 'card'],
+  //   ['/students', 'Students', FinanceStudents, 'users'],
+  //   ['/reconcile', 'Reconciliation', Reconcile, 'shield'],
+  // ],
+  finance: [['/', 'Finance office', FinanceOff, 'wallet']],
 };
+
+/** What a finance account sees while the finance app is switched off. */
+function FinanceOff() {
+  return (
+    <main className="center-page">
+      <section className="panel finance-off">
+        <span className="hero-badge"><Icon name="wallet" size={24} /></span>
+        <h2>The finance office app is switched off</h2>
+        <p className="muted">Collections, payments and reconciliation are not available right now. Sign out with the button at the top right, or contact the transport office.</p>
+      </section>
+    </main>
+  );
+}
 
 const initials = (name = '') => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
@@ -120,6 +137,7 @@ function Shell() {
 
   return (
     <div className="app">
+      <RouteBackdrop />
       {/* Contact strip and the floating navigation pill. */}
       <div className="masthead">
         <div className="utility-bar">

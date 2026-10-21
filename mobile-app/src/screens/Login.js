@@ -144,13 +144,13 @@ export default function Login({ navigation }) {
         <View style={FORM_CARD}>
           {mode === 'signin' ? (
             <>
-              <Txt muted small>Students, drivers, the transport office and the finance office all sign in here.</Txt>
+              <Txt muted small>Students, drivers and the transport office all sign in here.</Txt>
               <TextField label="Username or email" icon="user" value={form.username} onChangeText={set('username')} autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => passwordRef.current?.focus()} />
               <TextField ref={passwordRef} label="Password" icon="lock" value={form.password} onChangeText={set('password')} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="password" textContentType="password" returnKeyType="go" onSubmitEditing={submit} />
               <Collapsible title="Demo accounts">
                 <Txt muted small>
                   Password for all: the server's DEMO_PASSWORD (default Demo@2026).{'\n'}
-                  Students stu001–stu024 · drivers drv118, drv119… · admin · finance
+                  Students stu001–stu024 · drivers drv118, drv119… · admin
                 </Txt>
               </Collapsible>
             </>
