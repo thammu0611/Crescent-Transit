@@ -54,6 +54,44 @@
   100% { box-shadow: 0 0 0 0 rgba(97, 206, 112, 0); }
 }
 
+/* ---- Dashboard shortcuts: coloured, with a hint and a go arrow ------------------------- */
+.kit-shortcuts .kit-shortcut {
+  --tone-a: #2a4787; --tone-b: #1c315e; --tone-soft: rgba(28, 49, 94, 0.08); --tone-line: rgba(28, 49, 94, 0.28);
+  position: relative; overflow: hidden; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px;
+  padding: 16px 16px; text-align: left; border-radius: 20px;
+  background: radial-gradient(120% 140% at 0% 0%, var(--tone-soft), transparent 60%), rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(28, 49, 94, 0.10);
+  box-shadow: 0 10px 24px rgba(20, 37, 72, 0.08), inset 0 1px 0 #fff;
+}
+.kit-shortcuts .kit-shortcut::after {
+  content: ''; position: absolute; left: 16px; right: 16px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, var(--tone-a), var(--tone-b)); opacity: 0.85; transition: left 0.25s var(--ease), right 0.25s var(--ease);
+}
+.kit-shortcuts .kit-shortcut .ks-icon {
+  width: 46px; height: 46px; flex-shrink: 0; border-radius: 15px; display: grid; place-items: center; color: #fff; border: 0;
+  background: linear-gradient(135deg, var(--tone-a), var(--tone-b));
+  box-shadow: 0 8px 18px var(--tone-line), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.kit-shortcuts .kit-shortcut .ks-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; background: none; border: 0; box-shadow: none; width: auto; height: auto; place-items: initial; }
+.kit-shortcuts .kit-shortcut .ks-text b { font-family: var(--nav-font, inherit); font-size: 15px; font-weight: 700; color: var(--ink); }
+.kit-shortcuts .kit-shortcut .ks-text small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kit-shortcuts .kit-shortcut .ks-go {
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center;
+  background: var(--tone-soft); color: var(--tone-b); border: 0; box-shadow: none; transition: transform 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.kit-shortcuts .kit-shortcut:hover { border-color: var(--tone-line); box-shadow: 0 16px 34px var(--tone-soft), 0 10px 24px rgba(20, 37, 72, 0.10), inset 0 1px 0 #fff; }
+.kit-shortcuts .kit-shortcut:hover::after { left: 0; right: 0; }
+.kit-shortcuts .kit-shortcut:hover .ks-go { transform: translateX(3px); background: var(--tone-b); color: #fff; }
+.kit-shortcut.tone-green { --tone-a: #61ce70; --tone-b: #2b8a3e; --tone-soft: rgba(97, 206, 112, 0.14); --tone-line: rgba(43, 138, 62, 0.3); }
+.kit-shortcut.tone-blue { --tone-a: #6ec1e4; --tone-b: #0170b9; --tone-soft: rgba(110, 193, 228, 0.18); --tone-line: rgba(1, 112, 185, 0.3); }
+.kit-shortcut.tone-red { --tone-a: #c4373a; --tone-b: #a02022; --tone-soft: rgba(160, 32, 34, 0.10); --tone-line: rgba(160, 32, 34, 0.3); }
+@media (max-width: 1100px) { .kit-shortcuts .kit-shortcut .ks-text small { display: none; } }
+@media (max-width: 560px) {
+  .kit-shortcuts .kit-shortcut { flex-direction: column; text-align: center; gap: 8px; padding: 14px 8px; }
+  .kit-shortcuts .kit-shortcut .ks-text { align-items: center; }
+  .kit-shortcuts .kit-shortcut .ks-go { display: none; }
+}
+
 /* ---- Press feedback ------------------------------------------------------------------- */
 .btn, .kit-bus, .kit-row, .kit-shortcut, .stat, .tabs a, .bottom-tabs a, .chip, .segmented button, .icon-btn, .kit-back {
   transition: transform 0.18s var(--ease), box-shadow 0.22s var(--ease), background-color 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);

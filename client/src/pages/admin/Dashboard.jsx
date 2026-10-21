@@ -10,6 +10,14 @@ import RouteMiniMap from '../../components/RouteMiniMap.jsx';
 import { Block, ColumnChart, Donut, Figure, HBars, SERIES, dayLabel } from '../../components/adminkit.jsx';
 import { Badge, FoldPanel, Segmented, Stat } from '../../components/ui.jsx';
 
+// The four shortcuts, each in its own colour from the site's palette.
+const SHORTCUTS = [
+  ['#/trips', 'clock', 'Trips', 'Drivers and trip history', 'navy'],
+  ['#/attendance', 'check', 'Attendance', 'Bus registers by date', 'green'],
+  ['#/reports', 'chart', 'Reports', 'Charts and exports', 'blue'],
+  ['#/notices', 'bell', 'Announce', 'Post an alert to riders', 'red'],
+];
+
 const URGENT = ['SOS', 'EMERGENCY', 'BREAKDOWN', 'CAPACITY_BREACH'];
 const titleCase = (k) => k.replaceAll('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
@@ -97,10 +105,13 @@ export default function Dashboard() {
         </div>
 
         <nav className="kit-shortcuts" aria-label="Shortcuts">
-          <a className="kit-shortcut" href="#/trips"><span><Icon name="clock" size={18} /></span>Trips</a>
-          <a className="kit-shortcut" href="#/attendance"><span><Icon name="check" size={18} /></span>Attendance</a>
-          <a className="kit-shortcut" href="#/reports"><span><Icon name="chart" size={18} /></span>Reports</a>
-          <a className="kit-shortcut" href="#/notices"><span><Icon name="bell" size={18} /></span>Announce</a>
+          {SHORTCUTS.map(([href, icon, label, hint, tone]) => (
+            <a key={href} className={`kit-shortcut tone-${tone}`} href={href}>
+              <span className="ks-icon"><Icon name={icon} size={20} /></span>
+              <span className="ks-text"><b>{label}</b><small>{hint}</small></span>
+              <span className="ks-go"><Icon name="arrow" size={15} /></span>
+            </a>
+          ))}
         </nav>
 
         <div className="kit-grid-2">

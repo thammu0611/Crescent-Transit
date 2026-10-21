@@ -50,12 +50,24 @@ export function GreetHeader({ title, right, name }) {
   );
 }
 
-/** A square shortcut tile. */
-function Shortcut({ icon, label, onPress }) {
+// Each shortcut in its own colour from the site's palette, as on the web dashboard:
+// [gradient, soft tint, line].
+const SHORTCUT_TONE = {
+  navy: [['#2a4787', '#1c315e'], 'rgba(28,49,94,0.08)', '#1c315e'],
+  green: [['#61ce70', '#2b8a3e'], 'rgba(97,206,112,0.14)', '#2b8a3e'],
+  blue: [['#6ec1e4', '#0170b9'], 'rgba(110,193,228,0.18)', '#0170b9'],
+  red: [['#c4373a', '#a02022'], 'rgba(160,32,34,0.10)', '#a02022'],
+};
+
+/** A shortcut tile: a coloured icon, the label, and a coloured line along the bottom. */
+function Shortcut({ icon, label, tone = 'navy', onPress }) {
+  const [colors, soft, line] = SHORTCUT_TONE[tone];
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [{ flex: 1, alignItems: 'center', gap: 8, paddingVertical: 14, borderRadius: 18, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassEdge, ...shadow, shadowOpacity: 0.04 }, pressed && { opacity: 0.8 }]}>
-      <IconBubble name={icon} accent="navy" size={38} />
-      <Text style={{ fontSize: 12, ...F[600], color: C.ink }} numberOfLines={1}>{label}</Text>
+    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [{ flex: 1, alignItems: 'center', gap: 8, paddingTop: 14, paddingBottom: 16, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.94)', borderWidth: 1, borderColor: C.glassEdge, overflow: 'hidden', ...shadow, shadowOpacity: 0.06 }, pressed && { transform: [{ scale: 0.96 }] }]}>
+      <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: soft }} />
+      <IconBubble name={icon} colors={colors} size={40} />
+      <Text style={{ fontSize: 12, ...F.navBold, color: C.ink }} numberOfLines={1}>{label}</Text>
+      <View style={{ position: 'absolute', left: 14, right: 14, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: line, opacity: 0.85 }} />
     </Pressable>
   );
 }
@@ -135,10 +147,10 @@ export default function Dashboard({ navigation }) {
       </GradientCard>
 
       <Row gap={10}>
-        <Shortcut icon="clock" label="Trips" onPress={() => navigation.navigate('Trips')} />
-        <Shortcut icon="check" label="Attendance" onPress={() => navigation.navigate('AttendanceAdmin')} />
-        <Shortcut icon="chart" label="Reports" onPress={() => navigation.navigate('Reports')} />
-        <Shortcut icon="bell" label="Announce" onPress={() => navigation.navigate('Notices')} />
+        <Shortcut icon="clock" label="Trips" tone="navy" onPress={() => navigation.navigate('Trips')} />
+        <Shortcut icon="check" label="Attendance" tone="green" onPress={() => navigation.navigate('AttendanceAdmin')} />
+        <Shortcut icon="chart" label="Reports" tone="blue" onPress={() => navigation.navigate('Reports')} />
+        <Shortcut icon="bell" label="Announce" tone="red" onPress={() => navigation.navigate('Notices')} />
       </Row>
 
       <SectionTitle title="Today at a glance" />
