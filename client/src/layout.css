@@ -1,0 +1,264 @@
+/* Layout and alignment: the final style layer. One content width per role,
+   one spacing scale (8 / 12 / 16 / 20 / 24 px), compact stat cards, rows of
+   equal-height cards and two-column lists on wide screens, so every page
+   lines up the same way. Colours and glass live in liquid-glass.css. */
+
+/* ---- Content width --------------------------------------------------------------- */
+/* The page itself spans the whole window, so its scrollbar sits at the screen's
+   right edge on every device; side padding holds the content to one width in
+   the middle. Staff pages (transport office, finance, driver) share one width. */
+.page, .page.wide, .wide-app {
+  --page-max: 1320px;
+  --gutter: 28px;
+  max-width: none;
+  margin: 0;
+  padding: 24px max(var(--gutter), calc((100% - var(--page-max)) / 2 + var(--gutter))) 48px;
+}
+/* Student pages read better a little narrower, but all at the same width. */
+.app-page:not(.wide-app) { --page-max: 1120px; }
+.page > .page-head { margin-bottom: 20px; }
+.page > .panel, .page > .kit-stack > .panel { margin-bottom: 0; }
+
+/* ---- One vertical rhythm ------------------------------------------------------------ */
+.kit-stack { gap: 20px; }
+.app-page { gap: 20px; }
+.kit-grid-2, .kit-grid-3, .app-grid { gap: 20px; }
+.kit-stats { gap: 16px; }
+.panel { padding: 20px 22px; }
+.kit-block, .kit-profile { padding: 20px 22px; }
+.panel-head { margin-bottom: 16px; padding-bottom: 14px; }
+.kit-section-title { margin: 8px 0 -6px; }
+
+/* ---- Compact stat cards: icon beside the figure -------------------------------------- */
+.stat.with-icon {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  row-gap: 2px;
+  align-items: center;
+  align-content: center;
+  text-align: left;
+  padding: 16px 18px;
+  min-height: 84px;
+}
+.stat.with-icon .stat-icon { grid-row: 1 / span 2; width: 44px; height: 44px; margin: 0; border-radius: 14px; }
+.stat.with-icon b { align-self: end; margin: 0; font-size: 24px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat.with-icon > span:last-child { align-self: start; line-height: 1.3; }
+.kit-stats .stat b, .kpi-grid .stat b { font-size: 24px; }
+
+/* ---- Rows of cards share one height ---------------------------------------------------- */
+.kit-grid-2, .kit-grid-3 { align-items: stretch; }
+.kit-grid-2 > *, .kit-grid-3 > * { min-width: 0; }
+/* In a column of stacked cards, the last card takes up the remaining height. */
+.kit-grid-2 > .kit-stack > :last-child, .kit-grid-3 > .kit-stack > :last-child { flex: 1; }
+.kit-grid-2 > .kit-block, .kit-grid-2 > .soft-card, .kit-grid-2 > .map-card { height: 100%; }
+.map-card { display: flex; flex-direction: column; }
+.map-card-bar { margin-top: auto; }
+/* The fleet card: the headline at the top, the day's figures at the bottom. */
+.kit-fleet hr { margin-top: auto; }
+
+/* ---- Lists ------------------------------------------------------------------------------ */
+.kit-list.cols-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.kit-row { min-height: 76px; padding: 14px 16px; }
+.kit-bus-grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.kit-bus { min-height: 150px; }
+
+/* ---- Filters: controls on one aligned row ------------------------------------------------ */
+.kit-block .form-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 300px)); gap: 14px; align-items: end; }
+.kit-block .form-row .field { margin: 0; }
+.form-row.filters-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 280px)); gap: 14px; align-items: end; }
+
+/* ---- Panel headers with a search box: title left, search right, same height ---------------- */
+.panel-head .search-box { margin: 0; min-width: 260px; }
+.panel-head { align-items: center; }
+
+@media (max-width: 1100px) {
+  .kit-list.cols-2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  .page, .page.wide, .wide-app { --gutter: 16px; padding-top: 18px; padding-bottom: 40px; }
+  .panel-head .search-box { min-width: 0; width: 100%; }
+  .panel-head { flex-wrap: wrap; }
+}
+@media (max-width: 560px) {
+  .stat.with-icon { grid-template-columns: 38px minmax(0, 1fr); column-gap: 12px; padding: 14px; min-height: 74px; }
+  .stat.with-icon .stat-icon { width: 38px; height: 38px; }
+  .stat.with-icon b { font-size: 21px; }
+}
+
+/* A donut centred in a card that stretches to match its neighbour. */
+.kit-block > .kit-donut { margin-block: auto; }
+
+/* ---- Audit fixes -------------------------------------------------------------------------- */
+/* Student pages share one width (the student role's screens carry .with-tabs). */
+.screen.with-tabs .page, .screen.with-tabs .page.wide { --page-max: 1120px; }
+/* Long table text wraps instead of running off the card. */
+.table td.wrap { white-space: normal; min-width: 220px; overflow-wrap: anywhere; }
+/* Controls inside the navy page header: dark glass, white text. */
+.page > .page-head input, .page > .page-head select {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  height: var(--control-h);
+  color-scheme: dark;
+}
+.page > .page-head input::placeholder { color: rgba(255, 255, 255, 0.6); }
+.page > .page-head select option { color: var(--ink); }
+/* Route builder: the time field keeps its width when a stop shows the "approx." badge. */
+.stop-editor .meta-row { align-items: center; }
+.stop-editor .meta-row .seg { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; }
+.stop-editor .meta-row .seg .badge { padding: 1px 7px; font-size: 10px; }
+.stop-editor .meta-row input.time { flex: 0 0 84px; width: 84px; }
+/* Contact lists: rows aligned with the card's padding, numbers as pills. */
+.contact-list li { padding: 11px 2px; align-items: center; }
+
+/* ---- Folding panels (FoldPanel) and the leave-home card ------------------------------------ */
+.kit-fold .fold-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px 18px; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: 24px; }
+.kit-fold-icon { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; color: var(--gold); background: var(--g-navy, #1c315e); }
+.kit-fold-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kit-fold-text b { font-size: 16px; font-weight: 600; color: var(--ink); }
+.kit-fold-text small { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kit-fold .fold-body { display: flex; flex-direction: column; gap: 12px; }
+
+.leave-card { display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: 24px; text-align: left; font: inherit; color: inherit; width: 100%; cursor: pointer; border: 1px solid var(--glass-edge); background: var(--glass-gloss), var(--glass); box-shadow: var(--glass-shadow); }
+.leave-card:hover { box-shadow: var(--glass-shadow-hover); }
+.leave-card-row { display: flex; align-items: center; gap: 12px; }
+.leave-card-row .kit-fold-icon { color: var(--gold); }
+.leave-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.leave-card-text b { font-size: 15px; color: var(--ink); }
+.leave-card-text small { font-size: 13px; color: var(--muted); }
+.leave-card-arm { display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line-2); font-size: 13px; color: var(--dark); }
+.leave-card-arm span { flex: 1; }
+.leave-card.near { border-color: rgba(255, 255, 255, 0.2); color: #fff; background: radial-gradient(60% 80% at 100% 0%, rgba(247, 188, 49, 0.22), transparent 70%), linear-gradient(135deg, #b5282a, #7d1618); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 40px rgba(160, 32, 34, 0.32); }
+.leave-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #ffe3a3; }
+.leave-big { font-family: var(--heading); font-size: 30px; font-weight: 600; line-height: 1.1; }
+.leave-sub { font-size: 13.5px; color: rgba(255, 255, 255, 0.88); }
+.leave-more { font-size: 13px; font-weight: 700; }
+.leave-hero { padding: 16px; border-radius: 18px; background: var(--navy-50, #eef1f6); display: flex; flex-direction: column; gap: 4px; }
+.leave-hero.near { background: var(--red-50, #f9e9e9); }
+.leave-hero b { font-family: var(--heading); font-size: 26px; color: var(--navy); }
+.leave-hero.near b { color: var(--red-600, #a02022); }
+.leave-switch { position: relative; width: 44px; height: 26px; border-radius: 13px; border: 0; background: rgba(28, 49, 94, 0.18); cursor: pointer; flex-shrink: 0; transition: background 0.18s; }
+.leave-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); transition: transform 0.18s; }
+.leave-switch.on { background: var(--live); }
+.leave-switch.on::after { transform: translateX(18px); }
+
+/* Settings: the three main sections, then the secondary ones folded in a row. */
+.settings-more-title { margin: 26px 0 12px; }
+.settings-more { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .settings-more { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- Driver page ---------------------------------------------------------------------------- */
+/* The bus / route strip on the dark trip card stays solid white. */
+.route-pick { background: #fff; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* End trip: crimson, clearly the main action on the dark card. */
+.btn.end-trip { background: linear-gradient(135deg, #b5282a, #7d1618); color: #fff; border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 12px 26px rgba(160, 32, 34, 0.35); }
+.btn.end-trip:hover { filter: brightness(1.08); }
+/* One setting alone takes the full width. */
+.drive-settings:has(> label:only-child) { grid-template-columns: minmax(0, 1fr); }
+/* Students on this bus, grouped by stop. */
+.driver-stop { display: flex; flex-direction: column; gap: 6px; }
+.driver-stop + .driver-stop { margin-top: 6px; }
+.driver-stop-head { display: flex; align-items: center; gap: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+.driver-stop-head b { flex: 1; font-weight: 700; color: var(--navy); }
+.driver-stop-head .icon { color: var(--navy); }
+.driver-students { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.driver-students li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(28, 49, 94, 0.08); }
+.driver-student-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.driver-student-main b { font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.driver-student-main small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.driver-students .badge { flex-shrink: 0; }
+.btn.driver-mark { min-height: 30px; height: 30px; padding: 0 12px; font-size: 12.5px; border-radius: 10px; flex-shrink: 0; }
+
+/* ---- Admin fixes ------------------------------------------------------------------------------ */
+/* Highlighted feed items (e.g. "records to review"): a light tint with a gold edge, not a dark slab. */
+.feed li.hot { background: linear-gradient(90deg, rgba(247, 188, 49, 0.14), rgba(247, 188, 49, 0.04)); border: 1px solid rgba(247, 188, 49, 0.35); box-shadow: inset 3px 0 0 var(--gold); }
+.feed li.hot b { color: var(--ink); }
+.feed li.hot small, .feed li.hot time { color: var(--muted); opacity: 1; }
+.feed li.hot .feed-icon { color: #9b6a26; background: #fff; }
+.feed li.hot .feed-link { color: var(--navy); font-weight: 700; }
+.feed li.urgent { background: rgba(160, 32, 34, 0.06); border-color: rgba(160, 32, 34, 0.18); }
+
+/* Rows whose cards should not stretch to their neighbour's height. */
+.kit-grid-2.top { align-items: start; }
+.kit-grid-2.top > .soft-card, .kit-grid-2.top > .kit-block { height: auto; }
+.kit-grid-2.top > .kit-stack > :last-child { flex: none; }
+/* The dashboard map fills its card instead of leaving a gap under it. */
+.kit-grid-2 > .map-card .mini-map.tall { flex: 1; height: auto; min-height: 300px; }
+
+/* Stat icons: one colour per meaning everywhere (navy default, green live, amber delayed, crimson danger). */
+.stat .stat-icon { background: linear-gradient(135deg, #2a4378, #1c315e); color: var(--gold); }
+.stat.live .stat-icon { background: linear-gradient(135deg, #61ce70, #2b8a3e); color: #fff; }
+.stat.delayed .stat-icon { background: linear-gradient(135deg, #d9a54e, #9b6a26); color: #fff; }
+.stat.danger .stat-icon { background: linear-gradient(135deg, #b5282a, #8a1a1c); color: #fff; }
+
+/* Fleet map: status-coloured tiles and bus cards, and a clear selected bus. */
+.live-layout .stat-row .stat { border-top: 3px solid var(--navy-100, #d9dee8); }
+.live-layout .stat-row .stat.live { border-top-color: var(--live); }
+.live-layout .stat-row .stat.delayed { border-top-color: var(--delayed); }
+.live-layout .stat-row .stat.offline { border-top-color: var(--offline); }
+.live-layout .stat-row .stat.offline b { color: #6b707b; }
+.bus-card { box-shadow: var(--glass-shadow), inset 4px 0 0 var(--offline); }
+.bus-card.fresh-live { box-shadow: var(--glass-shadow), inset 4px 0 0 var(--live); }
+.bus-card.fresh-delayed { box-shadow: var(--glass-shadow), inset 4px 0 0 var(--delayed); }
+.bus-card.selected {
+  border-color: var(--navy);
+  background: linear-gradient(160deg, rgba(238, 241, 246, 0.95), rgba(255, 255, 255, 0.85));
+  box-shadow: 0 0 0 3px rgba(28, 49, 94, 0.16), var(--glass-shadow), inset 4px 0 0 var(--navy);
+}
+
+/* Trips and Attendance: drivers and buses on a trip are highlighted the same way. */
+.kit-row.is-live { box-shadow: var(--glass-shadow), inset 4px 0 0 var(--live); }
+.kit-bus.is-live { box-shadow: var(--glass-shadow), inset 0 3px 0 var(--live); }
+.kit-bus.is-empty { opacity: 0.78; }
+
+/* Alerts: the incident list's filter bar, compact columns and resolve button. */
+.incident-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.incident-bar .muted { font-size: 13px; }
+.kit-fold .table td.wrap { min-width: 170px; }
+.btn.incident-resolve { min-height: 30px; height: 30px; padding: 0 12px; font-size: 12.5px; border-radius: 10px; }
+.table td small { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+/* Reports: one folding attendance report per bus. */
+.bus-registers { display: flex; flex-direction: column; gap: 12px; }
+.bus-register-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.bus-register-bar .muted { font-size: 13px; }
+
+/* Icons inside input fields (sign-in, register, forms): above the frosted input, never hidden by it. */
+.control-wrap { isolation: isolate; }
+.control-wrap > .icon { z-index: 2; color: #6b7280; }
+.control-wrap:focus-within > .icon { color: var(--navy); }
+/* Browser autofill keeps the field's own colours instead of a blue tint. */
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:hover,
+.field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  box-shadow: 0 0 0 1000px #fff inset, inset 0 1px 2px rgba(20, 37, 72, 0.06);
+  caret-color: var(--ink);
+  transition: background-color 9999s ease-out 0s;
+}
+
+/* ---- Fixes: badges, segmented controls, driver backup button --------------------------------- */
+/* The "info" badge tone (counts, neutral facts) was never defined on the web. */
+.badge.info { background: #e6e9f2; color: #2a3a63; }
+.badge.info::before { background: currentColor; }
+/* Segmented controls stay on one line; on a narrow screen they scroll instead of wrapping. */
+.segmented { display: inline-flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.segmented::-webkit-scrollbar { display: none; }
+.segmented button { white-space: nowrap; flex-shrink: 0; }
+/* Driver page: the "Use phone GPS as backup" button is a solid white button across the card. */
+.drive-card .btn.light {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 46px; margin-top: 10px;
+  background: #fff; color: var(--navy); font-weight: 700;
+  border: 0; border-radius: 14px;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+.drive-card .btn.light:hover { background: #f3f5fa; }
+.drive-card .btn.light .icon { color: var(--red-600, #a02022); }
+/* In Settings the choice fills its section, with compact options so all four fit on one line. */
+.settings-section .segmented { display: flex; width: 100%; }
+.settings-section .segmented button { flex: 1 1 auto; padding: 9px 10px; font-size: 13px; }

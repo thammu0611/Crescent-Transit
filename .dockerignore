@@ -1,0 +1,15 @@
+node_modules
+client/dist
+.data
+.env
+.env.*
+!.env.example
+mobile-app
+presentation
+docs
+test
+.vscode
+.claude
+.github
+*.log
+*.bat

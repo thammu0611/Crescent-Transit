@@ -1,0 +1,24 @@
+{
+  // Run and Debug (F5): starts the backend with breakpoints in server/*.js.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend (debug)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/server/index.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Tests (debug)",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["--test", "test/"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

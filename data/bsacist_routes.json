@@ -1,0 +1,4579 @@
+{
+  "source_document": "BSACIST Estate Office - Transport Department, Bus Route for the Academic Year 2026-2027",
+  "institute": "B.S. Abdur Rahman Crescent Institute of Science & Technology",
+  "academic_year": "2026-2027",
+  "campus": {
+    "name": "BSACIST",
+    "latitude": 12.8737,
+    "longitude": 80.0823
+  },
+  "evening_departure": "4.30 PM",
+  "routes": [
+    {
+      "code": "101",
+      "name": "Thiruvotriyur(Toll Gate)",
+      "start_point": "Thiruvotriyur(Toll Gate)",
+      "end_point": "BSACIST",
+      "departure_time": "6.15 AM",
+      "duration_minutes": 135,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-101",
+        "make": "Eicher",
+        "bus_type": "Eicher AC Bus",
+        "capacity": 55,
+        "is_ac": true,
+        "source_description": "Eicher AC Bus - 55 Seater",
+        "driver_name": "Mr. Senthil Kumar",
+        "contact_number": "+91 81220 09062"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Thiruvotriyur(Toll Gate)",
+          "latitude": 13.162,
+          "longitude": 80.302,
+          "arrival_time": "6.15 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Theradi –Beach Road",
+          "latitude": 13.1578,
+          "longitude": 80.3008,
+          "arrival_time": "6.20 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Kaladipet - Beach Road",
+          "latitude": 13.149,
+          "longitude": 80.299,
+          "arrival_time": "6.25 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Tollgate - Beach Road",
+          "latitude": 13.141,
+          "longitude": 80.296,
+          "arrival_time": "6.30 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Kasimedu",
+          "latitude": 13.12,
+          "longitude": 80.297,
+          "arrival_time": "6.40 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Royapuram",
+          "latitude": 13.108,
+          "longitude": 80.294,
+          "arrival_time": "6.45 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Kuni ram Street",
+          "latitude": 13.096,
+          "longitude": 80.289,
+          "arrival_time": "6.46 AM",
+          "offset_minutes": 31,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Thambu Street",
+          "latitude": 13.093,
+          "longitude": 80.286,
+          "arrival_time": "6.47 AM",
+          "offset_minutes": 32,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Claif Battery",
+          "latitude": 13.09,
+          "longitude": 80.29,
+          "arrival_time": "6.49 AM",
+          "offset_minutes": 34,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Beach Station",
+          "latitude": 13.094,
+          "longitude": 80.292,
+          "arrival_time": "6.50 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "High Court",
+          "latitude": 13.089,
+          "longitude": 80.2872,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "LIC",
+          "latitude": 13.0865,
+          "longitude": 80.2806,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 13,
+          "name": "Seethakathi Chambers",
+          "latitude": 13.084,
+          "longitude": 80.274,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "DMS",
+          "latitude": 13.038,
+          "longitude": 80.245,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 15,
+          "name": "SIET",
+          "latitude": 13.039,
+          "longitude": 80.2465,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 70,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 16,
+          "name": "Teynambet Aanandha Hotel",
+          "latitude": 13.04,
+          "longitude": 80.248,
+          "arrival_time": "7.27 AM",
+          "offset_minutes": 72,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 17,
+          "name": "Nandanam",
+          "latitude": 13.033,
+          "longitude": 80.24,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 75,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 18,
+          "name": "Saidapet",
+          "latitude": 13.023,
+          "longitude": 80.223,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 80,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 19,
+          "name": "Guindy",
+          "latitude": 13.01,
+          "longitude": 80.221,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 85,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 20,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 135,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "102",
+      "name": "Thiruvotriyur",
+      "start_point": "Lift Gate Entry - Mullai Nagar",
+      "end_point": "BSACIST",
+      "departure_time": "6.10 AM",
+      "duration_minutes": 140,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-102",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Ashok",
+        "contact_number": "+91 96001 00173"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Lift Gate Entry - Mullai Nagar",
+          "latitude": 13.1665,
+          "longitude": 80.3045,
+          "arrival_time": "6.10 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Ernavoor",
+          "latitude": 13.178,
+          "longitude": 80.308,
+          "arrival_time": "6.15 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Wimco Nagar",
+          "latitude": 13.187,
+          "longitude": 80.311,
+          "arrival_time": "6.17 AM",
+          "offset_minutes": 7,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Ajax",
+          "latitude": 13.172,
+          "longitude": 80.306,
+          "arrival_time": "6.19 AM",
+          "offset_minutes": 9,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Thiruvotriyur Market",
+          "latitude": 13.1585,
+          "longitude": 80.3012,
+          "arrival_time": "6.22 AM",
+          "offset_minutes": 12,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Theradi",
+          "latitude": 13.1578,
+          "longitude": 80.3008,
+          "arrival_time": "6.25 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Raja Kadai",
+          "latitude": 13.153,
+          "longitude": 80.2998,
+          "arrival_time": "6.27 AM",
+          "offset_minutes": 17,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Kaladipet - TH Road",
+          "latitude": 13.149,
+          "longitude": 80.299,
+          "arrival_time": "6.30 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Tollgate - TH Road",
+          "latitude": 13.141,
+          "longitude": 80.296,
+          "arrival_time": "6.35 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Kasimedu",
+          "latitude": 13.12,
+          "longitude": 80.297,
+          "arrival_time": "6.45 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Bharathi Arts College (Morning Only) Drop Point - Beach Road",
+          "latitude": 13.111,
+          "longitude": 80.2925,
+          "arrival_time": "6.55 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "Excellent Hotel (Morning Only) Drop Point - Beach Road",
+          "latitude": 13.102,
+          "longitude": 80.288,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 13,
+          "name": "Broadway - Metro (Morning Only) Drop Point - Beach Road",
+          "latitude": 13.093,
+          "longitude": 80.2835,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "High Court",
+          "latitude": 13.089,
+          "longitude": 80.2872,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 15,
+          "name": "Alandur Metro",
+          "latitude": 13.003,
+          "longitude": 80.203,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 95,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 16,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 140,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "103",
+      "name": "Muthamil Nagar",
+      "start_point": "Muthamil Nagar",
+      "end_point": "BSACIST",
+      "departure_time": "6.35 AM",
+      "duration_minutes": 115,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-103",
+        "make": "Ashok Leyland",
+        "bus_type": "Ashok Leyland AC Bus",
+        "capacity": 55,
+        "is_ac": true,
+        "source_description": "AL AC Bus - 55 Seater",
+        "driver_name": "Mr. Solomon Iniyavan A",
+        "contact_number": "+91 95514 56926"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Muthamil Nagar",
+          "latitude": 13.127,
+          "longitude": 80.257,
+          "arrival_time": "6.35 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "MKB Nagar",
+          "latitude": 13.122,
+          "longitude": 80.262,
+          "arrival_time": "6.40 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Mullainagar",
+          "latitude": 13.166,
+          "longitude": 80.305,
+          "arrival_time": "6.45 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Stanley",
+          "latitude": 13.104,
+          "longitude": 80.287,
+          "arrival_time": "6.53 AM",
+          "offset_minutes": 18,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Beach Station",
+          "latitude": 13.094,
+          "longitude": 80.292,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Light House",
+          "latitude": 13.04,
+          "longitude": 80.279,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Santhome Church",
+          "latitude": 13.033,
+          "longitude": 80.278,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Sathya Studio",
+          "latitude": 13.044,
+          "longitude": 80.253,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Madhya Kailash",
+          "latitude": 13.011,
+          "longitude": 80.244,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Guindy",
+          "latitude": 13.01,
+          "longitude": 80.221,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Pallavaram",
+          "latitude": 12.967,
+          "longitude": 80.15,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 85,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Pallavaram Ponds",
+          "latitude": 12.967,
+          "longitude": 80.15,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 90,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Chromepet Saravana Store",
+          "latitude": 12.952,
+          "longitude": 80.14,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 95,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "Chromepet Bus Stand",
+          "latitude": 12.952,
+          "longitude": 80.14,
+          "arrival_time": "8.12 AM",
+          "offset_minutes": 97,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 15,
+          "name": "Hot Chips Sanatorium",
+          "latitude": 12.9485,
+          "longitude": 80.1375,
+          "arrival_time": "8.17 AM",
+          "offset_minutes": 102,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 16,
+          "name": "MEPZ",
+          "latitude": 12.945,
+          "longitude": 80.135,
+          "arrival_time": "8.18 AM",
+          "offset_minutes": 103,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 17,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 115,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "104",
+      "name": "Triplicane",
+      "start_point": "Beach Station",
+      "end_point": "BSACIST",
+      "departure_time": "7.05 AM",
+      "duration_minutes": 85,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-104",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Kalimuthu",
+        "contact_number": "+91 97895 19179"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Beach Station",
+          "latitude": 13.094,
+          "longitude": 80.292,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "D1 Triplicane Police Station",
+          "latitude": 13.056,
+          "longitude": 80.2775,
+          "arrival_time": "7.08 AM",
+          "offset_minutes": 3,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Aadham Market",
+          "latitude": 13.0675,
+          "longitude": 80.26925,
+          "arrival_time": "7.13 AM",
+          "offset_minutes": 8,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "Ratna Coffee",
+          "latitude": 13.079,
+          "longitude": 80.261,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Ice House",
+          "latitude": 13.051,
+          "longitude": 80.277,
+          "arrival_time": "7.17 AM",
+          "offset_minutes": 12,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Crescent Hospital",
+          "latitude": 13.051667,
+          "longitude": 80.272833,
+          "arrival_time": "7.18 AM",
+          "offset_minutes": 13,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 7,
+          "name": "Mirsahibpet",
+          "latitude": 13.052333,
+          "longitude": 80.268667,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "New College",
+          "latitude": 13.053,
+          "longitude": 80.2645,
+          "arrival_time": "7.23 AM",
+          "offset_minutes": 18,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Gemini",
+          "latitude": 13.045,
+          "longitude": 80.248,
+          "arrival_time": "7.26 AM",
+          "offset_minutes": 21,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Guindy",
+          "latitude": 13.01,
+          "longitude": 80.221,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 85,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "104A",
+      "name": "Puthupet",
+      "start_point": "C. P. Adithanar statue",
+      "end_point": "BSACIST",
+      "departure_time": "07.00 AM",
+      "duration_minutes": 90,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-104A",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Jagan",
+        "contact_number": "+91 76798 51612"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "C. P. Adithanar statue",
+          "latitude": 13.088,
+          "longitude": 80.278,
+          "arrival_time": "07.00 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 2,
+          "name": "Puthupet ( Green Cafe )",
+          "latitude": 13.084,
+          "longitude": 80.274,
+          "arrival_time": "07:05 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "Casino Theater",
+          "latitude": 13.08,
+          "longitude": 80.27,
+          "arrival_time": "07:07 AM",
+          "offset_minutes": 7,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Mirsahibpet Market",
+          "latitude": 13.0665,
+          "longitude": 80.26725,
+          "arrival_time": "07:20 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "New College",
+          "latitude": 13.053,
+          "longitude": 80.2645,
+          "arrival_time": "07:23 AM",
+          "offset_minutes": 23,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Alandur Metro",
+          "latitude": 13.003,
+          "longitude": 80.203,
+          "arrival_time": "07.55 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Pallavaram",
+          "latitude": 12.967,
+          "longitude": 80.15,
+          "arrival_time": "08:10 AM",
+          "offset_minutes": 70,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "08.30 AM",
+          "offset_minutes": 90,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "105",
+      "name": "Thiruvotriyur (Toll Gate) TH Road",
+      "start_point": "Toll Gate Depot - TH Road",
+      "end_point": "BSACIST",
+      "departure_time": "6.50 AM",
+      "duration_minutes": 100,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-105",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Murugan",
+        "contact_number": "+91 95661 28208"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Toll Gate Depot - TH Road",
+          "latitude": 13.14,
+          "longitude": 80.2955,
+          "arrival_time": "6.50 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Kaladipet Market",
+          "latitude": 13.149,
+          "longitude": 80.299,
+          "arrival_time": "6.55 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Tondiarpet Appollo",
+          "latitude": 13.128,
+          "longitude": 80.29,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Royapuram",
+          "latitude": 13.108,
+          "longitude": 80.294,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "GP Road",
+          "latitude": 13.087,
+          "longitude": 80.276,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Royapettah Police Station",
+          "latitude": 13.053,
+          "longitude": 80.264,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Ajantha Junction (Morning Only) Drop Point - New College",
+          "latitude": 13.053,
+          "longitude": 80.2645,
+          "arrival_time": "7.28 AM",
+          "offset_minutes": 38,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Alandur Metro",
+          "latitude": 13.003,
+          "longitude": 80.203,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 70,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Chrompet Saravana",
+          "latitude": 12.952,
+          "longitude": 80.14,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 85,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 100,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "106",
+      "name": "Kalmandapam via Luz Corner",
+      "start_point": "Kalmandabam",
+      "end_point": "BSACIST",
+      "departure_time": "6.50 AM",
+      "duration_minutes": 100,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-106",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Sasi Kumar",
+        "contact_number": "+91 63815 53393"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Kalmandabam",
+          "latitude": 13.096,
+          "longitude": 80.283,
+          "arrival_time": "6.50 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Parry Corner",
+          "latitude": 13.092,
+          "longitude": 80.287,
+          "arrival_time": "6.55 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Secretariat",
+          "latitude": 13.08,
+          "longitude": 80.287,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Vivekanandar Illam",
+          "latitude": 13.05,
+          "longitude": 80.282,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Luz Corner",
+          "latitude": 13.033,
+          "longitude": 80.26,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "R A Puram Sangeetha",
+          "latitude": 13.02,
+          "longitude": 80.265,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Mandaveli Depot",
+          "latitude": 13.027,
+          "longitude": 80.265,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Sathya Studio",
+          "latitude": 13.044,
+          "longitude": 80.253,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Adyar Signal",
+          "latitude": 13.006,
+          "longitude": 80.257,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Madhya Kailash",
+          "latitude": 13.011,
+          "longitude": 80.244,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Alandur",
+          "latitude": 13.003,
+          "longitude": 80.203,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Pallavaram",
+          "latitude": 12.967,
+          "longitude": 80.15,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 80,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Chrompet Saravana Store",
+          "latitude": 12.952,
+          "longitude": 80.14,
+          "arrival_time": "8.13 AM",
+          "offset_minutes": 83,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 100,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "107",
+      "name": "Madhavaram via MMDA",
+      "start_point": "Madavaram Rountana",
+      "end_point": "BSACIST",
+      "departure_time": "6.40 AM",
+      "duration_minutes": 110,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-107",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Jaheer",
+        "contact_number": "+91 99448 81415"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Madavaram Rountana",
+          "latitude": 13.148,
+          "longitude": 80.231,
+          "arrival_time": "6.40 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Temple School",
+          "latitude": 13.1215,
+          "longitude": 80.223,
+          "arrival_time": "6.55 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "MMDA",
+          "latitude": 13.095,
+          "longitude": 80.215,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Arumbakkam Metro Station",
+          "latitude": 13.073,
+          "longitude": 80.21,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Vadapalani",
+          "latitude": 13.051,
+          "longitude": 80.212,
+          "arrival_time": "7.48 AM",
+          "offset_minutes": 68,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Ashok Pillar",
+          "latitude": 13.027,
+          "longitude": 80.211,
+          "arrival_time": "7.52 AM",
+          "offset_minutes": 72,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Kasi Theatre",
+          "latitude": 13.02,
+          "longitude": 80.205,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 75,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Olympia",
+          "latitude": 13.018,
+          "longitude": 80.208,
+          "arrival_time": "7.58 AM",
+          "offset_minutes": 78,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Alandur",
+          "latitude": 13.003,
+          "longitude": 80.203,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 80,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Meenambakkam",
+          "latitude": 12.98,
+          "longitude": 80.175,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 90,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Pallavaram",
+          "latitude": 12.967,
+          "longitude": 80.15,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 95,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Pallavaram - Ponds",
+          "latitude": 12.967,
+          "longitude": 80.15,
+          "arrival_time": "8.18 AM",
+          "offset_minutes": 98,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Chrompet MIT",
+          "latitude": 12.952,
+          "longitude": 80.14,
+          "arrival_time": "8.20 AM",
+          "offset_minutes": 100,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 110,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "108",
+      "name": "Mathur via Periamet",
+      "start_point": "Mathur - Gate",
+      "end_point": "BSACIST",
+      "departure_time": "6.30 AM",
+      "duration_minutes": 110,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-108",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Neelagandan",
+        "contact_number": "+91 97918 77332"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Mathur - Gate",
+          "latitude": 13.143,
+          "longitude": 80.218,
+          "arrival_time": "6.30 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Milk Colony Gate",
+          "latitude": 13.1515,
+          "longitude": 80.2285,
+          "arrival_time": "6.35 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Thaball Petti",
+          "latitude": 13.11725,
+          "longitude": 80.24875,
+          "arrival_time": "6.40 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "Periamet",
+          "latitude": 13.083,
+          "longitude": 80.269,
+          "arrival_time": "6.55 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Vepery",
+          "latitude": 13.083,
+          "longitude": 80.262,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Purasaiwakam (Morning Only) Drop Point - Doveton Bridge",
+          "latitude": 13.093,
+          "longitude": 80.253,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Dashparakash Hotel",
+          "latitude": 13.079,
+          "longitude": 80.261,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Pachaiyappas College",
+          "latitude": 13.079,
+          "longitude": 80.22,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Maduravoyal",
+          "latitude": 13.065,
+          "longitude": 80.165,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Yerikarai Bus Stop",
+          "latitude": 13.001233,
+          "longitude": 80.137433,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 70,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 11,
+          "name": "Toll Gate",
+          "latitude": 12.937467,
+          "longitude": 80.109867,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 80,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.20 AM",
+          "offset_minutes": 110,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "109",
+      "name": "MKB Nagar",
+      "start_point": "MKB Nagar",
+      "end_point": "BSACIST",
+      "departure_time": "6.40 AM",
+      "duration_minutes": 110,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-109",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Immanual",
+        "contact_number": "+91 97913 52249"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "MKB Nagar",
+          "latitude": 13.122,
+          "longitude": 80.262,
+          "arrival_time": "6.40 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Erukancheri",
+          "latitude": 13.12,
+          "longitude": 80.256,
+          "arrival_time": "6:55 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Moolakadai",
+          "latitude": 13.131,
+          "longitude": 80.235,
+          "arrival_time": "7:00 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Perambur Church",
+          "latitude": 13.109,
+          "longitude": 80.232,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Venus",
+          "latitude": 13.1135,
+          "longitude": 80.2385,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 6,
+          "name": "Agaram",
+          "latitude": 13.118,
+          "longitude": 80.245,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 40,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Welding shop",
+          "latitude": 13.113,
+          "longitude": 80.23125,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "Rettai Yeri",
+          "latitude": 13.108,
+          "longitude": 80.2175,
+          "arrival_time": "7.28 AM",
+          "offset_minutes": 48,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 9,
+          "name": "Temple Squre",
+          "latitude": 13.103,
+          "longitude": 80.20375,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 10,
+          "name": "Padi - Saravana Store",
+          "latitude": 13.098,
+          "longitude": 80.19,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 110,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "110",
+      "name": "Red hills",
+      "start_point": "Red Hills - Revathi",
+      "end_point": "BSACIST",
+      "departure_time": "6.50 AM",
+      "duration_minutes": 100,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-110",
+        "make": "Eicher",
+        "bus_type": "Eicher AC Bus",
+        "capacity": 55,
+        "is_ac": true,
+        "source_description": "Eicher AC Bus 55 Seater",
+        "driver_name": "Mr. Meganathan",
+        "contact_number": "+91 78455 55118"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Red Hills - Revathi",
+          "latitude": 13.19,
+          "longitude": 80.183,
+          "arrival_time": "6.50 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Red Hills - Bus Stand",
+          "latitude": 13.19,
+          "longitude": 80.183,
+          "arrival_time": "6.55 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Kavangarai",
+          "latitude": 13.175,
+          "longitude": 80.19,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Puzhal Camp",
+          "latitude": 13.16,
+          "longitude": 80.21,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Cycle Shop",
+          "latitude": 13.154,
+          "longitude": 80.2205,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 6,
+          "name": "Madavaram Rountana",
+          "latitude": 13.148,
+          "longitude": 80.231,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "RTO Office",
+          "latitude": 13.14475,
+          "longitude": 80.22825,
+          "arrival_time": "7.17 AM",
+          "offset_minutes": 27,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "Rettai Yeri",
+          "latitude": 13.1415,
+          "longitude": 80.2255,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 9,
+          "name": "Relliance",
+          "latitude": 13.13825,
+          "longitude": 80.22275,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 10,
+          "name": "Senthil Nagar",
+          "latitude": 13.135,
+          "longitude": 80.22,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "DRJ Hospital",
+          "latitude": 13.11,
+          "longitude": 80.211,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "West Anna Nagar Depot",
+          "latitude": 13.085,
+          "longitude": 80.202,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Maduravoyal",
+          "latitude": 13.065,
+          "longitude": 80.165,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 70,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "Porur Toll Gate",
+          "latitude": 13.035,
+          "longitude": 80.152,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 75,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 15,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 100,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "111",
+      "name": "Madhavaram Milk colony",
+      "start_point": "Madhavaram Milk Colony",
+      "end_point": "BSACIST",
+      "departure_time": "6.30 AM",
+      "duration_minutes": 120,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-111",
+        "make": "TATA",
+        "bus_type": "TATA AC Bus",
+        "capacity": 55,
+        "is_ac": true,
+        "source_description": "TATA AC Bus - 55 Seater",
+        "driver_name": "Mr. Andrew",
+        "contact_number": "+91 93636 01265"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Madhavaram Milk Colony",
+          "latitude": 13.152,
+          "longitude": 80.228,
+          "arrival_time": "6.30 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Moolakadai",
+          "latitude": 13.131,
+          "longitude": 80.235,
+          "arrival_time": "6.45 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Perambur",
+          "latitude": 13.11,
+          "longitude": 80.233,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Otteri",
+          "latitude": 13.095,
+          "longitude": 80.245,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Ayanavaram",
+          "latitude": 13.098,
+          "longitude": 80.23,
+          "arrival_time": "7.07 AM",
+          "offset_minutes": 37,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Kelly's",
+          "latitude": 13.08,
+          "longitude": 80.248,
+          "arrival_time": "7.12 AM",
+          "offset_minutes": 42,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Pachaiyappa's College",
+          "latitude": 13.079,
+          "longitude": 80.22,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Aminjikarai",
+          "latitude": 13.073,
+          "longitude": 80.222,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Sky Walk",
+          "latitude": 13.07,
+          "longitude": 80.244,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Nerkundram",
+          "latitude": 13.065,
+          "longitude": 80.181,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Maduravoyal",
+          "latitude": 13.065,
+          "longitude": 80.165,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 75,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Toll Gate",
+          "latitude": 12.96935,
+          "longitude": 80.12365,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 85,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 13,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 120,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "112",
+      "name": "Ambattur OT",
+      "start_point": "Ambattur OT",
+      "end_point": "BSACIST",
+      "departure_time": "6.40 AM",
+      "duration_minutes": 110,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-112",
+        "make": "Eicher",
+        "bus_type": "Eicher AC Bus",
+        "capacity": 55,
+        "is_ac": true,
+        "source_description": "Eicher Bus AC Bus 55 Seater",
+        "driver_name": "Mr. Raj",
+        "contact_number": "+91 99404 20839"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Ambattur OT",
+          "latitude": 13.114,
+          "longitude": 80.158,
+          "arrival_time": "6.40 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Canara Bank",
+          "latitude": 13.106,
+          "longitude": 80.16,
+          "arrival_time": "6.50 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "Ambattur Estate",
+          "latitude": 13.098,
+          "longitude": 80.162,
+          "arrival_time": "6.55 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Lucas Signal",
+          "latitude": 13.089,
+          "longitude": 80.198,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "Nathamuni Theatre",
+          "latitude": 13.08,
+          "longitude": 80.234,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "R.T.O. Annan agar (West)",
+          "latitude": 13.086,
+          "longitude": 80.201,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "‘L’ Block",
+          "latitude": 13.063,
+          "longitude": 80.2175,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "Nalli Silks",
+          "latitude": 13.04,
+          "longitude": 80.234,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Thirumangalam",
+          "latitude": 13.085,
+          "longitude": 80.195,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Collector Nagar",
+          "latitude": 13.142,
+          "longitude": 80.196,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 70,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Golden Flats",
+          "latitude": 13.106333,
+          "longitude": 80.181333,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 75,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "Vaavin",
+          "latitude": 13.070667,
+          "longitude": 80.166667,
+          "arrival_time": "7.57 AM",
+          "offset_minutes": 77,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 13,
+          "name": "Porur Toll Gate",
+          "latitude": 13.035,
+          "longitude": 80.152,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 80,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 110,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "113",
+      "name": "Avadi Via Porur Toll gate",
+      "start_point": "Thiruninravur Bus Stop",
+      "end_point": "BSACIST",
+      "departure_time": "06:40 AM",
+      "duration_minutes": 110,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-113",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Kaviprasanna",
+        "contact_number": "+91 95000 43932"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Thiruninravur Bus Stop",
+          "latitude": 13.118,
+          "longitude": 80.025,
+          "arrival_time": "06:40 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Avadi Veltec",
+          "latitude": 13.11,
+          "longitude": 80.095,
+          "arrival_time": "07:00 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Nemilichery",
+          "latitude": 13.105,
+          "longitude": 80.085,
+          "arrival_time": "06:55 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Sithukadu",
+          "latitude": 13.1115,
+          "longitude": 80.0765,
+          "arrival_time": "06:58 AM",
+          "offset_minutes": 18,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "Pattabiram",
+          "latitude": 13.118,
+          "longitude": 80.068,
+          "arrival_time": "06:59 AM",
+          "offset_minutes": 19,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Avadi Bus Stand",
+          "latitude": 13.115,
+          "longitude": 80.101,
+          "arrival_time": "07:15 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Murugappa Polytechnic",
+          "latitude": 13.12,
+          "longitude": 80.1105,
+          "arrival_time": "07:20 AM",
+          "offset_minutes": 40,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "Thirumollaivoyal",
+          "latitude": 13.125,
+          "longitude": 80.12,
+          "arrival_time": "07:25 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Ambattur OT",
+          "latitude": 13.114,
+          "longitude": 80.158,
+          "arrival_time": "07:30 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Athipet Petrol Bunk",
+          "latitude": 13.11,
+          "longitude": 80.165,
+          "arrival_time": "07:40 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Decathlon",
+          "latitude": 13.0725,
+          "longitude": 80.1585,
+          "arrival_time": "07:45 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "Porur Toll Gate",
+          "latitude": 13.035,
+          "longitude": 80.152,
+          "arrival_time": "07:55 AM",
+          "offset_minutes": 75,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "08:30 AM",
+          "offset_minutes": 110,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "114",
+      "name": "Poonamallee via Tambaram",
+      "start_point": "Poonamallee Bypass",
+      "end_point": "BSACIST",
+      "departure_time": "7.00 AM",
+      "duration_minutes": 90,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-114",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus - 40 Seater",
+        "driver_name": "Mr. Santhakumar",
+        "contact_number": "+91 99529 99753"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Poonamallee Bypass",
+          "latitude": 13.048,
+          "longitude": 80.112,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Aravind Eye Hospital",
+          "latitude": 13.043667,
+          "longitude": 80.116333,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "Nilgris",
+          "latitude": 13.039333,
+          "longitude": 80.120667,
+          "arrival_time": "7.06 AM",
+          "offset_minutes": 6,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "Kumananchavadi",
+          "latitude": 13.035,
+          "longitude": 80.125,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Mangadu",
+          "latitude": 13.035,
+          "longitude": 80.108,
+          "arrival_time": "7.11 AM",
+          "offset_minutes": 11,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Mangadu Temple",
+          "latitude": 13.0345,
+          "longitude": 80.1075,
+          "arrival_time": "7.12 AM",
+          "offset_minutes": 12,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Kundrathur",
+          "latitude": 12.995,
+          "longitude": 80.095,
+          "arrival_time": "7.18 AM",
+          "offset_minutes": 18,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Manacheri",
+          "latitude": 12.9775,
+          "longitude": 80.105,
+          "arrival_time": "7.24 AM",
+          "offset_minutes": 24,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 9,
+          "name": "Anagaputhur",
+          "latitude": 12.96,
+          "longitude": 80.115,
+          "arrival_time": "7.28 AM",
+          "offset_minutes": 28,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Pammal",
+          "latitude": 12.965,
+          "longitude": 80.13,
+          "arrival_time": "7.37 AM",
+          "offset_minutes": 37,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Pozhichallur",
+          "latitude": 12.955,
+          "longitude": 80.125,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Pammal Krishana Nagar",
+          "latitude": 12.966,
+          "longitude": 80.129,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Muthamizh Nagar",
+          "latitude": 12.9665,
+          "longitude": 80.1395,
+          "arrival_time": "7.51 AM",
+          "offset_minutes": 51,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 14,
+          "name": "Pallavaram Redial Road",
+          "latitude": 12.967,
+          "longitude": 80.15,
+          "arrival_time": "7.54 AM",
+          "offset_minutes": 54,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 15,
+          "name": "Pallavaram Annai Therasa School",
+          "latitude": 12.967,
+          "longitude": 80.15,
+          "arrival_time": "7.56 AM",
+          "offset_minutes": 56,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 16,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 90,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "115",
+      "name": "Valluvar Kottam",
+      "start_point": "Valluvar Kottam",
+      "end_point": "BSACIST",
+      "departure_time": "6.45 AM",
+      "duration_minutes": 105,
+      "min_fare": 55000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-115",
+        "make": "TATA",
+        "bus_type": "TATA AC Bus",
+        "capacity": 50,
+        "is_ac": true,
+        "source_description": "TATA AC Bus - 50 Seater",
+        "driver_name": "Mr. Ananda Murugan M",
+        "contact_number": "+91 95662 15375"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Valluvar Kottam",
+          "latitude": 13.049,
+          "longitude": 80.242,
+          "arrival_time": "6.45 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Liberty",
+          "latitude": 13.052,
+          "longitude": 80.223,
+          "arrival_time": "6.50 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Power House",
+          "latitude": 13.049,
+          "longitude": 80.215,
+          "arrival_time": "6.55 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Lakshman Shrudhi Signal",
+          "latitude": 13.0525,
+          "longitude": 80.2035,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "Avichi School",
+          "latitude": 13.056,
+          "longitude": 80.192,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Virukambakkam",
+          "latitude": 13.057,
+          "longitude": 80.193,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "AT Nagar",
+          "latitude": 13.051,
+          "longitude": 80.1855,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "Valasaravakkam (Hot Chips)",
+          "latitude": 13.045,
+          "longitude": 80.178,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Porur",
+          "latitude": 13.038,
+          "longitude": 80.158,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Bhai Kadai",
+          "latitude": 13.0315,
+          "longitude": 80.1465,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 11,
+          "name": "Madanandhapuram",
+          "latitude": 13.025,
+          "longitude": 80.135,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Kovur",
+          "latitude": 13.005,
+          "longitude": 80.11,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Kundrathur New bye pass",
+          "latitude": 12.995,
+          "longitude": 80.095,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 75,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "Outer Ring Road",
+          "latitude": 12.93435,
+          "longitude": 80.08865,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 80,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 15,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 105,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "116",
+      "name": "Tansi Nagar",
+      "start_point": "Tansi Nagar",
+      "end_point": "BSACIST",
+      "departure_time": "7.25 AM",
+      "duration_minutes": 70,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-116",
+        "make": "Ashok Leyland",
+        "bus_type": "Ashok Leyland AC Bus",
+        "capacity": 55,
+        "is_ac": true,
+        "source_description": "AL AC Bus 55 Seater",
+        "driver_name": "Mr. Shahul Hamed",
+        "contact_number": "+91 80560 68299"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Tansi Nagar",
+          "latitude": 12.979,
+          "longitude": 80.224,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 2,
+          "name": "Velachery Signal",
+          "latitude": 12.975,
+          "longitude": 80.22,
+          "arrival_time": "7.28 AM",
+          "offset_minutes": 3,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Pallikaranai",
+          "latitude": 12.935,
+          "longitude": 80.205,
+          "arrival_time": "7.52 AM",
+          "offset_minutes": 27,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Oil Mill",
+          "latitude": 12.9275,
+          "longitude": 80.1985,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "Medavakkam",
+          "latitude": 12.92,
+          "longitude": 80.192,
+          "arrival_time": "7.58 AM",
+          "offset_minutes": 33,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Medavakkam X-Road",
+          "latitude": 12.92,
+          "longitude": 80.192,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Vijayanagar",
+          "latitude": 12.9175,
+          "longitude": 80.1885,
+          "arrival_time": "8.03 AM",
+          "offset_minutes": 38,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "Santhoshpuram",
+          "latitude": 12.915,
+          "longitude": 80.185,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 40,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Sembakkam",
+          "latitude": 12.915,
+          "longitude": 80.165,
+          "arrival_time": "8.07 AM",
+          "offset_minutes": 42,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Kamarajapuram",
+          "latitude": 12.913333,
+          "longitude": 80.155,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 11,
+          "name": "Mahalakshmi Nagar",
+          "latitude": 12.911667,
+          "longitude": 80.145,
+          "arrival_time": "8.12 AM",
+          "offset_minutes": 47,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "Camp Road",
+          "latitude": 12.91,
+          "longitude": 80.135,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 50,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Christ King School",
+          "latitude": 12.9165,
+          "longitude": 80.129,
+          "arrival_time": "8.18 AM",
+          "offset_minutes": 53,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 14,
+          "name": "MCC",
+          "latitude": 12.923,
+          "longitude": 80.123,
+          "arrival_time": "8.20 AM",
+          "offset_minutes": 55,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 15,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.35 AM",
+          "offset_minutes": 70,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "117",
+      "name": "Adambakkam Via Pallikaranai",
+      "start_point": "St Thomas mount",
+      "end_point": "BSACIST",
+      "departure_time": "7.10 AM",
+      "duration_minutes": 80,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-117",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Murugan",
+        "contact_number": "+91 72995 14472"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "St Thomas mount",
+          "latitude": 12.995,
+          "longitude": 80.197,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "NGO Colony",
+          "latitude": 12.98,
+          "longitude": 80.199,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "Prime Care Hospital",
+          "latitude": 12.965,
+          "longitude": 80.201,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "Kamatchi Hospital",
+          "latitude": 12.95,
+          "longitude": 80.203,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "Pallikaranai",
+          "latitude": 12.935,
+          "longitude": 80.205,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "School",
+          "latitude": 12.9215,
+          "longitude": 80.1885,
+          "arrival_time": "7.47 AM",
+          "offset_minutes": 37,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 7,
+          "name": "Gowriwakkam",
+          "latitude": 12.908,
+          "longitude": 80.172,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 40,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Sembakkam",
+          "latitude": 12.915,
+          "longitude": 80.165,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Kamarajapuram",
+          "latitude": 12.9115,
+          "longitude": 80.16,
+          "arrival_time": "7.57 AM",
+          "offset_minutes": 47,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 10,
+          "name": "Rajakilpakkam",
+          "latitude": 12.908,
+          "longitude": 80.155,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Mahalakshmi Nagar",
+          "latitude": 12.909,
+          "longitude": 80.145,
+          "arrival_time": "8.12 AM",
+          "offset_minutes": 62,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "Camp Road",
+          "latitude": 12.91,
+          "longitude": 80.135,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 65,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Air Force",
+          "latitude": 12.917,
+          "longitude": 80.128,
+          "arrival_time": "8.17 AM",
+          "offset_minutes": 67,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 14,
+          "name": "Tambaram Railway Station",
+          "latitude": 12.924,
+          "longitude": 80.121,
+          "arrival_time": "8.20.AM",
+          "offset_minutes": 0,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 15,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 80,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "118",
+      "name": "Velachery",
+      "start_point": "Velachery Vijaya Nagar",
+      "end_point": "BSACIST",
+      "departure_time": "7.20 AM",
+      "duration_minutes": 70,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-118",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Jai Kanth",
+        "contact_number": "+91 95851 65394"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Velachery Vijaya Nagar",
+          "latitude": 12.978,
+          "longitude": 80.218,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Ram Nagar",
+          "latitude": 12.97,
+          "longitude": 80.207,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "Madipakkam Ponniyamman Koil",
+          "latitude": 12.962,
+          "longitude": 80.196,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Madipakkam Axis Bank",
+          "latitude": 12.96,
+          "longitude": 80.195,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Keelkattalai",
+          "latitude": 12.945,
+          "longitude": 80.185,
+          "arrival_time": "7.38 AM",
+          "offset_minutes": 18,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Kovilambakkam",
+          "latitude": 12.945,
+          "longitude": 80.188,
+          "arrival_time": "7.43 AM",
+          "offset_minutes": 23,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Medavakkam X-Road",
+          "latitude": 12.92,
+          "longitude": 80.192,
+          "arrival_time": "7.48 AM",
+          "offset_minutes": 28,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Santhoshpuram",
+          "latitude": 12.915,
+          "longitude": 80.185,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Sembakkam",
+          "latitude": 12.915,
+          "longitude": 80.165,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Kamarajapuram",
+          "latitude": 12.9125,
+          "longitude": 80.15,
+          "arrival_time": "7.57 AM",
+          "offset_minutes": 37,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 11,
+          "name": "Camp Road",
+          "latitude": 12.91,
+          "longitude": 80.135,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 45,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Selaiyur",
+          "latitude": 12.912,
+          "longitude": 80.14,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 50,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Christ King School",
+          "latitude": 12.89285,
+          "longitude": 80.11115,
+          "arrival_time": "8.13 AM",
+          "offset_minutes": 53,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 14,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 70,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "119",
+      "name": "Kovalam via ECR",
+      "start_point": "Kovalam",
+      "end_point": "BSACIST",
+      "departure_time": "6.45 AM",
+      "duration_minutes": 110,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-119",
+        "make": "TATA",
+        "bus_type": "TATA AC Bus",
+        "capacity": 50,
+        "is_ac": true,
+        "source_description": "TATA AC Bus - 50 Seater",
+        "driver_name": "Mr. Parthasarathy",
+        "contact_number": "+91 98407 16021"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Kovalam",
+          "latitude": 12.79,
+          "longitude": 80.251,
+          "arrival_time": "6.45 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Muttukadu",
+          "latitude": 12.825,
+          "longitude": 80.243,
+          "arrival_time": "6.50 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "MGM",
+          "latitude": 12.8425,
+          "longitude": 80.2435,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "Kanathur",
+          "latitude": 12.86,
+          "longitude": 80.244,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Uthandi",
+          "latitude": 12.87,
+          "longitude": 80.244,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Panaiyur",
+          "latitude": 12.89,
+          "longitude": 80.247,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Akkarai",
+          "latitude": 12.91,
+          "longitude": 80.25,
+          "arrival_time": "7.18 AM",
+          "offset_minutes": 33,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "VGP",
+          "latitude": 12.905,
+          "longitude": 80.249,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Injambakkam",
+          "latitude": 12.925,
+          "longitude": 80.253,
+          "arrival_time": "7.22 AM",
+          "offset_minutes": 37,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Vettuvankani",
+          "latitude": 12.935,
+          "longitude": 80.255,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 40,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Neelankarai",
+          "latitude": 12.945,
+          "longitude": 80.257,
+          "arrival_time": "7.28 AM",
+          "offset_minutes": 43,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Palavakkam (Poorvika Showroom)",
+          "latitude": 12.9545,
+          "longitude": 80.2588,
+          "arrival_time": "7.31 AM",
+          "offset_minutes": 46,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Palavakkam Arch",
+          "latitude": 12.955,
+          "longitude": 80.259,
+          "arrival_time": "7.34 AM",
+          "offset_minutes": 49,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "Pallavakam Fish Market",
+          "latitude": 12.954,
+          "longitude": 80.2592,
+          "arrival_time": "7.36 AM",
+          "offset_minutes": 51,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 15,
+          "name": "Thiruvanmiyur (Mosque)",
+          "latitude": 12.984,
+          "longitude": 80.2595,
+          "arrival_time": "7.41 AM",
+          "offset_minutes": 56,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 16,
+          "name": "Thiruvanmiyur RTO",
+          "latitude": 12.982,
+          "longitude": 80.258,
+          "arrival_time": "7.43 AM",
+          "offset_minutes": 58,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 17,
+          "name": "Thiruvanmiyur Signal",
+          "latitude": 12.983,
+          "longitude": 80.259,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 18,
+          "name": "SRP Tools",
+          "latitude": 13.015,
+          "longitude": 80.198,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 19,
+          "name": "Taramani Signal",
+          "latitude": 12.988,
+          "longitude": 80.243,
+          "arrival_time": "7.52 AM",
+          "offset_minutes": 67,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 20,
+          "name": "Tansi Nagar",
+          "latitude": 12.979,
+          "longitude": 80.1715,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 70,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 21,
+          "name": "Kaiveli",
+          "latitude": 12.97,
+          "longitude": 80.1,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 75,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 22,
+          "name": "S Kolathur",
+          "latitude": 12.933,
+          "longitude": 80.179,
+          "arrival_time": "8.03 AM",
+          "offset_minutes": 78,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 23,
+          "name": "Pallava Garden",
+          "latitude": 12.9105,
+          "longitude": 80.1295,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 80,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 24,
+          "name": "VELS University",
+          "latitude": 12.888,
+          "longitude": 80.08,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 85,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 25,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.35 AM",
+          "offset_minutes": 110,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "120",
+      "name": "Nanganallur",
+      "start_point": "Adambakkam ( Sakthi Cars)",
+      "end_point": "BSACIST",
+      "departure_time": "7.10 AM",
+      "duration_minutes": 85,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-120",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Gajapathy",
+        "contact_number": "+91 99413 55917"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Adambakkam ( Sakthi Cars)",
+          "latitude": 12.988,
+          "longitude": 80.2,
+          "arrival_time": "7.10 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Palavanthangal Subway",
+          "latitude": 12.988,
+          "longitude": 80.188,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Canara Bank (Nanganallur Market)",
+          "latitude": 12.9805,
+          "longitude": 80.1885,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Roja Medicals",
+          "latitude": 12.980333,
+          "longitude": 80.188333,
+          "arrival_time": "7.32 AM",
+          "offset_minutes": 22,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "Sakthivel Theater",
+          "latitude": 12.980167,
+          "longitude": 80.188167,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 6,
+          "name": "Nanganallur Bus Stand Near JK Mahal",
+          "latitude": 12.98,
+          "longitude": 80.188,
+          "arrival_time": "7.37 AM",
+          "offset_minutes": 27,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Brilliant School",
+          "latitude": 12.98,
+          "longitude": 80.1815,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "Meenambakkam Subway",
+          "latitude": 12.98,
+          "longitude": 80.175,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Chromepet Bus Stop",
+          "latitude": 12.952,
+          "longitude": 80.14,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 50,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Chitlapakkam Varadaraja Theatre",
+          "latitude": 12.928,
+          "longitude": 80.142,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 60,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Baratha Madha Street -Tambaram East",
+          "latitude": 12.925,
+          "longitude": 80.127,
+          "arrival_time": "8.23 AM",
+          "offset_minutes": 73,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.35 AM",
+          "offset_minutes": 85,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "121",
+      "name": "Kamatchi Hospital",
+      "start_point": "Kamatchi Hospital",
+      "end_point": "BSACIST",
+      "departure_time": "7.15 AM",
+      "duration_minutes": 70,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-121",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Kasim",
+        "contact_number": "+91 74186 81202"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Kamatchi Hospital",
+          "latitude": 12.904,
+          "longitude": 80.104,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 2,
+          "name": "Jain College",
+          "latitude": 12.9,
+          "longitude": 80.1,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "PTC Bus Stop",
+          "latitude": 12.9,
+          "longitude": 80.1635,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 10,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "Sholinganallur",
+          "latitude": 12.9,
+          "longitude": 80.227,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Semmanchery Jeppiar College",
+          "latitude": 12.877,
+          "longitude": 80.228,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Navalur",
+          "latitude": 12.842,
+          "longitude": 80.227,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Padur",
+          "latitude": 12.81,
+          "longitude": 80.225,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 40,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Kelambakkam",
+          "latitude": 12.788,
+          "longitude": 80.22,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 45,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "Pudupakkam",
+          "latitude": 12.8,
+          "longitude": 80.195,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 50,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Mambakkam",
+          "latitude": 12.85,
+          "longitude": 80.165,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 55,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Kandigai",
+          "latitude": 12.86185,
+          "longitude": 80.12365,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 60,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.25 AM",
+          "offset_minutes": 70,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "122",
+      "name": "Kancheepuram",
+      "start_point": "Kanchipuram Bus Stand",
+      "end_point": "BSACIST",
+      "departure_time": "7.00 AM",
+      "duration_minutes": 90,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-122",
+        "make": "Ashok Leyland",
+        "bus_type": "Ashok Leyland AC Bus",
+        "capacity": 52,
+        "is_ac": true,
+        "source_description": "AL AC Bus 52 Seater",
+        "driver_name": "Mr. Arul",
+        "contact_number": "+91 63694 46114"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Kanchipuram Bus Stand",
+          "latitude": 12.834,
+          "longitude": 79.704,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Moongil Mandapam",
+          "latitude": 12.828,
+          "longitude": 79.718,
+          "arrival_time": "7.02 AM",
+          "offset_minutes": 2,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "Theradi",
+          "latitude": 12.822,
+          "longitude": 79.732,
+          "arrival_time": "7.04 AM",
+          "offset_minutes": 4,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "Rangasamy Kulam",
+          "latitude": 12.816,
+          "longitude": 79.746,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "New Police Station",
+          "latitude": 12.81,
+          "longitude": 79.76,
+          "arrival_time": "7.06 AM",
+          "offset_minutes": 6,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 6,
+          "name": "Chetty Street",
+          "latitude": 12.804,
+          "longitude": 79.774,
+          "arrival_time": "7.07 AM",
+          "offset_minutes": 7,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 7,
+          "name": "Toll Gate",
+          "latitude": 12.798,
+          "longitude": 79.788,
+          "arrival_time": "7.12 AM",
+          "offset_minutes": 12,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "Periyar Nagar",
+          "latitude": 12.792,
+          "longitude": 79.802,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 15,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 9,
+          "name": "Ayyempettai",
+          "latitude": 12.786,
+          "longitude": 79.816,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 10,
+          "name": "Walajabad",
+          "latitude": 12.78,
+          "longitude": 79.83,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 30,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Oragadam",
+          "latitude": 12.8,
+          "longitude": 79.95,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Salamangalam Road",
+          "latitude": 12.84,
+          "longitude": 79.985,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 13,
+          "name": "Padappai",
+          "latitude": 12.88,
+          "longitude": 80.02,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 70,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "Karasangal",
+          "latitude": 12.885,
+          "longitude": 80.0525,
+          "arrival_time": "8.12 AM",
+          "offset_minutes": 72,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 15,
+          "name": "Mannivakkam",
+          "latitude": 12.89,
+          "longitude": 80.085,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 75,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 16,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 90,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "123",
+      "name": "Kanchipuram",
+      "start_point": "Kanchipuram Bus Stand",
+      "end_point": "BSACIST",
+      "departure_time": "7.00 AM",
+      "duration_minutes": 90,
+      "min_fare": 36300,
+      "max_fare": 44000,
+      "bus": {
+        "fleet_code": "BSACIST-123",
+        "make": "Ashok Leyland",
+        "bus_type": "Ashok Leyland Non-AC Bus",
+        "capacity": 50,
+        "is_ac": false,
+        "source_description": "AL Non AC Bus - 50 Seater",
+        "driver_name": "Mr. Devarajan",
+        "contact_number": "+91 98408 58743"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Kanchipuram Bus Stand",
+          "latitude": 12.834,
+          "longitude": 79.704,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 0,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Moongil Mandabum",
+          "latitude": 12.8205,
+          "longitude": 79.7355,
+          "arrival_time": "7.02 AM",
+          "offset_minutes": 2,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "Rangaswamy Kulam",
+          "latitude": 12.807,
+          "longitude": 79.767,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 5,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "Chetty Street",
+          "latitude": 12.7935,
+          "longitude": 79.7985,
+          "arrival_time": "7.07 AM",
+          "offset_minutes": 7,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "Walajabad",
+          "latitude": 12.78,
+          "longitude": 79.83,
+          "arrival_time": "7.25 AM",
+          "offset_minutes": 25,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Oothukadu",
+          "latitude": 12.79,
+          "longitude": 79.89,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 30,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 7,
+          "name": "Oragadam",
+          "latitude": 12.8,
+          "longitude": 79.95,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 50,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Salamangalam Road",
+          "latitude": 12.84,
+          "longitude": 79.985,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 65,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 9,
+          "name": "Padappai",
+          "latitude": 12.88,
+          "longitude": 80.02,
+          "arrival_time": "8.08 AM",
+          "offset_minutes": 68,
+          "fare": 36300,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "Karasangal",
+          "latitude": 12.8835,
+          "longitude": 80.041833,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 70,
+          "fare": 36300,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 11,
+          "name": "Ruby Flats",
+          "latitude": 12.887,
+          "longitude": 80.063667,
+          "arrival_time": "8.13 AM",
+          "offset_minutes": 73,
+          "fare": 36300,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "Mannivakkam Junction",
+          "latitude": 12.8905,
+          "longitude": 80.0855,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 75,
+          "fare": 36300,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 90,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "124",
+      "name": "Melmaruvathur",
+      "start_point": "Sothupakkam",
+      "end_point": "BSACIST",
+      "departure_time": "6.40 AM",
+      "duration_minutes": 110,
+      "min_fare": 44000,
+      "max_fare": 55000,
+      "bus": {
+        "fleet_code": "BSACIST-124",
+        "make": "Ashok Leyland",
+        "bus_type": "Ashok Leyland AC Bus",
+        "capacity": 50,
+        "is_ac": true,
+        "source_description": "AL AC Bus 50 Seater",
+        "driver_name": "Mr. Sundaramoorthy",
+        "contact_number": "+91 97892 47444"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Sothupakkam",
+          "latitude": 12.439,
+          "longitude": 79.852,
+          "arrival_time": "6.40 AM",
+          "offset_minutes": 0,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 2,
+          "name": "Melmaruvathur",
+          "latitude": 12.435,
+          "longitude": 79.848,
+          "arrival_time": "6.45 AM",
+          "offset_minutes": 5,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Madurandhagam",
+          "latitude": 12.51,
+          "longitude": 79.89,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 20,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "Karunkuli",
+          "latitude": 12.47,
+          "longitude": 79.88,
+          "arrival_time": "7.05 AM",
+          "offset_minutes": 25,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "Padalam X Road",
+          "latitude": 12.557,
+          "longitude": 79.92,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 35,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 6,
+          "name": "Pukkathurai",
+          "latitude": 12.6245,
+          "longitude": 79.9485,
+          "arrival_time": "7.20 AM",
+          "offset_minutes": 40,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 7,
+          "name": "Chengalpet Collector Office",
+          "latitude": 12.692,
+          "longitude": 79.977,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 50,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "Chengalpet Anna Nagar",
+          "latitude": 12.695,
+          "longitude": 79.98,
+          "arrival_time": "7.35 AM",
+          "offset_minutes": 55,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 9,
+          "name": "ICICI Bank (Ratna Kenaru)",
+          "latitude": 12.704167,
+          "longitude": 79.985,
+          "arrival_time": "7.38 AM",
+          "offset_minutes": 58,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 10,
+          "name": "New Bus Stand",
+          "latitude": 12.713333,
+          "longitude": 79.99,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 60,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 11,
+          "name": "Old Bus Stand",
+          "latitude": 12.7225,
+          "longitude": 79.995,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 65,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "JSP Hospital",
+          "latitude": 12.731667,
+          "longitude": 80.0,
+          "arrival_time": "7.47 AM",
+          "offset_minutes": 67,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 13,
+          "name": "SRK",
+          "latitude": 12.740833,
+          "longitude": 80.005,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 70,
+          "fare": 55000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 14,
+          "name": "Mahendra City",
+          "latitude": 12.75,
+          "longitude": 80.01,
+          "arrival_time": "7.57 AM",
+          "offset_minutes": 77,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 15,
+          "name": "S.P. Koil",
+          "latitude": 12.76,
+          "longitude": 80.005,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 80,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 16,
+          "name": "Maraimalai Nagar",
+          "latitude": 12.792,
+          "longitude": 80.023,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 85,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 17,
+          "name": "Kattangulathur",
+          "latitude": 12.823,
+          "longitude": 80.045,
+          "arrival_time": "8.08 AM",
+          "offset_minutes": 88,
+          "fare": 55000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 18,
+          "name": "Guduvanchery",
+          "latitude": 12.845,
+          "longitude": 80.06,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 95,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 19,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 110,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "125",
+      "name": "Madambakkam",
+      "start_point": "Manikkam Nagar",
+      "end_point": "BSACIST",
+      "departure_time": "7.40 AM",
+      "duration_minutes": 55,
+      "min_fare": 36300,
+      "max_fare": 36300,
+      "bus": {
+        "fleet_code": "BSACIST-125",
+        "make": "SML",
+        "bus_type": "SML Non-AC Bus",
+        "capacity": 40,
+        "is_ac": false,
+        "source_description": "SML NAC Bus - 40 Seater",
+        "driver_name": "Mr. Masilamani",
+        "contact_number": "+91 91767 40183"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Manikkam Nagar",
+          "latitude": 12.91,
+          "longitude": 80.11,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 0,
+          "fare": 36300,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 2,
+          "name": "Santhi Colony",
+          "latitude": 12.906,
+          "longitude": 80.106,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 10,
+          "fare": 36300,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "Kozhipannai",
+          "latitude": 12.902,
+          "longitude": 80.102,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 15,
+          "fare": 36300,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "ALS Nagar",
+          "latitude": 12.898,
+          "longitude": 80.098,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 20,
+          "fare": 36300,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "Indira Nagar",
+          "latitude": 12.894,
+          "longitude": 80.094,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 30,
+          "fare": 36300,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 6,
+          "name": "Bharath Engineeing College",
+          "latitude": 12.89,
+          "longitude": 80.09,
+          "arrival_time": "8.13 AM",
+          "offset_minutes": 33,
+          "fare": 36300,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 7,
+          "name": "Mappedu",
+          "latitude": 12.884567,
+          "longitude": 80.087433,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 35,
+          "fare": 36300,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "Venkapakkam",
+          "latitude": 12.879133,
+          "longitude": 80.084867,
+          "arrival_time": "8.20 AM",
+          "offset_minutes": 40,
+          "fare": 36300,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 9,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.35 AM",
+          "offset_minutes": 55,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "126",
+      "name": "Kalpakkam Via Chengalpattu",
+      "start_point": "Kalpakkam Mosque",
+      "end_point": "BSACIST",
+      "departure_time": "7.00 AM",
+      "duration_minutes": 90,
+      "min_fare": 36300,
+      "max_fare": 44000,
+      "bus": {
+        "fleet_code": "BSACIST-126",
+        "make": "Eicher",
+        "bus_type": "Eicher Non-AC Bus",
+        "capacity": 40,
+        "is_ac": false,
+        "source_description": "Eicher  - 40 Seater",
+        "driver_name": "Mr. Doss",
+        "contact_number": "+91 97869 81451"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Kalpakkam Mosque",
+          "latitude": 12.514,
+          "longitude": 80.175,
+          "arrival_time": "7.00 AM",
+          "offset_minutes": 0,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "Vengampakkam ECR",
+          "latitude": 12.56,
+          "longitude": 80.1185,
+          "arrival_time": "7.15 AM",
+          "offset_minutes": 15,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 3,
+          "name": "Thirukalukumdran",
+          "latitude": 12.606,
+          "longitude": 80.062,
+          "arrival_time": "7.30 AM",
+          "offset_minutes": 30,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 4,
+          "name": "ICICI Bank (Ratna Kenaru)",
+          "latitude": 12.63,
+          "longitude": 80.053333,
+          "arrival_time": "7.38 AM",
+          "offset_minutes": 38,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 5,
+          "name": "New Bus Stand",
+          "latitude": 12.654,
+          "longitude": 80.044667,
+          "arrival_time": "7.40 AM",
+          "offset_minutes": 40,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 6,
+          "name": "Old Bus Stand",
+          "latitude": 12.678,
+          "longitude": 80.036,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 45,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 7,
+          "name": "JSP Hospital",
+          "latitude": 12.702,
+          "longitude": 80.027333,
+          "arrival_time": "7.47 AM",
+          "offset_minutes": 47,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 8,
+          "name": "SRK",
+          "latitude": 12.726,
+          "longitude": 80.018667,
+          "arrival_time": "7.50 AM",
+          "offset_minutes": 50,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 9,
+          "name": "Mahendra City",
+          "latitude": 12.75,
+          "longitude": 80.01,
+          "arrival_time": "7.57 AM",
+          "offset_minutes": 57,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 10,
+          "name": "S.P. Koil",
+          "latitude": 12.76,
+          "longitude": 80.005,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 60,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 11,
+          "name": "Maraimalai Nagar",
+          "latitude": 12.792,
+          "longitude": 80.023,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 65,
+          "fare": 36300,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 12,
+          "name": "Kattangulathur",
+          "latitude": 12.823,
+          "longitude": 80.045,
+          "arrival_time": "8.08 AM",
+          "offset_minutes": 68,
+          "fare": 36300,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 13,
+          "name": "Guduvanchery",
+          "latitude": 12.845,
+          "longitude": 80.06,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 75,
+          "fare": 36300,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 14,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 90,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    },
+    {
+      "code": "127",
+      "name": "Hasthinapuram Via Mudichur",
+      "start_point": "Hasthinapuram Bus Stop",
+      "end_point": "BSACIST",
+      "departure_time": "7.45 AM",
+      "duration_minutes": 45,
+      "min_fare": 44000,
+      "max_fare": 44000,
+      "bus": {
+        "fleet_code": "BSACIST-127",
+        "make": "Bharat Benz",
+        "bus_type": "Bharat Benz AC Bus",
+        "capacity": 40,
+        "is_ac": true,
+        "source_description": "BB AC Bus 40 Seater",
+        "driver_name": "Mr. Kuppan",
+        "contact_number": "+91 95000 17666"
+      },
+      "stops": [
+        {
+          "sequence": 1,
+          "name": "Hasthinapuram Bus Stop",
+          "latitude": 12.94,
+          "longitude": 80.145,
+          "arrival_time": "7.45 AM",
+          "offset_minutes": 0,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 2,
+          "name": "MEPZ",
+          "latitude": 12.945,
+          "longitude": 80.135,
+          "arrival_time": "7.55 AM",
+          "offset_minutes": 10,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 3,
+          "name": "Gandhi Road",
+          "latitude": 12.94,
+          "longitude": 80.1325,
+          "arrival_time": "7.58 AM",
+          "offset_minutes": 13,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 4,
+          "name": "MRF Tambaram",
+          "latitude": 12.935,
+          "longitude": 80.13,
+          "arrival_time": "8.00 AM",
+          "offset_minutes": 15,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 5,
+          "name": "E Sait Biryani",
+          "latitude": 12.930667,
+          "longitude": 80.128333,
+          "arrival_time": "8.05 AM",
+          "offset_minutes": 20,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 6,
+          "name": "Reymonds",
+          "latitude": 12.926333,
+          "longitude": 80.126667,
+          "arrival_time": "8.10 AM",
+          "offset_minutes": 25,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 7,
+          "name": "Old Tambaram - Kulam",
+          "latitude": 12.922,
+          "longitude": 80.125,
+          "arrival_time": "8.12 AM",
+          "offset_minutes": 27,
+          "fare": 44000,
+          "geo_source": "mapped"
+        },
+        {
+          "sequence": 8,
+          "name": "By Pass ( Signal ) - Ring Road",
+          "latitude": 12.91234,
+          "longitude": 80.11646,
+          "arrival_time": "8.15 AM",
+          "offset_minutes": 30,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 9,
+          "name": "Krishna Nagar",
+          "latitude": 12.90268,
+          "longitude": 80.10792,
+          "arrival_time": "8.16 AM",
+          "offset_minutes": 31,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 10,
+          "name": "Sunnambu Kaalvai",
+          "latitude": 12.89302,
+          "longitude": 80.09938,
+          "arrival_time": "8.18 AM",
+          "offset_minutes": 33,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 11,
+          "name": "Saidhanya School",
+          "latitude": 12.88336,
+          "longitude": 80.09084,
+          "arrival_time": "8.20 AM",
+          "offset_minutes": 35,
+          "fare": 44000,
+          "geo_source": "interpolated"
+        },
+        {
+          "sequence": 12,
+          "name": "BSACIST",
+          "latitude": 12.8737,
+          "longitude": 80.0823,
+          "arrival_time": "8.30 AM",
+          "offset_minutes": 45,
+          "fare": null,
+          "geo_source": "mapped"
+        }
+      ]
+    }
+  ]
+}

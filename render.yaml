@@ -1,0 +1,35 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repository.
+# Render's disk is wiped on every deploy, so the hosted service needs a real
+# PostgreSQL: create one on Render (or Supabase) and paste its URL as DATABASE_URL.
+# Render web services accept HTTPS only: raw TCP GPS trackers (GT06, Teltonika)
+# need a VPS, or a Traccar server forwarding to /api/gps/webhook (docs/GPS_TRACKERS.md).
+services:
+  - type: web
+    name: crescent-transit
+    runtime: node
+    plan: free
+    # Dev dependencies (Vite) are needed to build the web app even though NODE_ENV=production.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DEMO_PASSWORD
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: VITE_GOOGLE_MAPS_API_KEY
+        sync: false

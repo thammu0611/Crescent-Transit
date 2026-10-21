@@ -1,0 +1,154 @@
+/* The navigation bar and the app name. Loaded last.
+   A deep navy glass bar with a gold hairline; the app name as a serif
+   wordmark ("Crescent") over small spaced gold capitals ("TRANSIT") beside a
+   crest; page links as quiet text with a frosted pill on the current page;
+   the account corner set apart by a hairline. The mobile app's header pill
+   uses the same wordmark (mobile-app/src/components/ui.js: Wordmark). */
+
+:root {
+  /* Montserrat, the heading face of crescent.education, for the app name and the
+     navigation in both apps (the phone app loads the same weights). */
+  --brand-font: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+  --nav-font: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ---- Bar ------------------------------------------------------------------------ */
+.topbar {
+  position: relative;
+  min-height: 70px;
+  padding: 0 12px 0 14px;
+  gap: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0) 100%),
+    linear-gradient(120deg, rgba(31, 54, 104, 0.94) 0%, rgba(20, 37, 72, 0.96) 55%, rgba(16, 30, 60, 0.97) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 20px 44px rgba(20, 37, 72, 0.24), 0 2px 8px rgba(20, 37, 72, 0.12);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+}
+/* A fine gold line along the lower edge. */
+.topbar::after {
+  content: ''; position: absolute; left: 48px; right: 48px; bottom: -1px; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, rgba(247, 188, 49, 0), rgba(247, 188, 49, 0.6) 25%, rgba(247, 188, 49, 0.6) 75%, rgba(247, 188, 49, 0));
+}
+
+/* ---- Brand ------------------------------------------------------------------------ */
+.brand { gap: 12px; padding: 8px 0; }
+.brand-icon { flex-shrink: 0; display: block; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.28)); transition: transform 0.2s var(--ease); }
+.brand:hover .brand-icon { transform: translateY(-1px) rotate(-3deg); }
+.brand-text { display: flex; flex-direction: column; justify-content: center; line-height: 1; }
+.brand-text strong {
+  font-family: var(--brand-font);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  text-transform: none;
+  color: #fff;
+  line-height: 1.05;
+}
+.brand-sub {
+  display: inline-flex; align-items: center; gap: 7px; margin-top: 3px;
+  font-family: var(--nav-font); font-size: 9.5px; font-weight: 700; letter-spacing: 3.8px; text-transform: uppercase;
+  color: var(--gold);
+}
+.brand-sub::before { content: ''; width: 14px; height: 1px; background: currentColor; opacity: 0.8; }
+.brand-text small { display: none; }
+
+/* ---- Page links (wide screens) -------------------------------------------------------- */
+@media (min-width: 1061px) {
+  .tabs { gap: 4px; }
+  .tabs a {
+    position: relative; padding: 9px 15px; border-radius: 999px;
+    font-family: var(--nav-font); font-size: 13px; font-weight: 600; letter-spacing: 0.2px;
+    color: rgba(255, 255, 255, 0.72);
+    transition: color 0.18s, background 0.18s, box-shadow 0.18s;
+  }
+  .tabs a:not(.active):not(.nav-cta):hover { color: #fff; background: rgba(255, 255, 255, 0.07); }
+  .tabs a.active {
+    color: #fff; font-weight: 600;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+  }
+  /* The current page: a small gold dot under its frosted pill. */
+  .tabs a.active::after {
+    display: block; content: ''; position: absolute; left: 50%; right: auto; bottom: 3px;
+    width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--gold);
+  }
+  .tabs a.nav-cta { padding: 10px 20px; font-weight: 700; }
+
+  /* Account corner, set apart by a hairline. */
+  .user-chip { margin-left: 14px; padding-left: 16px; gap: 8px; border-left: 1px solid rgba(255, 255, 255, 0.14); }
+  .avatar {
+    width: 38px; height: 38px; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+    border: 1.5px solid var(--gold); color: #fff;
+    box-shadow: 0 0 0 3px rgba(247, 188, 49, 0.12);
+  }
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);
+    transition: background 0.18s, border-color 0.18s;
+  }
+  .icon-btn:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.28); }
+}
+@media (min-width: 1061px) and (max-width: 1240px) {
+  .tabs a { padding: 9px 10px; font-size: 13px; }
+  .brand-text strong { font-size: 21px; }
+}
+
+/* ---- Utility line above the bar ----------------------------------------------------------- */
+.utility-inner { font-size: 12px; letter-spacing: 0.2px; }
+
+/* ---- Narrow screens -------------------------------------------------------------------------- */
+@media (max-width: 1060px) {
+  .topbar { min-height: 62px; padding: 6px 8px 6px 10px; }
+  .topbar::after { left: 32px; right: 32px; }
+  .brand-icon { width: 40px; height: 40px; }
+  .brand-text strong { font-size: 19px; }
+  .brand-sub { font-size: 8.5px; letter-spacing: 3.2px; }
+}
+
+/* Every navigation label in the same face, on every screen width. */
+.topbar .tabs a, .topbar .user-meta, .bottom-tabs a span { font-family: var(--nav-font); }
+.topbar .user-meta b { font-weight: 700; }
+
+/* ---- Enhanced bar: link track, gliding pill, condensing on scroll ---------------------- */
+/* Below the wide layout the track is invisible (links stack in the menu as before). */
+.nav-track { display: contents; }
+.nav-glider { display: none; }
+@media (min-width: 1061px) {
+  /* The links sit in a recessed glass track, like the phone app's tab bar... */
+  .nav-track {
+    position: relative; display: flex; align-items: center; gap: 2px; padding: 5px; align-self: center;
+    border-radius: 999px; background: rgba(6, 12, 28, 0.32);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  /* ...and the current page's pill glides to whichever link is active. */
+  .nav-glider {
+    display: block; position: absolute; top: 5px; bottom: 5px; left: 0; border-radius: 999px; pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 6px 14px rgba(0, 0, 0, 0.28);
+    transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .nav-glider::after {
+    content: ''; position: absolute; left: 50%; bottom: 3px; width: 14px; height: 2px; margin-left: -7px; border-radius: 2px;
+    background: var(--gold); box-shadow: 0 0 8px rgba(247, 188, 49, 0.8);
+  }
+  .tabs a { z-index: 1; padding: 8px 14px; }
+  .tabs a.active { background: none; box-shadow: none; }
+  .tabs a.active::after { display: none; }
+  .tabs a .icon { display: inline-block; opacity: 0.65; transition: opacity 0.2s, color 0.2s, transform 0.2s; }
+  .tabs a:hover .icon { opacity: 1; transform: translateY(-1px); }
+  .tabs a.active .icon { opacity: 1; color: var(--gold); }
+  .tabs a:not(.active):not(.nav-cta):hover { background: rgba(255, 255, 255, 0.05); }
+}
+/* Room for icons only on wide screens; the transport office has eight links. */
+@media (min-width: 1061px) and (max-width: 1400px) {
+  .tabs a .icon { display: none; }
+  .tabs a { padding: 8px 11px; }
+}
+
+/* Once the page scrolls the bar keeps its size and only casts a deeper shadow. */
+.topbar { transition: box-shadow 0.28s var(--ease); }
+.app.scrolled .topbar { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 22px 48px rgba(20, 37, 72, 0.34), 0 2px 8px rgba(20, 37, 72, 0.16); }
+@media (prefers-reduced-motion: reduce) { .nav-glider { transition: none; } }

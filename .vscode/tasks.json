@@ -1,0 +1,73 @@
+{
+  // Terminal > Run Task... (or Ctrl+Shift+P > "Tasks: Run Task").
+  // Each task runs in Command Prompt on Windows, where npm is never blocked.
+  "version": "2.0.0",
+  "options": {
+    "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] }
+  },
+  "linux": { "options": { "shell": { "executable": "bash", "args": ["-c"] } } },
+  "osx": { "options": { "shell": { "executable": "bash", "args": ["-c"] } } },
+  "tasks": [
+    {
+      "label": "Install everything",
+      "type": "shell",
+      "command": "npm install && cd mobile-app && npm install",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend (web app + API on :4000)",
+      "type": "shell",
+      "command": "npm run build && npm start",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated" }
+    },
+    {
+      "label": "Web dev server (live reload on :5173)",
+      "type": "shell",
+      "command": "npm run dev:client",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated" }
+    },
+    {
+      "label": "Bus simulator (moving buses + riders)",
+      "type": "shell",
+      "command": "npm run simulate:riders",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated" }
+    },
+    {
+      "label": "Mobile app (Expo, same Wi-Fi)",
+      "type": "shell",
+      "command": "npm run lan",
+      "options": { "cwd": "${workspaceFolder}/mobile-app" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated" }
+    },
+    {
+      "label": "Mobile app (Expo tunnel, any network)",
+      "type": "shell",
+      "command": "npm start",
+      "options": { "cwd": "${workspaceFolder}/mobile-app" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated" }
+    },
+    {
+      "label": "Tests",
+      "type": "shell",
+      "command": "npm test",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Reset local database",
+      "type": "shell",
+      "command": "npm run reset-db",
+      "problemMatcher": []
+    }
+  ]
+}

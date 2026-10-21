@@ -1,0 +1,177 @@
+/* Backdrop and motion: the last style layer. The route-map backdrop
+   (components/RouteBackdrop.jsx), screens that glide in, gentle press
+   feedback, and the student's dark glass tab bar, as in the phone app.
+   Everything stands still for people who ask for reduced motion. */
+
+/* ---- Route-map backdrop ------------------------------------------------------------ */
+/* Behind every screen: .app makes its own stacking context, so the map paints
+   over the app's glow but under all content. */
+.app { isolation: isolate; }
+.route-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.route-bg svg { width: 100%; height: 100%; display: block; }
+.route-bg-line path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.route-bg-line .casing { stroke: rgba(255, 255, 255, 0.55); stroke-width: 10; }
+.route-bg-line .line { stroke-width: 3; }
+.route-bg-line.navy .line { stroke: rgba(28, 49, 94, 0.13); }
+.route-bg-line.sky .line { stroke: rgba(110, 193, 228, 0.38); }
+.route-bg-line.gold .line { stroke: rgba(247, 188, 49, 0.55); stroke-dasharray: 2 12; animation: route-flow 14s linear infinite; }
+.route-bg-stop circle { fill: #fff; stroke: rgba(28, 49, 94, 0.28); stroke-width: 2; }
+.route-bg-stop .halo { fill: rgba(247, 188, 49, 0.14); stroke: none; }
+.route-bg-bus { filter: drop-shadow(0 2px 3px rgba(20, 37, 72, 0.25)); opacity: 0.85; }
+@keyframes route-flow { to { stroke-dashoffset: -280; } }
+/* Dark hero cards are see-through glass; give them a solid navy base so the
+   map's lines never show through their text. */
+.page > .page-head, .app-greet, .app-title, .kit-fleet, .route-card, .fleet-card, .drive-card { background-color: #1c315e; }
+/* Sign-in and the public home bring their own navy art; keep the map faint there. */
+.app:has(.auth, .land-hero) .route-bg { opacity: 0.5; }
+
+/* ---- Screens glide in ------------------------------------------------------------------ */
+/* .screen is re-mounted on every navigation (App.jsx keys it by route). */
+.screen > * { animation: screen-in 0.38s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes screen-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.page { scroll-behavior: smooth; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+
+/* ---- Cards rise in one after another --------------------------------------------------- */
+/* Every page's cards, panels, tiles and list rows arrive in a short cascade
+   behind the screen's own glide (the live bus panel included). */
+.sidebar > *, .driver-controls > *, .page > *, .app-page > *, .kit-stack > *, .kit-grid-2 > *, .kit-grid-3 > *,
+.kit-stats > *, .stat-row > *, .kit-bus-grid > *, .kit-shortcuts > *, .cols > .col > * {
+  animation: card-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+:is(.sidebar, .driver-controls, .page, .app-page, .kit-stack, .kit-grid-2, .kit-grid-3, .kit-stats, .stat-row, .kit-bus-grid, .kit-shortcuts, .cols > .col) > :nth-child(2) { animation-delay: 0.05s; }
+:is(.sidebar, .driver-controls, .page, .app-page, .kit-stack, .kit-grid-2, .kit-grid-3, .kit-stats, .stat-row, .kit-bus-grid, .kit-shortcuts, .cols > .col) > :nth-child(3) { animation-delay: 0.1s; }
+:is(.sidebar, .driver-controls, .page, .app-page, .kit-stack, .kit-grid-2, .kit-grid-3, .kit-stats, .stat-row, .kit-bus-grid, .kit-shortcuts, .cols > .col) > :nth-child(4) { animation-delay: 0.15s; }
+:is(.sidebar, .driver-controls, .page, .app-page, .kit-stack, .kit-grid-2, .kit-grid-3, .kit-stats, .stat-row, .kit-bus-grid, .kit-shortcuts, .cols > .col) > :nth-child(5) { animation-delay: 0.2s; }
+:is(.sidebar, .driver-controls, .page, .app-page, .kit-stack, .kit-grid-2, .kit-grid-3, .kit-stats, .stat-row, .kit-bus-grid, .kit-shortcuts, .cols > .col) > :nth-child(6) { animation-delay: 0.25s; }
+:is(.sidebar, .driver-controls, .page, .app-page, .kit-stack, .kit-grid-2, .kit-grid-3, .kit-stats, .stat-row, .kit-bus-grid, .kit-shortcuts, .cols > .col) > :nth-child(n + 7) { animation-delay: 0.3s; }
+@keyframes card-in { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: none; } }
+
+/* Live things breathe: the connection light and live counts. */
+.conn.on::before, .badge.live::before { animation: live-pulse 1.8s ease-out infinite; }
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(97, 206, 112, 0.6); }
+  70% { box-shadow: 0 0 0 7px rgba(97, 206, 112, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(97, 206, 112, 0); }
+}
+
+/* ---- Dashboard shortcuts: coloured, with a hint and a go arrow ------------------------- */
+.kit-shortcuts .kit-shortcut {
+  --tone-a: #2a4787; --tone-b: #1c315e; --tone-soft: rgba(28, 49, 94, 0.08); --tone-line: rgba(28, 49, 94, 0.28);
+  position: relative; overflow: hidden; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px;
+  padding: 16px 16px; text-align: left; border-radius: 20px;
+  background: radial-gradient(120% 140% at 0% 0%, var(--tone-soft), transparent 60%), rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(28, 49, 94, 0.10);
+  box-shadow: 0 10px 24px rgba(20, 37, 72, 0.08), inset 0 1px 0 #fff;
+}
+.kit-shortcuts .kit-shortcut::after {
+  content: ''; position: absolute; left: 16px; right: 16px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, var(--tone-a), var(--tone-b)); opacity: 0.85; transition: left 0.25s var(--ease), right 0.25s var(--ease);
+}
+.kit-shortcuts .kit-shortcut .ks-icon {
+  width: 46px; height: 46px; flex-shrink: 0; border-radius: 15px; display: grid; place-items: center; color: #fff; border: 0;
+  background: linear-gradient(135deg, var(--tone-a), var(--tone-b));
+  box-shadow: 0 8px 18px var(--tone-line), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.kit-shortcuts .kit-shortcut .ks-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; background: none; border: 0; box-shadow: none; width: auto; height: auto; place-items: initial; }
+.kit-shortcuts .kit-shortcut .ks-text b { font-family: var(--nav-font, inherit); font-size: 15px; font-weight: 700; color: var(--ink); }
+.kit-shortcuts .kit-shortcut .ks-text small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kit-shortcuts .kit-shortcut .ks-go {
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center;
+  background: var(--tone-soft); color: var(--tone-b); border: 0; box-shadow: none; transition: transform 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.kit-shortcuts .kit-shortcut:hover { border-color: var(--tone-line); box-shadow: 0 16px 34px var(--tone-soft), 0 10px 24px rgba(20, 37, 72, 0.10), inset 0 1px 0 #fff; }
+.kit-shortcuts .kit-shortcut:hover::after { left: 0; right: 0; }
+.kit-shortcuts .kit-shortcut:hover .ks-go { transform: translateX(3px); background: var(--tone-b); color: #fff; }
+.kit-shortcut.tone-green { --tone-a: #61ce70; --tone-b: #2b8a3e; --tone-soft: rgba(97, 206, 112, 0.14); --tone-line: rgba(43, 138, 62, 0.3); }
+.kit-shortcut.tone-blue { --tone-a: #6ec1e4; --tone-b: #0170b9; --tone-soft: rgba(110, 193, 228, 0.18); --tone-line: rgba(1, 112, 185, 0.3); }
+.kit-shortcut.tone-red { --tone-a: #c4373a; --tone-b: #a02022; --tone-soft: rgba(160, 32, 34, 0.10); --tone-line: rgba(160, 32, 34, 0.3); }
+@media (max-width: 1100px) { .kit-shortcuts .kit-shortcut .ks-text small { display: none; } }
+@media (max-width: 560px) {
+  .kit-shortcuts .kit-shortcut { flex-direction: column; text-align: center; gap: 8px; padding: 14px 8px; }
+  .kit-shortcuts .kit-shortcut .ks-text { align-items: center; }
+  .kit-shortcuts .kit-shortcut .ks-go { display: none; }
+}
+
+/* ---- Press feedback ------------------------------------------------------------------- */
+.btn, .kit-bus, .kit-row, .kit-shortcut, .stat, .tabs a, .bottom-tabs a, .chip, .segmented button, .icon-btn, .kit-back {
+  transition: transform 0.18s var(--ease), box-shadow 0.22s var(--ease), background-color 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active:not(:disabled), .kit-bus:active:not(:disabled), .kit-row:active, .kit-shortcut:active,
+.chip:active, .segmented button:active, .icon-btn:active, .kit-back:active { transform: scale(0.97); }
+@media (hover: hover) {
+  .kit-bus:hover:not(:disabled), .kit-row:hover, .stat:hover { transform: translateY(-2px); }
+}
+
+/* ---- Student tab bar: dark glass capsule, as in the phone app ------------------------- */
+@media (max-width: 900px) {
+  .bottom-tabs {
+    height: 72px; border-radius: 36px; padding: 6px;
+    background: rgba(24, 30, 44, 0.74);
+    -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+  .bottom-tabs a { border-radius: 30px; color: #fff; opacity: 0.88; font-size: 11.5px; gap: 4px; }
+  .bottom-tabs a .icon { color: #fff; }
+  .bottom-tabs a.active { opacity: 1; background: rgba(6, 10, 20, 0.5); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); color: #fff; }
+  .bottom-tabs a.active .icon { color: #fff; }
+  .bottom-tabs a.active::before, .bottom-tabs a.active::after { display: none; }
+  .bottom-tabs a:active { transform: scale(0.94); }
+}
+
+/* ---- Map pages on wide screens ----------------------------------------------------------- */
+/* Panel column and map as two cards with the same 16px gaps all round; the
+   column scrolls with a slim scrollbar inside its own gap. */
+@media (min-width: 901px) {
+  .live-layout, .driver-layout { grid-template-columns: minmax(340px, 400px) minmax(0, 1fr); gap: 16px; padding: 16px; }
+  .live-layout > .sidebar, .driver-layout > .driver-controls {
+    padding: 0 8px 16px 0; background: transparent; border: 0;
+    scrollbar-width: thin; scrollbar-color: rgba(28, 49, 94, 0.28) transparent; scrollbar-gutter: stable;
+  }
+  .live-layout > .map-wrap, .driver-layout > .map-wrap {
+    border-radius: 24px; overflow: hidden; border: 1px solid rgba(28, 49, 94, 0.12); box-shadow: 0 14px 32px rgba(20, 37, 72, 0.14);
+  }
+  .live-layout > .map-wrap .map, .driver-layout > .map-wrap .map { height: 100%; }
+}
+
+/* Live bus counts as the phone app shows them: a 2 x 2 grid of equal tiles,
+   each with its colour as a bar down the left edge. */
+.live-layout .stat-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.live-layout .stat-row .stat {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px;
+  padding: 12px 14px 12px 18px; border-radius: 16px; border-top: 0; text-align: left; min-height: 74px;
+}
+.live-layout .stat-row .stat::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: transparent; }
+.live-layout .stat-row .stat.live::before { background: var(--live); }
+.live-layout .stat-row .stat.delayed::before { background: var(--delayed); }
+.live-layout .stat-row .stat.offline::before { background: var(--offline); }
+.live-layout .stat-row .stat b { font-size: 26px; line-height: 1; }
+.live-layout .stat-row .stat span { white-space: nowrap; font-size: 11px; letter-spacing: 0.08em; }
+
+/* ---- Map pages on phones and tablets ---------------------------------------------------- */
+/* One column that scrolls as a whole: the map as a rounded card with the page's
+   side margins, then the panels with the same margins (the old two-row grid
+   squeezed the panels into a fixed 55vh row). */
+@media (max-width: 900px) {
+  .live-layout, .driver-layout { display: flex; flex-direction: column; gap: 14px; padding: 12px 16px 24px; overflow-y: auto; }
+  .live-layout > .map-wrap, .driver-layout > .map-wrap {
+    order: -1; flex: none; height: clamp(260px, 46vh, 520px); border-radius: 24px; overflow: hidden;
+    border: 1px solid rgba(28, 49, 94, 0.12); box-shadow: 0 14px 32px rgba(20, 37, 72, 0.14);
+  }
+  .live-layout > .map-wrap .map, .driver-layout > .map-wrap .map { height: 100%; }
+  .live-layout > .sidebar, .driver-layout > .driver-controls { flex: none; padding: 0; overflow: visible; background: transparent; border: 0; }
+  .live-layout .legend { bottom: 10px; }
+}
+
+/* ---- Attendance: show more ------------------------------------------------------------- */
+.show-more { display: inline-flex; align-items: center; gap: 6px; align-self: center; margin: 10px auto 0; }
+
+/* ---- Finance switched off ------------------------------------------------------------- */
+.finance-off { max-width: 520px; text-align: center; display: flex; flex-direction: column; gap: 10px; padding: 28px; }
+.finance-off h2 { margin: 6px 0 0; font-size: 20px; color: var(--navy); }
+.finance-off p { margin: 0; line-height: 1.5; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
