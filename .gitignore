@@ -9,3 +9,6 @@ load-test-result*.json
 # Build output and screen captures (large, regenerated on demand)
 release/*.apk
 screenshots/
+
+.vercel
+.env*.local

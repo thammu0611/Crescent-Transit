@@ -1,0 +1,13 @@
+# Only the server, the shared rules, the data and the web app go to Vercel.
+release/
+mobile-app/
+apk/
+screenshots/
+presentation/
+docs/
+test/
+node_modules/
+client/dist/
+.data/
+*.apk
+*.log
