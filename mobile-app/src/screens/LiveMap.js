@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { BusPin, CampusPin, MapBox, RouteLayer } from '../components/maps';
 import {
-  Badge, Button, ErrorText, Panel, Row, Select, Stat, StatGrid, Text, Txt, useTabBarSpace,
+  Badge, Button, ErrorText, FadeIn, LivePulse, Panel, Row, Select, Stat, StatGrid, Text, Txt, useTabBarSpace,
 } from '../components/ui.js';
 import { api, getSocket } from '../lib/api.js';
 import { etaText, OCCUPANCY } from '../lib/format.js';
@@ -128,7 +128,7 @@ export default function LiveMap({ navigation }) {
       </View>
       <ScrollView contentContainerStyle={{ padding: 14, gap: 12, paddingBottom: 30 + tabSpace }} keyboardShouldPersistTaps="handled">
         {denied ? <Paywall reason={denied} navigation={navigation} /> : null}
-        <Panel title={user?.role === 'admin' ? 'Fleet' : 'Live buses'} actions={<Badge tone={connected ? 'live' : 'delayed'}>{connected ? 'Connected' : 'Reconnecting…'}</Badge>}>
+        <Panel title={user?.role === 'admin' ? 'Fleet' : 'Live buses'} actions={<Row gap={2}>{connected ? <LivePulse size={7} /> : null}<Badge tone={connected ? 'live' : 'delayed'}>{connected ? 'Connected' : 'Reconnecting…'}</Badge></Row>}>
           <StatGrid>
             <Stat label="on trip" value={list.length} />
             <Stat label="live" value={counts.live ?? 0} tone="live" />
@@ -160,35 +160,36 @@ export default function LiveMap({ navigation }) {
           </Panel>
         )}
         {list.map((b) => (
-          <Pressable
-            key={b.busId}
-            onPress={() => selectBus(b.busId)}
-            accessibilityState={{ selected: b.busId === selectedBusId }}
-            style={{ backgroundColor: b.busId === selectedBusId ? C.glassStrong : C.glass, borderRadius: 16, padding: 14, paddingLeft: 18, gap: 6, borderWidth: b.busId === selectedBusId ? 2 : 1, borderColor: b.busId === selectedBusId ? C.navy : C.glassEdge, overflow: 'hidden' }}
-          >
-            <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: FRESH_COLOR[b.freshness] ?? C.offline }} />
-            <Row style={{ justifyContent: 'space-between' }}>
-              <Txt bold>{b.fleetCode}</Txt>
-              <Row gap={6}>
-                {OCCUPANCY[b.occupancy] ? <Badge tone={OCCUPANCY[b.occupancy].tone}>{OCCUPANCY[b.occupancy].label}</Badge> : null}
-                <Badge tone={b.freshness}>{STATE_LABEL[b.freshness]}</Badge>
+          <FadeIn key={b.busId}>
+            <Pressable
+              onPress={() => selectBus(b.busId)}
+              accessibilityState={{ selected: b.busId === selectedBusId }}
+              style={{ backgroundColor: b.busId === selectedBusId ? C.glassStrong : C.glass, borderRadius: 16, padding: 14, paddingLeft: 18, gap: 6, borderWidth: b.busId === selectedBusId ? 2 : 1, borderColor: b.busId === selectedBusId ? C.navy : C.glassEdge, overflow: 'hidden' }}
+            >
+              <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: FRESH_COLOR[b.freshness] ?? C.offline }} />
+              <Row style={{ justifyContent: 'space-between' }}>
+                <Txt bold>{b.fleetCode}</Txt>
+                <Row gap={6}>
+                  {OCCUPANCY[b.occupancy] ? <Badge tone={OCCUPANCY[b.occupancy].tone}>{OCCUPANCY[b.occupancy].label}</Badge> : null}
+                  <Badge tone={b.freshness}>{STATE_LABEL[b.freshness]}</Badge>
+                </Row>
               </Row>
-            </Row>
-            <Txt muted small>{b.routeName}</Txt>
-            {stop && b.routeCode === route?.code && (
-              <Row style={{ justifyContent: 'space-between', backgroundColor: b.eta?.confidence === 'low' ? C.delayed50 : C.indigo50, padding: 8, borderRadius: 10 }}>
-                <Txt small style={{ flex: 1 }}>Estimated arrival at {stop.name}</Txt>
-                <Txt bold>{b.freshness === 'offline' ? 'Bus offline' : etaText(b.eta)}</Txt>
+              <Txt muted small>{b.routeName}</Txt>
+              {stop && b.routeCode === route?.code && (
+                <Row style={{ justifyContent: 'space-between', backgroundColor: b.eta?.confidence === 'low' ? C.delayed50 : C.indigo50, padding: 8, borderRadius: 10 }}>
+                  <Txt small style={{ flex: 1 }}>Estimated arrival at {stop.name}</Txt>
+                  <Txt bold>{b.freshness === 'offline' ? 'Bus offline' : etaText(b.eta)}</Txt>
+                </Row>
+              )}
+              <Row style={{ justifyContent: 'space-between' }}>
+                <Txt muted small>Updated {ageLabel(b.recordedAt, now)}</Txt>
+                <Txt muted small>{b.freshness === 'offline' ? 'last seen' : `${Math.round(b.speedKmh ?? 0)} km/h`}</Txt>
               </Row>
-            )}
-            <Row style={{ justifyContent: 'space-between' }}>
-              <Txt muted small>Updated {ageLabel(b.recordedAt, now)}</Txt>
-              <Txt muted small>{b.freshness === 'offline' ? 'last seen' : `${Math.round(b.speedKmh ?? 0)} km/h`}</Txt>
-            </Row>
-            {b.nearestStop && (
-              <Txt small>{b.freshness === 'offline' ? 'Last seen near' : 'Near'} <Txt small bold>{b.nearestStop.name}</Txt> ({b.nearestStop.distanceM} m)</Txt>
-            )}
-          </Pressable>
+              {b.nearestStop && (
+                <Txt small>{b.freshness === 'offline' ? 'Last seen near' : 'Near'} <Txt small bold>{b.nearestStop.name}</Txt> ({b.nearestStop.distanceM} m)</Txt>
+              )}
+            </Pressable>
+          </FadeIn>
         ))}
 
         {route && (

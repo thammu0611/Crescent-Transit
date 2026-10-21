@@ -245,8 +245,21 @@ export const RoutePattern = ({ opacity = 0.16, color = '#f9d27a', slice }) => (
 
 const native = Platform.OS !== 'web';
 
-/** Fades and slides its content in when it first appears. */
-export function FadeIn({ children, delay = 0, style }) {
+// Cards that appear together (a screen opening, a list arriving) come in as a
+// short cascade: each one 60 ms after the one before, at most 360 ms.
+const cascade = { at: 0, n: 0 };
+function nextCascadeDelay() {
+  const now = Date.now();
+  if (now - cascade.at > 250) cascade.n = 0;
+  cascade.at = now;
+  const d = Math.min(cascade.n, 6) * 60;
+  cascade.n += 1;
+  return d;
+}
+
+/** Fades and slides its content in when it first appears (in a cascade unless given a delay). */
+export function FadeIn({ children, delay: fixedDelay, style }) {
+  const [delay] = useState(() => fixedDelay ?? nextCascadeDelay());
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(v, { toValue: 1, duration: 420, delay, easing: Easing.out(Easing.cubic), useNativeDriver: native }).start();
