@@ -152,7 +152,13 @@ function BoardedList({ token, tripId }) {
   };
   const onBoard = data?.records.filter((r) => ['CONFIRMED', 'ON_BOARD', 'PROVISIONAL'].includes(r.status) && !r.alighted_at) ?? [];
   return (
-    <Panel title="On board" icon="users" actions={<Badge tone={data && data.capacity && data.onBoard > data.capacity ? 'danger' : 'live'}>{data?.onBoard ?? 0} / {data?.capacity ?? '—'} seats</Badge>}>
+    // Folded until opened, like "Students on this bus"; the seat count stays visible.
+    <FoldCard
+      icon="users"
+      title="On board"
+      summary={!data ? 'Loading…' : onBoard.length ? `${onBoard.length} student${onBoard.length === 1 ? '' : 's'} on board · mark one by hand` : 'Nobody recorded yet · mark one by hand'}
+      badge={<Badge tone={data && data.capacity && data.onBoard > data.capacity ? 'danger' : 'live'}>{data?.onBoard ?? 0} / {data?.capacity ?? '—'} seats</Badge>}
+    >
       {onBoard.length === 0 ? <Txt muted>Nobody recorded yet.</Txt> : onBoard.map((r) => (
         <View key={r.attendance_id} style={{ paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: C.line2 }}>
           <Txt bold>{r.full_name} <Txt muted small>{r.register_no ?? r.username}</Txt></Txt>
@@ -164,7 +170,7 @@ function BoardedList({ token, tripId }) {
         <Button title="Mark" variant="ghost" onPress={mark} />
       </Row>
       <ErrorText>{error}</ErrorText>
-    </Panel>
+    </FoldCard>
   );
 }
 
