@@ -59,6 +59,35 @@
   .bottom-tabs a:active { transform: scale(0.94); }
 }
 
+/* ---- Map pages on wide screens ----------------------------------------------------------- */
+/* Panel column and map as two cards with the same 16px gaps all round; the
+   column scrolls with a slim scrollbar inside its own gap. */
+@media (min-width: 901px) {
+  .live-layout, .driver-layout { grid-template-columns: minmax(340px, 400px) minmax(0, 1fr); gap: 16px; padding: 16px; }
+  .live-layout > .sidebar, .driver-layout > .driver-controls {
+    padding: 0 8px 16px 0; background: transparent; border: 0;
+    scrollbar-width: thin; scrollbar-color: rgba(28, 49, 94, 0.28) transparent; scrollbar-gutter: stable;
+  }
+  .live-layout > .map-wrap, .driver-layout > .map-wrap {
+    border-radius: 24px; overflow: hidden; border: 1px solid rgba(28, 49, 94, 0.12); box-shadow: 0 14px 32px rgba(20, 37, 72, 0.14);
+  }
+  .live-layout > .map-wrap .map, .driver-layout > .map-wrap .map { height: 100%; }
+}
+
+/* Live bus counts as the phone app shows them: a 2 x 2 grid of equal tiles,
+   each with its colour as a bar down the left edge. */
+.live-layout .stat-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.live-layout .stat-row .stat {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px;
+  padding: 12px 14px 12px 18px; border-radius: 16px; border-top: 0; text-align: left; min-height: 74px;
+}
+.live-layout .stat-row .stat::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: transparent; }
+.live-layout .stat-row .stat.live::before { background: var(--live); }
+.live-layout .stat-row .stat.delayed::before { background: var(--delayed); }
+.live-layout .stat-row .stat.offline::before { background: var(--offline); }
+.live-layout .stat-row .stat b { font-size: 26px; line-height: 1; }
+.live-layout .stat-row .stat span { white-space: nowrap; font-size: 11px; letter-spacing: 0.08em; }
+
 /* ---- Map pages on phones and tablets ---------------------------------------------------- */
 /* One column that scrolls as a whole: the map as a rounded card with the page's
    side margins, then the panels with the same margins (the old two-row grid
