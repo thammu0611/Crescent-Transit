@@ -1,0 +1,64 @@
+/* Accessibility and interaction states: the last style layer.
+   One focus ring, one disabled look, one busy look and comfortable tap targets
+   on every screen (WCAG 2.2 AA: 3:1 focus contrast, 24 px minimum targets). */
+
+/* ---- Colour tokens tuned for contrast ----------------------------------------------------- */
+/* The site's green as text and as a background behind white text: #2b8a3e was
+   4.4:1 (just under AA); this shade passes on white, the pale green tint and grey. */
+:root { --live: #237a36; --emerald: #237a36; }
+
+/* ---- Keyboard focus -------------------------------------------------------------------- */
+/* Navy on light surfaces (gold there is only ~1.8:1), gold on the navy ones. */
+:focus-visible { outline: 2.5px solid var(--navy); outline-offset: 2px; }
+:is(.topbar, .masthead, .page-head, .app-greet, .app-title, .kit-fleet, .route-card, .fleet-card, .drive-card,
+    .bottom-tabs, .auth-side, .land-hero, .kit-detail-head .btn.primary) :focus-visible,
+.btn.primary:focus-visible, .btn.red:focus-visible, .btn.danger:focus-visible { outline-color: var(--gold); }
+/* Fields already show focus with a coloured border and ring; keep a visible
+   outline only for keyboard users on controls that have neither. */
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible,
+.control-wrap > input:focus-visible, .control-wrap > select:focus-visible, .search-box input:focus-visible { outline: none; }
+.route-pick:focus-within, .route-pill:focus-within { box-shadow: 0 0 0 2.5px var(--gold); }
+
+/* Skip straight to the page content (first Tab on every screen). */
+.skip-link {
+  position: fixed; left: 12px; top: -60px; z-index: 5000; padding: 10px 16px; border-radius: 12px;
+  background: var(--navy); color: #fff; font-weight: 700; text-decoration: none; box-shadow: 0 10px 24px rgba(20, 37, 72, 0.3);
+  transition: top 0.18s var(--ease);
+}
+.skip-link:focus { top: 12px; }
+.screen:focus { outline: none; }
+
+/* ---- Disabled and busy ------------------------------------------------------------------ */
+.btn:disabled, .btn[aria-disabled='true'], .link:disabled, .tile:disabled, .chip:disabled, .icon-btn:disabled {
+  opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(0.6);
+}
+.btn[aria-busy='true'], button[aria-busy='true'] { cursor: progress; opacity: 0.75; }
+
+/* ---- Tap targets -------------------------------------------------------------------------- */
+/* The phone numbers in the top strip and the sign-in page's back link were
+   about 15 px tall; give them a full row to hit. */
+.util-item a { display: inline-flex; align-items: center; min-height: 28px; padding: 0 4px; margin: 0 -4px; border-radius: 8px; }
+.util-item a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.auth-back { min-height: 32px; }
+
+/* ---- Small finishing touches -------------------------------------------------------------- */
+::selection { background: rgba(247, 188, 49, 0.45); color: var(--ink); }
+/* Numbers that update in place (counts, times) keep their width. */
+.tabular, .kit-figures b, .stat b, .kit-fleet-big b { font-variant-numeric: tabular-nums; }
+/* Long words and links wrap instead of pushing the layout sideways. */
+.panel, .kit-block, .kit-day, .kit-row, .notice, .alert { overflow-wrap: anywhere; }
+
+/* ---- Schedule: stops the bus has already passed --------------------------------------------- */
+/* They used to fade to 45% opacity (2.1:1, unreadable); now muted but readable,
+   with the timeline dot greyed so "already passed" still reads at a glance. */
+.timeline li.passed { opacity: 1; }
+.timeline li.passed time, .timeline li.passed .stop-name, .timeline li.passed .bus-tag { color: #646a73; }
+.timeline li.passed time { font-weight: 600; }
+.timeline li.passed .stop-name em:not(.you) { background: #646a73; }
+
+/* ---- More comfortable targets --------------------------------------------------------------- */
+/* Header links and text buttons ("All trips", "Clear all") and the route picker
+   inside its pill take a full 28 px row instead of their text height. */
+.soft-card-head a, .clear, .contact-list a, .contact-text a, .land-foot a { display: inline-flex; align-items: center; min-height: 28px; padding: 0 6px; margin: 0 -6px; border-radius: 8px; }
+.soft-card-head a:hover, .clear:hover { background: rgba(28, 49, 94, 0.06); }
+.route-pill select { align-self: stretch; }

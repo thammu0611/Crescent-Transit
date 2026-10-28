@@ -6,7 +6,7 @@ import Icon from './Icon.jsx';
 import { Empty } from './ui.jsx';
 
 /** Series colours: navy, gold, emerald, crimson, slate, sky. */
-export const SERIES = ['#1c315e', '#f7bc31', '#2b8a3e', '#a02022', '#3e4c57', '#6ec1e4'];
+export const SERIES = ['#1c315e', '#f7bc31', '#237a36', '#a02022', '#3e4c57', '#6ec1e4'];
 
 const compact = (n) => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 

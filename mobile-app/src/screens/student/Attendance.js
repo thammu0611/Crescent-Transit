@@ -86,7 +86,7 @@ function Scanner({ onScan, onClose }) {
       <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
         <Row style={{ padding: 12 }}>
           <Text style={{ color: '#fff', ...F[800], fontSize: 17, flex: 1 }}>Scan the bus QR code</Text>
-          <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close"><Icon name="x" size={24} color="#fff" /></Pressable>
+          <Pressable accessibilityRole="button" onPress={onClose} hitSlop={10} accessibilityLabel="Close"><Icon name="x" size={24} color="#fff" /></Pressable>
         </Row>
         {!permission ? null : !permission.granted ? (
           <View style={{ padding: 20, gap: 12 }}>

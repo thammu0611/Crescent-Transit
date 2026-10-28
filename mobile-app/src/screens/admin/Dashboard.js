@@ -24,7 +24,7 @@ export function Card({ title, icon, onSeeAll, seeAll = 'See all', children, righ
         <IconBubble name={icon} accent="navy" size={34} />
         <Txt bold style={{ flex: 1, fontSize: 16 }}>{title}</Txt>
         {right}
-        {onSeeAll ? <Pressable onPress={onSeeAll} hitSlop={8}><Text style={{ color: C.indigo, ...F[700] }}>{seeAll}</Text></Pressable> : null}
+        {onSeeAll ? <Pressable accessibilityRole="button" onPress={onSeeAll} hitSlop={8}><Text style={{ color: C.indigo, ...F[700] }}>{seeAll}</Text></Pressable> : null}
       </Row>
       {children}
     </View>
@@ -215,7 +215,7 @@ export default function Dashboard({ navigation }) {
         {open == null ? <Skeleton /> : open.length === 0 && !k.awaitingReview ? <Txt muted>Nothing needs attention. All quiet on the fleet.</Txt> : (
           <View style={{ gap: 8 }}>
             {k.awaitingReview > 0 && (
-              <Pressable onPress={() => navigation.navigate('AttendanceAdmin')} style={{ padding: 12, paddingLeft: 15, borderRadius: 14, backgroundColor: 'rgba(247,188,49,0.12)', borderWidth: 1, borderColor: 'rgba(247,188,49,0.4)', borderLeftWidth: 4, borderLeftColor: C.gold, gap: 2 }}>
+              <Pressable accessibilityRole="button" onPress={() => navigation.navigate('AttendanceAdmin')} style={{ padding: 12, paddingLeft: 15, borderRadius: 14, backgroundColor: 'rgba(247,188,49,0.12)', borderWidth: 1, borderColor: 'rgba(247,188,49,0.4)', borderLeftWidth: 4, borderLeftColor: C.gold, gap: 2 }}>
                 <Txt bold>{k.awaitingReview} attendance record{k.awaitingReview === 1 ? '' : 's'} to review</Txt>
                 <Txt small muted>Provisional records and disputes need a decision.</Txt>
                 <Text style={{ color: C.navy, ...F[700], marginTop: 2 }}>Review now →</Text>

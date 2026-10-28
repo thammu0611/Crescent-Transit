@@ -11,7 +11,11 @@ import './liquid-glass.css';
 import './layout.css';
 import './navbar.css';
 import './motion.css';
+import './polish.css';
 import App from './App.jsx';
+import { installSubmitGuard } from './lib/submitGuard.js';
+
+installSubmitGuard();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -161,7 +161,7 @@ export default function LiveMap({ navigation }) {
         )}
         {list.map((b) => (
           <FadeIn key={b.busId}>
-            <Pressable
+            <Pressable accessibilityRole="button"
               onPress={() => selectBus(b.busId)}
               accessibilityState={{ selected: b.busId === selectedBusId }}
               style={{ backgroundColor: b.busId === selectedBusId ? C.glassStrong : C.glass, borderRadius: 16, padding: 14, paddingLeft: 18, gap: 6, borderWidth: b.busId === selectedBusId ? 2 : 1, borderColor: b.busId === selectedBusId ? C.navy : C.glassEdge, overflow: 'hidden' }}
@@ -201,7 +201,7 @@ export default function LiveMap({ navigation }) {
               const here = selected?.nearestStop?.seq === s.seq;
               const mine = s.seq === stopSeq;
               return (
-                <Pressable key={s.seq} onPress={() => map.current?.focus(s)} style={{ flexDirection: 'row', gap: 8, paddingVertical: 6, paddingHorizontal: 6, borderRadius: 8, backgroundColor: here ? C.indigo50 : mine ? C.red50 : 'transparent' }}>
+                <Pressable accessibilityRole="button" key={s.seq} onPress={() => map.current?.focus(s)} style={{ flexDirection: 'row', gap: 8, paddingVertical: 6, paddingHorizontal: 6, borderRadius: 8, backgroundColor: here ? C.indigo50 : mine ? C.red50 : 'transparent' }}>
                   <Txt small style={{ flex: 1 }}>{s.seq}. {s.name}{s.geo_source === 'interpolated' ? <Txt small muted> approx.</Txt> : null}</Txt>
                   <Txt small muted>{s.scheduled_time}</Txt>
                 </Pressable>

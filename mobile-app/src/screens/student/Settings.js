@@ -283,7 +283,7 @@ export default function Settings() {
       <FoldCard icon="phone" title="Help and support" summary="Contacts and common questions">
         <View style={{ gap: 2 }}>
           {(contacts.data ?? []).map((c, i) => (
-            <Pressable key={c.label} onPress={() => call(c.phone)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: C.line2, opacity: pressed ? 0.6 : 1 })}>
+            <Pressable accessibilityRole="button" key={c.label} onPress={() => call(c.phone)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: C.line2, opacity: pressed ? 0.6 : 1 })}>
               <Txt style={{ flex: 1 }}>{c.label}</Txt>
               <Text style={{ color: C.red600, ...F[700] }}>{c.phone}</Text>
               <Icon name="phone" size={15} color={C.red600} />

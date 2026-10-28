@@ -71,7 +71,7 @@ function ProblemTiles({ token, disabled }) {
         {[['BREAKDOWN', 'Breakdown'], ['DELAY', 'Delay'], ['EMERGENCY', 'Emergency'], ['SOS', 'SOS']].map(([k, label]) => {
           const off = disabled && k !== 'SOS';
           return (
-            <Pressable
+            <Pressable accessibilityRole="button"
               key={k}
               disabled={off}
               onPress={() => { setKind(k); setDone(null); setError(null); }}
@@ -613,7 +613,7 @@ export default function DriverApp() {
             {Object.entries(OCCUPANCY).map(([k, o]) => {
               const on = occupancy === k;
               return (
-                <Pressable key={k} onPress={() => tapOccupancy(k)} style={{ flex: 1, minHeight: 56, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: TONE[o.tone].fg, backgroundColor: on ? TONE[o.tone].fg : TONE[o.tone].bg }}>
+                <Pressable accessibilityRole="button" key={k} onPress={() => tapOccupancy(k)} style={{ flex: 1, minHeight: 56, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: TONE[o.tone].fg, backgroundColor: on ? TONE[o.tone].fg : TONE[o.tone].bg }}>
                   <Text style={{ ...F[800], color: on ? '#fff' : TONE[o.tone].fg }}>{o.label}</Text>
                 </Pressable>
               );

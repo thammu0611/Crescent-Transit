@@ -245,6 +245,11 @@ export const RoutePattern = ({ opacity = 0.16, color = '#f9d27a', slice }) => (
 
 const native = Platform.OS !== 'web';
 
+// The phone's "remove animations" setting: cards then appear at once.
+let reduceMotion = false;
+AccessibilityInfo.isReduceMotionEnabled?.().then((v) => { reduceMotion = v; }).catch(() => {});
+AccessibilityInfo.addEventListener?.('reduceMotionChanged', (v) => { reduceMotion = v; });
+
 // Cards that appear together (a screen opening, a list arriving) come in as a
 // short cascade: each one 60 ms after the one before, at most 360 ms.
 const cascade = { at: 0, n: 0 };
@@ -260,7 +265,7 @@ function nextCascadeDelay() {
 /** Fades and slides its content in when it first appears (in a cascade unless given a delay). */
 export function FadeIn({ children, delay: fixedDelay, style }) {
   const [delay] = useState(() => fixedDelay ?? nextCascadeDelay());
-  const v = useRef(new Animated.Value(0)).current;
+  const v = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
   useEffect(() => {
     Animated.timing(v, { toValue: 1, duration: 420, delay, easing: Easing.out(Easing.cubic), useNativeDriver: native }).start();
   }, [v, delay]);
@@ -462,7 +467,7 @@ export function Avatar({ name = '', size = 44, light }) {
 /** Round glassy icon button for gradient headers (bell, sign out). */
 export function HeaderIconButton({ icon, onPress, badge, label, dark }) {
   return (
-    <Pressable onPress={onPress} accessibilityLabel={label} hitSlop={6} style={({ pressed }) => [s.headerBtn, dark && { backgroundColor: '#fff', borderColor: C.line2, ...shadow }, pressed && { transform: [{ scale: 0.94 }] }]}>
+    <Pressable accessibilityRole="button" onPress={onPress} accessibilityLabel={label} hitSlop={6} style={({ pressed }) => [s.headerBtn, dark && { backgroundColor: '#fff', borderColor: C.line2, ...shadow }, pressed && { transform: [{ scale: 0.94 }] }]}>
       <Icon name={icon} size={20} color={dark ? C.navy : '#fff'} />
       {badge ? <View style={s.headerBadge}><Text style={s.headerBadgeText}>{badge > 99 ? '99+' : badge}</Text></View> : null}
     </Pressable>
@@ -475,7 +480,7 @@ export function SectionTitle({ title, action, onAction }) {
     <View style={[s.row, { marginTop: 6, marginBottom: -4 }]}>
       <View style={s.sectionRule} />
       <Text style={s.section}>{title}</Text>
-      {action ? <Pressable onPress={onAction} hitSlop={8}><Text style={s.link}>{action}</Text></Pressable> : null}
+      {action ? <Pressable accessibilityRole="button" onPress={onAction} hitSlop={8}><Text style={s.link}>{action}</Text></Pressable> : null}
     </View>
   );
 }
@@ -611,7 +616,7 @@ export function Button({ title, onPress, variant = 'primary', icon, disabled, bu
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: off }}
+      accessibilityState={{ disabled: off, busy: Boolean(busy) }}
       disabled={off}
       onPress={onPress}
       onPressIn={tickPress}
@@ -636,7 +641,7 @@ export function Button({ title, onPress, variant = 'primary', icon, disabled, bu
 export function LinkButton({ title, onPress, danger, icon }) {
   const color = danger ? C.danger : C.indigo;
   return (
-    <Pressable onPress={onPress} hitSlop={8} style={({ pressed }) => [s.linkBtn, { backgroundColor: danger ? C.danger50 : C.indigo50 }, pressed && { opacity: 0.6 }]}>
+    <Pressable accessibilityRole="button" onPress={onPress} hitSlop={8} style={({ pressed }) => [s.linkBtn, { backgroundColor: danger ? C.danger50 : C.indigo50 }, pressed && { opacity: 0.6 }]}>
       {icon ? <Icon name={icon} size={13} color={color} /> : null}
       <Text style={[s.link, { color, fontSize: 13 }]}>{title}</Text>
     </Pressable>
@@ -736,7 +741,7 @@ export function Select({ label, value, onChange, options, placeholder = 'Chooseâ
           {list.map((o) => {
             const on = String(o.value) === String(value);
             return (
-              <Pressable key={String(o.value)} onPress={() => { setOpen(false); onChange(o.value); }} style={({ pressed }) => [s.option, on && s.optionOn, pressed && { backgroundColor: C.surface }]}>
+              <Pressable accessibilityRole="button" key={String(o.value)} onPress={() => { setOpen(false); onChange(o.value); }} style={({ pressed }) => [s.option, on && s.optionOn, pressed && { backgroundColor: C.surface }]}>
                 <Text style={[s.txt, { flex: 1 }, on && { color: C.navy, ...F[700] }]}>{o.label}</Text>
                 {on ? <View style={s.optionCheck}><Icon name="check" size={13} color="#fff" strokeWidth={3} /></View> : null}
               </Pressable>
@@ -769,7 +774,7 @@ export function SearchBox({ value, onChange, placeholder = 'Search' }) {
     <View style={[s.inputWrap, { marginBottom: 10, backgroundColor: C.surface, borderColor: C.line2 }]}>
       <Icon name="search" size={16} color={C.faint} />
       <TextInput importantForAutofill="no" value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={C.faint} style={[s.input, Platform.OS === 'web' && { outlineStyle: 'none' }]} autoCapitalize="none" autoCorrect={false} accessibilityLabel={placeholder} />
-      {value ? <Pressable onPress={() => onChange('')} hitSlop={8} accessibilityLabel="Clear search"><Icon name="x" size={16} color={C.faint} /></Pressable> : null}
+      {value ? <Pressable accessibilityRole="button" onPress={() => onChange('')} hitSlop={8} accessibilityLabel="Clear search"><Icon name="x" size={16} color={C.faint} /></Pressable> : null}
     </View>
   );
 }
@@ -780,7 +785,7 @@ export function Sheet({ visible = true, title, onClose, children, scroll = true 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={() => onClose?.()} statusBarTranslucent>
       <KeyboardAvoidingView style={s.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={() => onClose?.()} />
+        <Pressable accessibilityRole="button" style={StyleSheet.absoluteFill} onPress={() => onClose?.()} />
         <View style={[s.sheet, { paddingBottom: 18 + insets.bottom }]}>
           <Frost intensity={70} style={{ borderTopLeftRadius: 32, borderTopRightRadius: 32 }} />
           <View style={s.grabber} />
@@ -788,7 +793,7 @@ export function Sheet({ visible = true, title, onClose, children, scroll = true 
             <View style={[s.row, { marginBottom: 6 }]}>
               <Text style={[s.h2, { flex: 1 }]}>{title ?? ''}</Text>
               {onClose ? (
-                <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Close" style={s.closeBtn}><Icon name="x" size={18} color={C.muted} /></Pressable>
+                <Pressable accessibilityRole="button" onPress={onClose} hitSlop={10} accessibilityLabel="Close" style={s.closeBtn}><Icon name="x" size={18} color={C.muted} /></Pressable>
               ) : null}
             </View>
           ) : null}
@@ -899,9 +904,9 @@ export function MonthPicker({ value, onChange, light }) {
   const btn = [s.monthBtn, light && { backgroundColor: 'rgba(255,255,255,0.18)' }];
   return (
     <View style={[s.row, { gap: 8, alignSelf: 'flex-start' }]}>
-      <Pressable hitSlop={8} onPress={() => onChange(shiftMonth(value, -1))} accessibilityLabel="Previous month" style={btn}><Icon name="back" size={16} color={color} /></Pressable>
+      <Pressable accessibilityRole="button" hitSlop={8} onPress={() => onChange(shiftMonth(value, -1))} accessibilityLabel="Previous month" style={btn}><Icon name="back" size={16} color={color} /></Pressable>
       <Text style={[s.bold, { color, minWidth: 116, textAlign: 'center' }]}>{monthName(value)}</Text>
-      <Pressable hitSlop={8} disabled={atNow} onPress={() => onChange(shiftMonth(value, 1))} style={[btn, { opacity: atNow ? 0.35 : 1 }]} accessibilityLabel="Next month"><Icon name="arrow" size={16} color={color} /></Pressable>
+      <Pressable accessibilityRole="button" hitSlop={8} disabled={atNow} onPress={() => onChange(shiftMonth(value, 1))} style={[btn, { opacity: atNow ? 0.35 : 1 }]} accessibilityLabel="Next month"><Icon name="arrow" size={16} color={color} /></Pressable>
     </View>
   );
 }
@@ -955,7 +960,7 @@ export function DateField({ label, value, onChange, mode = 'date', clearable }) 
           <Icon name="clock" size={16} color={C.faint} />
           <Text style={[s.input, { paddingVertical: 13 }, !value && { color: C.faint }]}>{shown}</Text>
         </Pressable>
-        {clearable && value ? <Pressable onPress={() => onChange('')} hitSlop={8} accessibilityLabel="Clear"><Icon name="x" size={18} color={C.muted} /></Pressable> : null}
+        {clearable && value ? <Pressable accessibilityRole="button" onPress={() => onChange('')} hitSlop={8} accessibilityLabel="Clear"><Icon name="x" size={18} color={C.muted} /></Pressable> : null}
       </View>
       {Platform.OS === 'ios' && (
         <Sheet visible={iosOpen} title={label} onClose={() => setIosOpen(false)}>

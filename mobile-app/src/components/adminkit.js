@@ -192,7 +192,7 @@ export function DetailModal({ title, subtitle, onClose, children, refreshing, on
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'left', 'right']}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 12, backgroundColor: C.glassStrong, borderBottomWidth: 1, borderBottomColor: C.glassEdge }}>
-          <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Back" style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: C.navy50, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable accessibilityRole="button" onPress={onClose} hitSlop={10} accessibilityLabel="Back" style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: C.navy50, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="back" size={18} color={C.navy} />
           </Pressable>
           <View style={{ flex: 1 }}>

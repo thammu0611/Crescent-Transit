@@ -186,7 +186,7 @@ function BusContact({ bus, route }) {
         </View>
         {OCCUPANCY[bus?.occupancy] ? <Badge tone={OCCUPANCY[bus.occupancy].tone}>{OCCUPANCY[bus.occupancy].label}</Badge> : null}
       </View>
-      <Pressable onPress={() => call('+914422751347')} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: R.md, backgroundColor: pressed ? C.indigo50 : C.surface })}>
+      <Pressable accessibilityRole="button" onPress={() => call('+914422751347')} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: R.md, backgroundColor: pressed ? C.indigo50 : C.surface })}>
         <IconBubble name="phone" colors={G.indigo} size={38} />
         <View style={{ flex: 1 }}><Txt bold>Transport office</Txt><Txt muted small>+91 44 2275 1347</Txt></View>
         <Text style={{ color: C.indigo, ...F[800] }}>Call</Text>
@@ -338,7 +338,7 @@ export default function StudentHome({ navigation }) {
   const hero = (
     <HeroHeader colors={G.navy}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Pressable onPress={() => navigation.navigate('Profile')} accessibilityLabel="Profile"><Avatar name={user.name} size={48} light /></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Profile')} accessibilityLabel="Profile"><Avatar name={user.name} size={48} light /></Pressable>
         <View style={{ flex: 1 }}>
           <Text style={{ color: '#f9d27a', fontSize: 15, ...F[500] }}>{greeting()},</Text>
           <Text style={{ color: '#fff', fontSize: 26, ...F.display }}>{first}</Text>
@@ -365,7 +365,7 @@ export default function StudentHome({ navigation }) {
       <RouteCard routes={routes.data ?? []} route={route.data} routeCode={routeCode} setRouteCode={setRouteCode} stopSeq={stopSeq} bus={bus} eta={eta} entitled={entitled} loading={entitlement == null} />
 
       {entitlement && !entitled && (
-        <Pressable onPress={() => navigation.navigate('Subscription')}>
+        <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Subscription')}>
           <GradientCard colors={G.violet} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
             <IconBubble name="sparkle" size={42} colors={G.red} />
             <View style={{ flex: 1 }}>
@@ -377,7 +377,7 @@ export default function StudentHome({ navigation }) {
         </Pressable>
       )}
       {entitled && entitlement.inGrace && (
-        <Pressable onPress={() => navigation.navigate('Subscription')}>
+        <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Subscription')}>
           <GradientCard colors={G.sunrise} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
             <Icon name="alert" size={20} color="#fff" />
             <View style={{ flex: 1 }}>
@@ -403,7 +403,7 @@ export default function StudentHome({ navigation }) {
             <Text style={{ ...F[800], color: C.navy, fontSize: 12 }}>Route {route.data?.code ?? ''} map</Text>
           </View>
         </View>
-        <Pressable onPress={() => navigation.navigate(entitled ? 'Track' : 'Subscription')} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 }}>
+        <Pressable accessibilityRole="button" onPress={() => navigation.navigate(entitled ? 'Track' : 'Subscription')} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 }}>
           <IconBubble name="bus" accent={entitled ? 'emerald' : 'navy'} size={36} />
           <View style={{ flex: 1 }}>
             <Txt bold>{entitlement == null ? 'Checking buses…' : entitled ? `${buses.length} bus${buses.length === 1 ? '' : 'es'} available` : 'Live tracking locked'}</Txt>
@@ -423,7 +423,7 @@ export default function StudentHome({ navigation }) {
           ['alert', 'Report', 'Delay or SOS', G.danger, () => setReporting(true)],
           ['settings', 'Settings', 'Route & privacy', G.dark, () => navigation.navigate('Profile')],
         ].map(([icon, label, hint, colors, onPress]) => (
-          <Pressable key={label} onPress={onPress} style={({ pressed }) => ({ flexBasis: '47%', flexGrow: 1, padding: 14, gap: 10, borderRadius: R.lg, backgroundColor: C.glass, transform: [{ scale: pressed ? 0.97 : 1 }], ...shadow })}>
+          <Pressable accessibilityRole="button" key={label} onPress={onPress} style={({ pressed }) => ({ flexBasis: '47%', flexGrow: 1, padding: 14, gap: 10, borderRadius: R.lg, backgroundColor: C.glass, transform: [{ scale: pressed ? 0.97 : 1 }], ...shadow })}>
             <IconBubble name={icon} colors={colors} size={42} />
             <View>
               <Txt bold>{label}</Txt>

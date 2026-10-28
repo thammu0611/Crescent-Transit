@@ -172,7 +172,7 @@ function MoreMenu({ navigation }) {
       <SectionTitle title="Transport office" />
       <View style={{ backgroundColor: C.glass, borderRadius: 22, padding: 6, borderWidth: 1, borderColor: C.glassEdge, ...shadow }}>
         {ADMIN_MORE.map(([name, title, icon, hint, accent], i) => (
-          <Pressable key={name} onPress={() => navigation.navigate(name)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 16, backgroundColor: pressed ? C.surface : 'transparent', borderTopWidth: i ? 1 : 0, borderTopColor: C.line2 })}>
+          <Pressable accessibilityRole="button" key={name} onPress={() => navigation.navigate(name)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 16, backgroundColor: pressed ? C.surface : 'transparent', borderTopWidth: i ? 1 : 0, borderTopColor: C.line2 })}>
             <IconBubble name={icon} accent={accent} size={44} />
             <View style={{ flex: 1 }}><Txt bold>{title}</Txt><Txt muted small>{hint}</Txt></View>
             <Icon name="arrow" size={16} color={C.faint} />

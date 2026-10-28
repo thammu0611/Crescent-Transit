@@ -49,7 +49,7 @@ function CrashScreen({ error }) {
         <Text selectable style={{ color: '#ffd56b', fontSize: 14, fontWeight: '700', marginBottom: 8 }}>{error?.name}: {error?.message}</Text>
         <Text selectable style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, lineHeight: 16 }}>{stack}</Text>
       </ScrollView>
-      <Pressable onPress={() => reloadAppAsync?.().catch(() => {})} style={{ backgroundColor: '#f7bc31', borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}>
+      <Pressable accessibilityRole="button" onPress={() => reloadAppAsync?.().catch(() => {})} style={{ backgroundColor: '#f7bc31', borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}>
         <Text style={{ color: '#1c315e', fontSize: 16, fontWeight: '700' }}>Try again</Text>
       </Pressable>
     </View>

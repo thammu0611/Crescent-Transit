@@ -19,7 +19,7 @@ function Fit({ points }) {
   return null;
 }
 
-const COLOR = { live: '#2b8a3e', delayed: '#b9832a', offline: '#8b909b' };
+const COLOR = { live: '#237a36', delayed: '#b9832a', offline: '#8b909b' };
 
 /**
  * A small, still map: one route with its live buses (student home), or the

@@ -160,6 +160,7 @@ function Shell() {
 
   return (
     <div className={`app${scrolled ? ' scrolled' : ''}`}>
+      <a className="skip-link" href="#main-content" onClick={(e) => { e.preventDefault(); document.getElementById('main-content')?.focus(); }}>Skip to content</a>
       <RouteBackdrop />
       {/* Contact strip and the floating navigation pill. */}
       <div className="masthead">
@@ -214,7 +215,7 @@ function Shell() {
           </nav>
         </header>
       </div>
-      <div className={`screen${role === 'student' ? ' with-tabs' : ''}`} key={`${role}:${entry[0]}`}>
+      <div id="main-content" tabIndex={-1} className={`screen${role === 'student' ? ' with-tabs' : ''}`} key={`${role}:${entry[0]}`}>
         <Screen />
       </div>
       {role === 'student' && (

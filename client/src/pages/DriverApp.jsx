@@ -606,7 +606,7 @@ export default function DriverApp() {
             <CircleMarker key={s.seq} center={[s.lat, s.lng]} radius={5} pathOptions={{ color: '#1c315e', weight: 2, fillColor: '#f7bc31', fillOpacity: 1 }} />
           ))}
           {shown && (
-            <CircleMarker center={[shown.lat, shown.lng]} radius={11} pathOptions={{ color: '#fff', weight: 3, fillColor: '#2b8a3e', fillOpacity: 1 }} />
+            <CircleMarker center={[shown.lat, shown.lng]} radius={11} pathOptions={{ color: '#fff', weight: 3, fillColor: '#237a36', fillOpacity: 1 }} />
           )}
           <FitRoute route={route} />
           <Follow position={shown} />

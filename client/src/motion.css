@@ -82,7 +82,7 @@
 .kit-shortcuts .kit-shortcut:hover { border-color: var(--tone-line); box-shadow: 0 16px 34px var(--tone-soft), 0 10px 24px rgba(20, 37, 72, 0.10), inset 0 1px 0 #fff; }
 .kit-shortcuts .kit-shortcut:hover::after { left: 0; right: 0; }
 .kit-shortcuts .kit-shortcut:hover .ks-go { transform: translateX(3px); background: var(--tone-b); color: #fff; }
-.kit-shortcut.tone-green { --tone-a: #61ce70; --tone-b: #2b8a3e; --tone-soft: rgba(97, 206, 112, 0.14); --tone-line: rgba(43, 138, 62, 0.3); }
+.kit-shortcut.tone-green { --tone-a: #61ce70; --tone-b: #237a36; --tone-soft: rgba(97, 206, 112, 0.14); --tone-line: rgba(43, 138, 62, 0.3); }
 .kit-shortcut.tone-blue { --tone-a: #6ec1e4; --tone-b: #0170b9; --tone-soft: rgba(110, 193, 228, 0.18); --tone-line: rgba(1, 112, 185, 0.3); }
 .kit-shortcut.tone-red { --tone-a: #c4373a; --tone-b: #a02022; --tone-soft: rgba(160, 32, 34, 0.10); --tone-line: rgba(160, 32, 34, 0.3); }
 @media (max-width: 1100px) { .kit-shortcuts .kit-shortcut .ks-text small { display: none; } }

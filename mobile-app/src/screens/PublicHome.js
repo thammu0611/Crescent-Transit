@@ -61,7 +61,7 @@ export function FreeView({ showRoutes = true }) {
       </Fold>
       <Panel title="Emergency contacts" icon="phone">
         {(contacts.data ?? []).map((c) => (
-          <Pressable key={c.label} onPress={() => call(c.phone)} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.line2 }}>
+          <Pressable accessibilityRole="button" key={c.label} onPress={() => call(c.phone)} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.line2 }}>
             <Txt>{c.label}</Txt>
             <Txt style={{ color: C.indigo, ...F[700] }}>{c.phone}</Txt>
           </Pressable>
@@ -73,7 +73,7 @@ export function FreeView({ showRoutes = true }) {
           {routes.data == null && !routes.error && <Skeleton height={160} />}
           {(routes.data ?? []).map((r) => (
             <View key={r.code}>
-              <Pressable
+              <Pressable accessibilityRole="button"
                 onPress={() => setOpen(open === r.code ? null : r.code)}
                 accessibilityState={{ expanded: open === r.code }}
                 style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: C.line2 }}
@@ -182,7 +182,7 @@ export default function PublicHome({ navigation }) {
       <Text style={{ fontSize: 11, ...F[700], letterSpacing: 2.2, color: C.red600 }}>FREE FOR EVERYONE</Text>
       <FreeView />
 
-      <Pressable onPress={() => call('+91 44 2275 1347')} style={{ alignItems: 'center', paddingVertical: 10 }}>
+      <Pressable accessibilityRole="button" onPress={() => call('+91 44 2275 1347')} style={{ alignItems: 'center', paddingVertical: 10 }}>
         <Txt muted small style={{ textAlign: 'center' }}>Crescent Transit · B.S. Abdur Rahman Crescent Institute of Science & Technology</Txt>
         <Txt small style={{ color: C.red600, ...F[700] }}>Transport office +91 44 2275 1347</Txt>
       </Pressable>

@@ -272,7 +272,7 @@ export default function Reports() {
                 <Bars rows={demandByStop} label={(r) => r.label} value={(r) => r.n} />
               </Block>
               <Block title="Boardings by hour" caption="Hour of the day (campus time)">
-                <ColumnChart data={demandByHour.map((h) => ({ label: h.label.slice(0, 2), value: h.value }))} highlightLast={false} color="#2b8a3e" />
+                <ColumnChart data={demandByHour.map((h) => ({ label: h.label.slice(0, 2), value: h.value }))} highlightLast={false} color="#237a36" />
               </Block>
             </div>
           </>

@@ -25,7 +25,7 @@ export default function Alerts({ navigation }) {
     navigation.setOptions({
       headerRight: items.length
         ? () => (
-          <Pressable hitSlop={8} onPress={() => { const t = Date.now(); setJSON(KEY, t); setCleared(t); }}>
+          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => { const t = Date.now(); setJSON(KEY, t); setCleared(t); }}>
             <Text style={{ color: C.indigo, ...F[700] }}>Clear all</Text>
           </Pressable>
         )

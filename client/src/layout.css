@@ -190,7 +190,7 @@
 
 /* Stat icons: one colour per meaning everywhere (navy default, green live, amber delayed, crimson danger). */
 .stat .stat-icon { background: linear-gradient(135deg, #2a4378, #1c315e); color: var(--gold); }
-.stat.live .stat-icon { background: linear-gradient(135deg, #61ce70, #2b8a3e); color: #fff; }
+.stat.live .stat-icon { background: linear-gradient(135deg, #61ce70, #237a36); color: #fff; }
 .stat.delayed .stat-icon { background: linear-gradient(135deg, #d9a54e, #9b6a26); color: #fff; }
 .stat.danger .stat-icon { background: linear-gradient(135deg, #b5282a, #8a1a1c); color: #fff; }
 

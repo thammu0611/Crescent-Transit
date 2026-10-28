@@ -57,7 +57,7 @@ function StopPin({ stop, onMoved }) {
 }
 
 const SqBtn = ({ icon, onPress, disabled, danger, label }) => (
-  <Pressable onPress={onPress} disabled={disabled} accessibilityLabel={label} hitSlop={4} style={{ width: 34, height: 34, borderRadius: 10, borderWidth: 1, borderColor: danger ? C.danger50 : C.line, backgroundColor: danger ? C.danger50 : '#fff', alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.35 : 1 }}>
+  <Pressable accessibilityRole="button" onPress={onPress} disabled={disabled} accessibilityLabel={label} hitSlop={4} style={{ width: 34, height: 34, borderRadius: 10, borderWidth: 1, borderColor: danger ? C.danger50 : C.line, backgroundColor: danger ? C.danger50 : '#fff', alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.35 : 1 }}>
     <Icon name={icon} size={15} color={danger ? C.danger : C.navy} />
   </Pressable>
 );
