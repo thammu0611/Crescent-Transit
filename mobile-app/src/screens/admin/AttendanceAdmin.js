@@ -4,7 +4,7 @@ import { Chips, DetailModal, Figure } from '../../components/adminkit.js';
 import Icon from '../../components/Icon.js';
 import {
   Avatar, Badge, Button, DataList, Empty, ErrorText, ItemCard, KV, LinkButton, Notice, PageHead, Panel, RouteCode, Row, Screen,
-  SearchBox, SectionTitle, Segmented, Sheet, Skeleton, Stat, StatGrid, Text, TextField, Txt, usePrompt, YesNo,
+  SearchBox, SectionTitle, Segmented, Select, Sheet, Skeleton, Stat, StatGrid, Text, TextField, Txt, usePrompt, YesNo, DirectionBadge,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
 import { METHOD_TEXT, STATUS_TEXT, date, dateTime, daysAgo, thisMonth, time, today } from '../../lib/format.js';
@@ -12,8 +12,8 @@ import { useAction, useAsync, useRefresh } from '../../lib/hooks.js';
 import { useSession } from '../../lib/session.js';
 import { C, F, G, shadow } from '../../theme.js';
 
-const DAY_TONE = { PRESENT: 'live', ABSENT: 'danger', PENDING: 'delayed' };
-const DAY_TEXT = { PRESENT: 'Present', ABSENT: 'Absent', PENDING: 'Pending review' };
+const DAY_TONE = { PRESENT: 'live', PARTIAL: 'delayed', ABSENT: 'danger', PENDING: 'delayed' };
+const DAY_TEXT = { PRESENT: 'Present', PARTIAL: 'One way only', ABSENT: 'Absent', PENDING: 'Pending review' };
 const RECORD_TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISIONAL: 'delayed', PROMPTED: 'delayed', DISPUTED: 'delayed', ADJUSTED: 'info', REJECTED: 'offline', VOID: 'danger' };
 const RECORD_TEXT = { ...STATUS_TEXT, REJECTED: 'Said No', PROMPTED: 'Awaiting answer' };
 
@@ -86,6 +86,43 @@ const periodRange = (p) => {
 };
 
 /** One student's attendance, date by date (doc 9.14), with the phone binding. */
+/** Does this day match the run and status chosen in the filters? */
+const dayMatches = (d, run, status) => {
+  const value = run ? d[run].status : d.status;
+  return value != null && (!status || value === status);
+};
+const STATUS_FILTERS = ['PRESENT', 'PARTIAL', 'ABSENT', 'PENDING'];
+
+const RunCell = ({ run }) => (run.status
+  ? <Badge tone={DAY_TONE[run.status]} dot={false}>{DAY_TEXT[run.status]}</Badge>
+  : <Txt small muted>No trip</Txt>);
+
+function RunDetail({ direction, run }) {
+  if (!run.status) return null;
+  return (
+    <View style={{ gap: 8, paddingTop: 10, borderTopWidth: 1, borderTopColor: C.line2 }}>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <DirectionBadge direction={direction} />
+        <Badge tone={DAY_TONE[run.status]}>{DAY_TEXT[run.status]}</Badge>
+      </Row>
+      {run.records.length === 0 ? <Txt small muted>No boarding recorded.</Txt> : run.records.map((r) => (
+        <Row key={r.attendance_id} gap={10} style={{ alignItems: 'flex-start' }}>
+          <RouteCode code={r.route_code} small />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt small bold style={{ fontVariant: ['tabular-nums'] }}>{time(r.boarded_at)}{r.alighted_at ? ` – ${time(r.alighted_at)}` : ''} · {r.fleet_code}</Txt>
+            <Txt small muted numberOfLines={2}>{[r.boarding_stop, r.alighting_stop].filter(Boolean).join(' → ') || r.route_name}</Txt>
+            <Txt small muted>{METHOD_TEXT[r.method] ?? r.method} · trip #{r.trip_id}{r.auto_confirmed ? ' · auto-confirmed' : ''}</Txt>
+          </View>
+          <View style={{ alignItems: 'flex-end', gap: 4 }}>
+            <Badge tone={RECORD_TONE[r.status] ?? 'offline'}>{RECORD_TEXT[r.status] ?? r.status}</Badge>
+            {r.flagged ? <Badge tone="danger">{r.flag_reason ?? 'flagged'}</Badge> : null}
+          </View>
+        </Row>
+      ))}
+    </View>
+  );
+}
+
 function StudentHistory({ token, student: initial, onClose, onUnbind }) {
   const [student, setStudent] = useState(initial);
   const [unbinding, setUnbinding] = useState(null); // reason text while the unbind form is open
@@ -98,10 +135,16 @@ function StudentHistory({ token, student: initial, onClose, onUnbind }) {
   };
   const [period, setPeriod] = useState('30');
   const [status, setStatus] = useState('');
+  const [run, setRun] = useState('');
+  const [openDay, setOpenDay] = useState(null);
   const q = new URLSearchParams(periodRange(period)).toString();
   const h = useAsync(() => api(`/api/admin/students/${student.id}/attendance?${q}`, { token }), [student.id, q, token]);
   const days = h.data?.days ?? null;
-  const shown = days?.filter((d) => !status || d.status === status);
+  const shown = days?.filter((d) => dayMatches(d, run, status));
+  const chooseRun = (next) => {
+    setRun(next);
+    if (next && status === 'PARTIAL') setStatus(''); // one run alone cannot be partial
+  };
   const sm = h.data?.summary;
   return (
     <DetailModal title={student.full_name} subtitle={`${student.register_no ?? student.username} · attendance history`} onClose={onClose} refreshing={h.loading && h.data != null} onRefresh={h.reload}>
@@ -138,56 +181,53 @@ function StudentHistory({ token, student: initial, onClose, onUnbind }) {
         <View style={{ height: 1, backgroundColor: C.line2 }} />
         <Row>
           <Figure value={sm ? (sm.attendancePct == null ? '—' : `${sm.attendancePct}%`) : '…'} label="Attendance" />
-          <Figure value={sm?.present ?? '…'} label="Present" />
-          <Figure value={sm?.absent ?? '…'} label="Absent" />
-          <Figure value={sm?.trips ?? '…'} label="Trips" />
+          <Figure value={sm ? `${sm.up.present}/${sm.up.present + sm.up.absent}` : '…'} label="Inbound trips" />
+          <Figure value={sm ? `${sm.down.present}/${sm.down.present + sm.down.absent}` : '…'} label="Outbound trips" />
+          <Figure value={sm ? sm.up.absent + sm.down.absent : '…'} label="Missed" />
         </Row>
         {sm?.lastBoardedAt ? <Txt small muted>Last boarded {dateTime(sm.lastBoardedAt)}</Txt> : null}
       </View>
 
-      <View style={{ gap: 10 }}>
-        <Chips value={period} onChange={setPeriod} options={PERIODS} />
-        <Chips
+      <Row gap={8}>
+        <Select style={{ flex: 1 }} label="Period" value={period} onChange={setPeriod} options={PERIODS} />
+        <Select style={{ flex: 1 }} label="Direction" value={run} onChange={chooseRun} options={[{ value: '', label: 'Both' }, { value: 'up', label: 'Inbound' }, { value: 'down', label: 'Outbound' }]} />
+        <Select
+          style={{ flex: 1 }}
+          label="Status"
           value={status}
           onChange={setStatus}
           options={[
-            { value: '', label: 'All days', count: days?.length },
-            { value: 'PRESENT', label: 'Present', count: sm?.present },
-            { value: 'ABSENT', label: 'Absent', count: sm?.absent },
-            { value: 'PENDING', label: 'Pending', count: sm?.pending },
+            { value: '', label: `All (${days?.filter((d) => dayMatches(d, run, '')).length ?? 0})` },
+            ...STATUS_FILTERS.filter((k) => !run || k !== 'PARTIAL').map((k) => ({ value: k, label: `${DAY_TEXT[k]} (${days?.filter((d) => dayMatches(d, run, k)).length ?? 0})` })),
           ]}
         />
-      </View>
-      <Txt small muted>A day is listed when the student's route ran a trip or the student was recorded on any bus. Absent: the route ran and nothing was recorded.</Txt>
+      </Row>
       <ErrorText>{h.error?.message}</ErrorText>
-      {shown == null ? <View style={{ gap: 10 }}><Skeleton /><Skeleton /><Skeleton /></View> : shown.length === 0 ? <Empty icon="check">No days in this period.</Empty> : shown.map((d) => (
-        <View key={d.date} style={{ backgroundColor: C.glass, borderRadius: 16, borderWidth: 1, borderColor: C.glassEdge, overflow: 'hidden' }}>
-          <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: C[DAY_TONE[d.status]] ?? C.delayed }} />
-          <View style={{ padding: 14, paddingLeft: 18, gap: 10 }}>
-            <Row>
-              <View style={{ flex: 1 }}>
-                <Txt bold>{date(`${d.date}T06:30:00Z`)}</Txt>
-                <Txt small muted>{d.routeTrips ? `Route ran ${d.routeTrips} trip${d.routeTrips === 1 ? '' : 's'}` : 'Rode another route'}</Txt>
-              </View>
-              <Badge tone={DAY_TONE[d.status]}>{DAY_TEXT[d.status]}</Badge>
-            </Row>
-            {d.records.length === 0 ? <Txt small muted>No boarding recorded.</Txt> : d.records.map((r) => (
-              <Row key={r.attendance_id} gap={10} style={{ alignItems: 'flex-start', paddingTop: 10, borderTopWidth: 1, borderTopColor: C.line2 }}>
-                <RouteCode code={r.route_code} small />
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Txt small bold style={{ fontVariant: ['tabular-nums'] }}>{time(r.boarded_at)}{r.alighted_at ? ` – ${time(r.alighted_at)}` : ''} · {r.fleet_code}</Txt>
-                  <Txt small muted numberOfLines={2}>{[r.boarding_stop, r.alighting_stop].filter(Boolean).join(' → ') || r.route_name}</Txt>
-                  <Txt small muted>{METHOD_TEXT[r.method] ?? r.method} · trip #{r.trip_id}{r.auto_confirmed ? ' · auto-confirmed' : ''}</Txt>
-                </View>
-                <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                  <Badge tone={RECORD_TONE[r.status] ?? 'offline'}>{RECORD_TEXT[r.status] ?? r.status}</Badge>
-                  {r.flagged ? <Badge tone="danger">{r.flag_reason ?? 'flagged'}</Badge> : null}
-                </View>
-              </Row>
-            ))}
-          </View>
+      {shown == null ? <View style={{ gap: 10 }}><Skeleton /><Skeleton /><Skeleton /></View> : shown.length === 0 ? <Empty icon="check">No days match these filters.</Empty> : (
+        <View style={{ backgroundColor: C.glass, borderRadius: 16, borderWidth: 1, borderColor: C.glassEdge, overflow: 'hidden' }}>
+          <Row gap={8} style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+            <Txt small muted style={{ flex: 1 }}>Date</Txt>
+            <Txt small muted style={{ width: 92 }}>Inbound</Txt>
+            <Txt small muted style={{ width: 92 }}>Outbound</Txt>
+          </Row>
+          {shown.map((d) => (
+            <Pressable key={d.date} accessibilityRole="button" onPress={() => setOpenDay(d)} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.line2 }, pressed && { opacity: 0.7 }]}>
+              <Txt small bold style={{ flex: 1 }} numberOfLines={1}>{date(`${d.date}T06:30:00Z`)}</Txt>
+              <View style={{ width: 92, alignItems: 'flex-start' }}><RunCell run={d.up} /></View>
+              <View style={{ width: 92, alignItems: 'flex-start' }}><RunCell run={d.down} /></View>
+            </Pressable>
+          ))}
         </View>
-      ))}
+      )}
+      <Txt small muted>Each direction is marked separately and the percentage counts trips. Tap a day for its details.</Txt>
+      {openDay ? (
+        <Sheet title={date(`${openDay.date}T06:30:00Z`)} onClose={() => setOpenDay(null)}>
+          <View style={{ gap: 12 }}>
+            <RunDetail direction="UP" run={openDay.up} />
+            <RunDetail direction="DOWN" run={openDay.down} />
+          </View>
+        </Sheet>
+      ) : null}
     </DetailModal>
   );
 }

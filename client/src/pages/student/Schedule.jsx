@@ -1,6 +1,7 @@
+import DayBanner from '../../components/DayBanner.jsx';
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
-import { longDate, nowMinutes, parseTime, prettyTime } from '../../lib/schedule.js';
+import { formatMinutes, longDate, nowMinutes, parseTime, prettyTime } from '../../lib/schedule.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import { useLive } from '../../lib/useLive.js';
@@ -11,7 +12,13 @@ import Icon from '../../components/Icon.jsx';
  * the route picker, the morning run stop by stop with the bus's live position
  * marked "Active", and the evening run from campus.
  */
+const moved = (text, shift) => {
+  const t = parseTime(text);
+  return shift && t != null ? formatMinutes(t + shift) : prettyTime(text);
+};
+
 export default function Schedule() {
+  const day = useAsync(() => api('/api/calendar'), []).data?.today;
   const { token, user, entitlement } = useSession();
   const routes = useAsync(() => api('/api/routes'), []);
   const [code, setCode] = useState(user?.homeRouteCode ?? '');
@@ -32,6 +39,7 @@ export default function Schedule() {
         <a href="#/" className="back" aria-label="Back"><Icon name="back" size={18} /></a>
         <h1>Schedule</h1>
       </header>
+      <DayBanner />
       <a className="btn indigo" href="#/map"><Icon name="pin" size={17} /> View bus stoppage points</a>
 
       <section className="schedule-card">
@@ -52,7 +60,7 @@ export default function Schedule() {
                 const active = bus ? s.seq === here : s.seq === nextSeq;
                 return (
                   <li key={s.seq} className={`${active ? 'active' : ''} ${s.seq === mine ? 'mine' : ''} ${bus && here && s.seq < here ? 'passed' : ''}`}>
-                    <time className="tabular">{prettyTime(s.scheduled_time)}</time>
+                    <time className="tabular">{moved(s.scheduled_time, day?.morning_shift)}</time>
                     <span className="stop-name">
                       {s.name}
                       {active && <em>{bus ? 'Bus here' : 'Next'}</em>}
@@ -67,7 +75,7 @@ export default function Schedule() {
           <span className="leg">Campus to {route.data?.start_point ?? '…'}</span>
           <ol className="timeline">
             <li className={parseTime(route.data?.evening_departure) >= now ? 'active' : ''}>
-              <time className="tabular">{prettyTime(route.data?.evening_departure)}</time>
+              <time className="tabular">{moved(route.data?.evening_departure, day?.evening_shift)}</time>
               <span className="stop-name">Departs BSACIST campus<small>Stops in reverse order; evening stop times are not printed in the timetable.</small></span>
               <span className="bus-tag">Bus {route.data?.code}</span>
             </li>

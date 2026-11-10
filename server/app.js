@@ -5,17 +5,31 @@ import express from 'express';
 import { Server as SocketServer } from 'socket.io';
 import { parseWindows } from '../shared/colocation.js';
 import { AttendanceService } from './attendance.js';
+import { BusAlternativesService } from './alternatives.js';
+import { AutomationService } from './automation.js';
+import { CalendarService } from './calendar.js';
+import { FleetCareService } from './fleetcare.js';
+import { GuardianService } from './guardians.js';
+import { BusPassService } from './pass.js';
+import { mountServices } from './routes/services.js';
 import { BoardingCheckService } from './boarding.js';
-import { changePassword, HttpError, loadProfile, login, registerStudent, requireRole, verifyToken } from './auth.js';
+import {
+  changePassword, emailCheck, HttpError, loadProfile, login, registerParent, registerStudent, requestPasswordReset, requireRole, resetPassword, sendEmailCode, verifyEmailCode, verifyToken,
+} from './auth.js';
 import { cacheFor } from './cache.js';
 import { createGateway } from './billing/gateway.js';
 import { TrackerService } from './gps/trackers.js';
 import { receiptPdf } from './billing/pdf.js';
 import { BillingService } from './billing/service.js';
-import { localMonth } from './clock.js';
+import { localDate, localMonth } from './clock.js';
 import { JobRunner } from './jobs.js';
+import { createMailer } from './mail.js';
 import { PushService } from './push.js';
 import { ReportService } from './reports.js';
+import { BackupService } from './backup.js';
+import { MonitorService } from './monitor.js';
+import { PrivacyService } from './privacy.js';
+import { RosterService } from './roster.js';
 import { adminRouter } from './routes/admin.js';
 import { financeRouter } from './routes/finance.js';
 import { TrackingService } from './tracking.js';
@@ -24,9 +38,10 @@ import { audit, intParam, rateLimit, sendTable } from './util.js';
 const INCIDENT_TO_NOTICE = { BREAKDOWN: 'BREAKDOWN', DELAY: 'DELAY', EMERGENCY: 'EMERGENCY' };
 // Incidents urgent enough to push to the transport office's phones.
 const PUSH_INCIDENTS = new Set(['SOS', 'EMERGENCY', 'BREAKDOWN']);
+const PARENT_INCIDENTS = PUSH_INCIDENTS;
 
 /** Build the HTTP server, REST API and Socket.IO layer around an open database. */
-export async function createServer(db, config) {
+export async function createServer(db, config, { mailer = createMailer(config) } = {}) {
   const app = express();
   const httpServer = http.createServer(app);
   // Keep idle connections open longer than a hosting proxy does (Render and
@@ -41,7 +56,19 @@ export async function createServer(db, config) {
   const routeIdByCode = async (code) => cache.get(`routeId:${code}`, ['routes'], REFERENCE_TTL, async () => (
     (await db.query('SELECT id FROM routes WHERE code = $1', [code])).rows[0]?.id ?? null
   ));
-  const io = new SocketServer(httpServer, { cors: { origin: '*' } });
+  // The live connection opens only from the app's own address, the listed
+  // websites and phone apps (which send no origin). Demo mode also allows local
+  // development servers.
+  const originAllowed = (origin, host) => {
+    if (!origin) return true;
+    let parsed;
+    try { parsed = new URL(origin); } catch { return false; }
+    if (parsed.host === host || config.allowedOrigins.includes(parsed.origin)) return true;
+    return config.demoMode && ['localhost', '127.0.0.1'].includes(parsed.hostname);
+  };
+  const io = new SocketServer(httpServer, {
+    allowRequest: (req, callback) => callback(null, originAllowed(req.headers.origin, req.headers.host)),
+  });
 
   // The evening run leaves campus at one time for every route (timetable circular).
   const eveningDeparture = (() => {
@@ -54,10 +81,21 @@ export async function createServer(db, config) {
   const gateway = createGateway(db, config.payment);
   const billing = new BillingService(db, config, gateway, io);
   const push = new PushService(db, config, billing);
-  const attendance = new AttendanceService(db, config, tracking, billing, io, push);
-  const boarding = new BoardingCheckService(db, config, { tracking, attendance, io, push });
+  const attendance = new AttendanceService(db, config, tracking, billing, io, push, mailer);
+  const calendar = new CalendarService(db, config);
+  attendance.calendar = calendar;
+  const boarding = new BoardingCheckService(db, config, { tracking, attendance, calendar, io, push });
+  const alternatives = new BusAlternativesService(db, config, { tracking, attendance, billing, calendar, io, push, eveningDeparture });
+  const guardians = new GuardianService(db, config, { tracking, billing, push });
+  const pass = new BusPassService(db, config, { tracking, attendance, billing });
+  const fleetCare = new FleetCareService(db, config, { tracking, io, push });
+  const automation = new AutomationService(db, config, { tracking, attendance, billing, calendar, notify: (n) => broadcastNotification(n), eveningDeparture, fleetCare, io, push, guardians });
   const reports = new ReportService(db, config, tracking);
-  const jobs = new JobRunner(db, config, { attendance, billing, boarding });
+  const backups = new BackupService(db, config);
+  const monitor = new MonitorService(db, config, { mailer, calendar, backups, io });
+  const privacy = new PrivacyService(db);
+  const roster = new RosterService(db, config, { tracking });
+  const jobs = new JobRunner(db, config, { attendance, billing, boarding, alternatives, automation, backups, monitor });
 
   // The test gateway calls our webhook over HTTP, like the real one.
   httpServer.on('listening', () => {
@@ -65,7 +103,7 @@ export async function createServer(db, config) {
   });
 
   const role = (...roles) => requireRole(config, db, ...roles);
-  const anyUser = role('admin', 'driver', 'student', 'finance');
+  const anyUser = role('admin', 'driver', 'student', 'finance', 'parent');
   const driverOnly = role('driver');
   const adminOnly = role('admin');
   const financeOnly = role('finance');
@@ -81,10 +119,26 @@ export async function createServer(db, config) {
   if (config.trustProxy !== false) app.set('trust proxy', config.trustProxy);
   app.disable('x-powered-by');
 
-  // Browser hardening headers. No Content-Security-Policy: the maps (Google /
-  // OpenStreetMap tiles), Razorpay checkout and web fonts load from other origins.
+  // Browser hardening headers. The policy lists every outside service the
+  // website uses: Google Maps, OpenStreetMap tiles, Razorpay checkout, Google Fonts.
+  const CONTENT_SECURITY_POLICY = [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'self'",
+    "form-action 'self'",
+    "script-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://checkout.razorpay.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' ws: wss: https://maps.googleapis.com https://*.razorpay.com",
+    "frame-src https://*.razorpay.com",
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+  ].join('; ');
   app.use((req, res, next) => {
     res.set({
+      'Content-Security-Policy': CONTENT_SECURITY_POLICY,
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'SAMEORIGIN',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -96,6 +150,9 @@ export async function createServer(db, config) {
     if (req.path.startsWith('/api/')) res.set('Cache-Control', 'no-store');
     next();
   });
+
+  // Student lists and route circulars are larger than any other request.
+  app.use('/api/admin/roster', adminOnly, express.json({ limit: '8mb' }));
 
   // Raw bytes are kept for the webhook: its signature covers the exact body.
   app.use(express.json({ limit: '200kb', verify: (req, _res, buf) => { req.rawBody = buf; } }));
@@ -149,6 +206,18 @@ export async function createServer(db, config) {
         data: { type: 'incident', id: rows[0].id, kind },
       });
     }
+    // Parents hear about emergencies too: the route's parents when it is the bus,
+    // the student's own parents when a student asks for help.
+    if (PARENT_INCIDENTS.has(kind)) {
+      const bus = busId ? (await db.query('SELECT fleet_code FROM buses WHERE id = $1', [busId])).rows[0]?.fleet_code?.replace('BSACIST-', 'Bus ') : null;
+      const what = kind === 'SOS' ? 'SOS' : kind === 'EMERGENCY' ? 'Emergency' : 'Breakdown';
+      if (source === 'driver' && routeId) {
+        await guardians.toRouteParents(routeId, { kind, title: `${what}: ${bus ?? 'your child\'s bus'}`, body: message ?? 'The transport office has been told and is responding.' });
+      } else if (source === 'student') {
+        const who = (await db.query('SELECT full_name FROM users WHERE id = $1', [auth.userId])).rows[0]?.full_name;
+        await guardians.toChildParents(auth.userId, { kind, title: `${who} sent an SOS`, body: message ?? 'The transport office has been told and is responding.' });
+      }
+    }
     // A driver's breakdown, delay or emergency is also an alert to the route.
     if (source === 'driver' && INCIDENT_TO_NOTICE[kind] && routeId) {
       const bus = (await db.query('SELECT fleet_code FROM buses WHERE id = $1', [busId])).rows[0];
@@ -168,7 +237,7 @@ export async function createServer(db, config) {
 
   app.get('/api/health', async (_req, res) => {
     await db.query('SELECT 1');
-    res.json({ ok: true, database: db.kind, liveBuses: tracking.latest.size, paymentGateway: gateway.mode });
+    res.json({ ok: true, database: db.kind, liveBuses: tracking.latest.size, paymentGateway: gateway.mode, demoMode: config.demoMode, subscriptionRequired: config.subscription.studentRequired });
   });
 
   app.get('/api/routes', async (_req, res) => {
@@ -224,6 +293,7 @@ export async function createServer(db, config) {
     )).rows));
   });
   app.get('/api/contacts', (_req, res) => res.json(config.emergencyContacts));
+  app.get('/api/institution', (_req, res) => res.json(config.institution));
   app.get('/api/plans', async (_req, res) => res.json(await billing.plans()));
 
   /** Pipeline counters: accepted fixes and rejections by reason. */
@@ -250,6 +320,19 @@ export async function createServer(db, config) {
   app.post('/api/auth/register', rateLimit({ windowMs: 60000, max: config.rateLimits.register }), async (req, res) => {
     res.status(201).json(await registerStudent(db, config, req.body ?? {}));
   });
+  app.post('/api/auth/register-parent', rateLimit({ windowMs: 60000, max: config.rateLimits.register }), async (req, res) => {
+    res.status(201).json(await registerParent(db, config, req.body ?? {}, guardians));
+  });
+  /** Forgot password: a code emailed to the account's address, then a new password. */
+  const resetLimit = rateLimit({ windowMs: 60000, max: 10, key: (req) => `reset:${req.ip}:${String(req.body?.login ?? '').toLowerCase()}`, message: 'Too many attempts; wait a minute' });
+  app.post('/api/auth/password/forgot', resetLimit, async (req, res) => {
+    res.json(await requestPasswordReset(db, config, mailer, req.body ?? {}));
+  });
+  app.post('/api/auth/password/reset', resetLimit, async (req, res) => {
+    const result = await resetPassword(db, config, req.body ?? {});
+    await audit(db, { actorId: result.user.id, action: 'PASSWORD_RESET', entity: 'user', entityId: result.user.id, ip: req.ip });
+    res.json(result);
+  });
   app.post('/api/auth/logout', anyUser, (_req, res) => res.json({ ok: true })); // tokens are stateless
 
   /** Every role changes its own password; other signed-in devices are signed out. */
@@ -260,9 +343,20 @@ export async function createServer(db, config) {
     res.json(result);
   });
 
+  /** University-email check for students: an emailed 6-digit code (auth.js). */
+  const emailLimit = rateLimit({ windowMs: 60000, max: 6, key: (req) => `email:${req.auth.userId}`, message: 'Too many attempts; wait a minute' });
+  app.post('/api/auth/email/send', anyUser, emailLimit, async (req, res) => {
+    res.json(await sendEmailCode(db, config, mailer, req.auth.userId, req.body ?? {}));
+  });
+  app.post('/api/auth/email/verify', anyUser, emailLimit, async (req, res) => {
+    const result = await verifyEmailCode(db, config, req.auth.userId, req.body ?? {});
+    await audit(db, { actorId: req.auth.userId, action: 'EMAIL_VERIFIED', entity: 'user', entityId: req.auth.userId, ip: req.ip });
+    res.json(result);
+  });
+
   app.get('/api/me', anyUser, async (req, res) => {
     const profile = await loadProfile(db, req.auth.userId);
-    const out = { user: profile };
+    const out = { user: profile, emailCheck: emailCheck(config, profile) };
     if (profile.role === 'student') out.entitlement = await billing.access(req.auth.userId);
     res.json(out);
   });
@@ -305,6 +399,10 @@ export async function createServer(db, config) {
       if (typeof b.boardingReminders !== 'boolean') throw new HttpError(400, 'boardingReminders must be true or false');
       add('boarding_reminders', b.boardingReminders);
     }
+    if (b.arrivalAlerts !== undefined) {
+      if (typeof b.arrivalAlerts !== 'boolean') throw new HttpError(400, 'arrivalAlerts must be true or false');
+      add('arrival_alerts', b.arrivalAlerts);
+    }
     if (b.locationConsent !== undefined) {
       add('location_consent', Boolean(b.locationConsent));
       add('consent_at', new Date());
@@ -312,6 +410,13 @@ export async function createServer(db, config) {
     }
     if (!sets.length) throw new HttpError(400, 'Nothing to update');
     await db.query(`UPDATE users SET ${sets.join(', ')} WHERE id = $1`, vals);
+    res.json({ user: await loadProfile(db, req.auth.userId) });
+  });
+
+  /** Everyone can choose the app's language, parents included. */
+  app.put('/api/me/language', anyUser, async (req, res) => {
+    if (!['en', 'ta'].includes(req.body?.language)) throw new HttpError(400, 'language must be en or ta');
+    await db.query('UPDATE users SET language = $2 WHERE id = $1', [req.auth.userId, req.body.language]);
     res.json({ user: await loadProfile(db, req.auth.userId) });
   });
 
@@ -384,11 +489,11 @@ export async function createServer(db, config) {
   // ---- Driver app (JWT, role = driver) -----------------------------------
 
   app.get('/api/driver/trip', driverOnly, async (req, res) => {
-    res.json({ trip: await tracking.activeTrip(req.auth.busId) });
+    res.json({ trip: await tracking.activeTrip(req.auth.busId), suggestedDirection: tracking.defaultDirection() });
   });
 
   const startTrip = async (req, res) => {
-    const result = await tracking.startTrip(req.auth);
+    const result = await tracking.startTrip(req.auth, { direction: req.body?.direction ?? null });
     res.status(result.resumed ? 200 : 201).json(result);
   };
   app.post('/api/driver/trips', driverOnly, startTrip);
@@ -469,11 +574,12 @@ export async function createServer(db, config) {
          LEFT JOIN LATERAL (SELECT status, method, boarded_at, alighted_at FROM attendance
                              WHERE trip_id = $3 AND user_id = u.id ORDER BY boarded_at DESC NULLS LAST LIMIT 1) a ON TRUE
         WHERE u.role = 'student' AND u.status = 'active' AND u.home_route_id = $1
-        ORDER BY u.home_stop_seq NULLS LAST, u.full_name`,
+        ORDER BY u.home_stop_seq ${trip?.direction === 'DOWN' ? 'DESC' : 'ASC'} NULLS LAST, u.full_name`,
       [bus.route_id, today, trip?.id ?? null],
     );
     res.json({
       tripId: trip?.id ?? null,
+      direction: trip?.direction ?? null,
       students: rows.map((r) => ({
         id: r.id,
         username: r.username,
@@ -524,6 +630,7 @@ export async function createServer(db, config) {
   });
 
   app.post('/api/subscriptions/order', student, rateLimit({ windowMs: 60000, max: config.rateLimits.orders, key: (req) => `order:${req.auth.userId}` }), async (req, res) => {
+    if (gateway.mode === 'mock' && !config.demoMode) throw new HttpError(404, 'In-app payments are off. Pay the bus fee on DigiiCampus.');
     res.status(201).json(await billing.createOrder(req.auth.userId, req.body?.planCode, req.get('idempotency-key')));
   });
 
@@ -557,7 +664,9 @@ export async function createServer(db, config) {
   });
 
   // The built-in test gateway's hosted checkout (test mode only).
-  if (gateway.mode === 'mock') {
+  // The test gateway's checkout pages exist only in demo mode: outside it no
+  // order can be "paid" without a real gateway.
+  if (gateway.mode === 'mock' && config.demoMode) {
     app.get('/api/mock-gateway/orders/:orderId', async (req, res) => {
       const order = await gateway.getOrder(req.params.orderId);
       if (!order) throw new HttpError(404, 'Unknown order');
@@ -606,9 +715,12 @@ export async function createServer(db, config) {
 
   // "Did you board?" from the bus GPS (server/boarding.js). No subscription
   // check: like the attendance prompt, it can always be answered.
+  app.get('/api/alternatives', student, entitled, async (req, res) => res.json(await alternatives.forStudent(req.auth.userId)));
   app.get('/api/boarding-checks/pending', student, async (req, res) => res.json(await boarding.pending(req.auth.userId)));
   app.post('/api/boarding-checks/:id/answer', student, async (req, res) => {
-    res.json(await boarding.answer(req.auth, intParam(req.params.id, 'id'), req.body?.answer));
+    const result = await boarding.answer(req.auth, intParam(req.params.id, 'id'), req.body?.answer);
+    if (result.status === 'NOT_BOARDED') await alternatives.afterMissed(req.auth.userId);
+    res.json(result);
   });
 
   app.post('/api/attendance/:id/dispute', student, async (req, res) => {
@@ -645,6 +757,30 @@ export async function createServer(db, config) {
   app.post('/api/notifications', adminOnly, postNotification);
   app.post('/api/admin/notifications', adminOnly, postNotification);
 
+  mountServices(app, { db, config, tracking, guardians, pass, calendar, fleetCare, reports, io, push, role, anyUser, student, driverOnly, adminOnly });
+
+  /** Everything held about me, as a file; then delete my account (DPDP Act). */
+  const privacyLimit = rateLimit({ windowMs: 60000, max: 5, key: (req) => `privacy:${req.auth?.userId ?? req.ip}` });
+  app.get('/api/me/export', anyUser, privacyLimit, async (req, res) => {
+    res.set('content-disposition', `attachment; filename="my-data-${localDate(new Date(), config.timeZone)}.json"`);
+    res.json(await privacy.exportFor(req.auth.userId));
+  });
+  app.post('/api/me/delete', anyUser, privacyLimit, async (req, res) => {
+    res.json(await privacy.deleteAccount(req.auth, req.body?.password, req.ip));
+  });
+
+  // The yearly work of the transport office, and how the system is doing.
+  app.get('/api/admin/system', adminOnly, async (_req, res) => res.json(await monitor.health()));
+  app.post('/api/admin/system/backup', adminOnly, async (_req, res) => {
+    if (!config.backup.enabled) throw new HttpError(409, 'Backups are switched off');
+    const r = await jobs.run('backup');
+    res.json({ file: r?.file ? path.basename(r.file) : null, rows: r?.rows, bytes: r?.bytes, offsite: r?.offsite ?? false, skipped: r?.skipped });
+  });
+  app.get('/api/admin/roster/summary', adminOnly, async (_req, res) => res.json(await roster.summary()));
+  app.post('/api/admin/roster/students', adminOnly, async (req, res) => res.json(await roster.importStudents(req.body ?? {}, req.auth.userId)));
+  app.post('/api/admin/roster/routes', adminOnly, async (req, res) => res.json(await roster.importRoutes(req.body ?? {}, req.auth.userId)));
+  app.post('/api/admin/roster/rollover', adminOnly, async (req, res) => res.json(await roster.rollover(req.body ?? {}, req.auth.userId)));
+
   app.use('/api/admin/trackers', adminOnly, trackers.router());
   app.use('/api/admin', adminOnly, adminRouter({ db, config, tracking, attendance, reports, jobs, io }));
   app.use('/api/finance', financeOnly, financeRouter({ db, config, billing, gateway, jobs }));
@@ -664,13 +800,17 @@ export async function createServer(db, config) {
 
   // ---- Errors --------------------------------------------------------------
 
-  app.use((err, _req, res, _next) => {
+  app.use((err, req, res, _next) => {
     if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Body is not valid JSON' });
+    if (err.type === 'entity.too.large') return res.status(413).json({ error: 'That file is too large' });
     const status = err.status ?? 500;
     // A deliberate HttpError (e.g. 503 "busy, try again") keeps its message;
     // anything unexpected is logged and hidden behind a generic one.
     const deliberate = err instanceof HttpError;
-    if (!deliberate && status >= 500) console.error(err);
+    if (!deliberate && status >= 500) {
+      console.error(err);
+      monitor.capture('server', err, `${req.method} ${req.route?.path ?? req.path}`);
+    }
     if (deliberate && err.extra?.retryAfterS) res.set('Retry-After', String(err.extra.retryAfterS));
     const expose = deliberate || status < 500;
     res.status(status).json({ error: expose ? err.message : 'Internal server error', ...(expose ? err.extra : {}) });
@@ -720,5 +860,5 @@ export async function createServer(db, config) {
     trackers.stop();
   };
 
-  return { app, httpServer, io, tracking, billing, attendance, boarding, reports, jobs, gateway, trackers, trackerListeners, stop };
+  return { app, httpServer, io, monitor, backups, tracking, billing, attendance, boarding, alternatives, automation, guardians, pass, calendar, fleetCare, reports, jobs, gateway, trackers, trackerListeners, stop };
 }

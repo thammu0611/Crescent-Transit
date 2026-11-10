@@ -6,7 +6,7 @@ export default function RouteLayer({ route, highlightSeq }) {
   const line = route.stops.map((s) => [s.lat, s.lng]);
   return (
     <>
-      <Polyline positions={line} pathOptions={{ color: '#1c315e', weight: 5, opacity: 0.7 }} />
+      <Polyline positions={line} pathOptions={{ color: 'var(--chart-navy)', weight: 5, opacity: 0.7 }} />
       {route.stops.map((s) => {
         const highlighted = s.seq === highlightSeq;
         const approx = s.geo_source === 'interpolated';
@@ -16,7 +16,7 @@ export default function RouteLayer({ route, highlightSeq }) {
             center={[s.lat, s.lng]}
             radius={highlighted ? 9 : 6}
             pathOptions={{
-              color: '#1c315e',
+              color: 'var(--chart-navy)',
               weight: 2,
               fillColor: highlighted ? '#f7bc31' : approx ? '#ffffff' : '#1c315e',
               fillOpacity: 1,

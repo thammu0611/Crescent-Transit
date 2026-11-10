@@ -1,21 +1,84 @@
-// The floating tab bar: a dark liquid-glass capsule above the bottom edge, white
-// icons over labels, and a darker pill that slides behind the active tab. Badges
-// (options.tabBarBadge) are the site's green: a count, or a dot for `true`.
+// The tab bar (2026 redesign): docked to the bottom edge on the surface colour
+// with a hairline on top. The current tab's icon sits on a soft accent pill and
+// its label turns bold accent; the icon springs up a little as it becomes active.
+// Badges (options.tabBarBadge) are a red count, or a dot for `true`.
 import { BottomTabBarHeightCallbackContext } from '@react-navigation/bottom-tabs';
 import { useContext, useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { F } from '../theme.js';
 import { tickSelect } from '../lib/haptics.js';
+import { C, F } from '../theme.js';
 import Icon from './Icon.js';
-import { Frost } from './ui.js';
 
-const PAD = 6;
+const PAD = 8;
+const ICON_ON = C.navy;
+const ICON_OFF = C.muted;
+// Tamil words run wider than the same length in English.
+const LONG_SCRIPT = /[஀-௿]/;
+
+// The label's size from the room each tab really has, so no label is cut or spills
+// over its neighbour: any number of tabs, any phone width, English or Tamil.
+// Average glyph width as a share of the font size, measured on the app's fonts.
+const GLYPH = 0.64; // the bold face of the current tab, the widest
+const GLYPH_TAMIL = 0.86;
+export function labelSize(label, tabWidth, tabCount) {
+  const base = tabCount > 4 ? 11 : 12;
+  if (!tabWidth || !label) return base;
+  const room = tabWidth - 3;
+  const per = LONG_SCRIPT.test(label) ? GLYPH_TAMIL : GLYPH;
+  const fit = room / (String(label).length * per);
+  return Math.max(8, Math.min(base, Math.floor(fit * 2) / 2));
+}
+
+let reduceMotion = false;
+AccessibilityInfo.isReduceMotionEnabled?.().then((v) => { reduceMotion = v; }).catch(() => {});
 
 function Badge({ value }) {
   if (value == null || value === false) return null;
   if (value === true) return <View style={s.dot} />;
   return <View style={s.count}><Text style={s.countText}>{value}</Text></View>;
+}
+
+/** One tab: an accent pill behind the icon when current; the icon springs up a little. */
+function Tab({ focused, label, icon, badge, size, onPress, onLongPress, a11yLabel }) {
+  const [pop] = useState(() => new Animated.Value(focused ? 1 : 0));
+  useEffect(() => {
+    if (reduceMotion) { pop.setValue(focused ? 1 : 0); return; }
+    Animated.spring(pop, { toValue: focused ? 1 : 0, useNativeDriver: true, damping: 12, stiffness: 220, mass: 0.7 }).start();
+  }, [focused, pop]);
+  const CustomIcon = typeof icon === 'function' ? icon : null;
+  const scale = pop.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] });
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: focused }}
+      accessibilityLabel={a11yLabel}
+      style={({ pressed }) => [s.tab, pressed && { opacity: 0.75 }]}
+    >
+      <View style={[s.pill, focused && s.pillOn]}>
+        <Animated.View style={{ transform: [{ scale }] }}>
+          {CustomIcon
+            ? <CustomIcon focused={focused} />
+            : <Icon name={icon} size={22} color={focused ? ICON_ON : ICON_OFF} strokeWidth={focused ? 2.2 : 1.9} />}
+        </Animated.View>
+        <View style={s.badgeAt}><Badge value={badge} /></View>
+      </View>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}
+        // The phone's large-text setting would push labels into each other; the
+        // icons and the accessibility label carry the meaning at any size.
+        maxFontSizeMultiplier={1.15}
+        ellipsizeMode="clip"
+        style={[s.label, { fontSize: size, lineHeight: Math.round(size * 1.3) }, focused ? s.labelOn : s.labelOff]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
 }
 
 /**
@@ -25,33 +88,21 @@ function Badge({ value }) {
 export default function GlassTabBar({ state, descriptors, navigation, icons }) {
   const insets = useSafeAreaInsets();
   const reportHeight = useContext(BottomTabBarHeightCallbackContext);
-  const [width, setWidth] = useState(0);
-  const tabW = width ? (width - PAD * 2) / state.routes.length : 0;
-  const [x] = useState(() => new Animated.Value(0));
-
-  useEffect(() => {
-    Animated.spring(x, { toValue: state.index * tabW, useNativeDriver: true, damping: 18, stiffness: 180, mass: 0.8 }).start();
-  }, [state.index, tabW, x]);
+  const screen = useWindowDimensions().width;
+  const tabW = (screen - PAD * 2) / state.routes.length;
+  const labelOf = (route) => { const o = descriptors[route.key].options; return o.tabBarLabel ?? o.title ?? route.name; };
+  // One size for the whole bar, set by the label that needs the most room.
+  const size = Math.min(...state.routes.map((r) => labelSize(labelOf(r), tabW, state.routes.length)));
 
   return (
     <View
-      style={[s.bar, { bottom: insets.bottom + 10 }]}
-      onLayout={(e) => { setWidth(e.nativeEvent.layout.width); reportHeight?.(e.nativeEvent.layout.height); }}
+      style={[s.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}
+      onLayout={(e) => reportHeight?.(e.nativeEvent.layout.height)}
     >
-      <Frost tint="dark" intensity={55} style={{ borderRadius: s.bar.borderRadius }} />
-      <View pointerEvents="none" style={s.sheen} />
-      {tabW ? (
-        <Animated.View pointerEvents="none" style={[s.active, { width: tabW, transform: [{ translateX: x }] }]}>
-          {/* A short gold bar under the active tab, as under the web bar's current link. */}
-          <View style={s.activeBar} />
-        </Animated.View>
-      ) : null}
       {state.routes.map((route, i) => {
         const { options } = descriptors[route.key];
         const focused = state.index === i;
-        const label = options.tabBarLabel ?? options.title ?? route.name;
-        const icon = icons[route.name];
-        const CustomIcon = typeof icon === 'function' ? icon : null;
+        const label = labelOf(route);
         const onPress = () => {
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
           if (!focused && !event.defaultPrevented) {
@@ -60,23 +111,17 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
           }
         };
         return (
-          <Pressable
+          <Tab
             key={route.key}
+            focused={focused}
+            label={label}
+            icon={icons[route.name]}
+            badge={options.tabBarBadge}
+            size={size}
             onPress={onPress}
             onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: focused }}
-            accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
-            style={s.tab}
-          >
-            <View>
-              {CustomIcon
-                ? <CustomIcon focused={focused} />
-                : <Icon name={icon} size={25} color="#fff" strokeWidth={focused ? 2.1 : 1.8} />}
-              <View style={s.badgeAt}><Badge value={options.tabBarBadge} /></View>
-            </View>
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[s.label, state.routes.length > 4 && s.labelTight, { opacity: focused ? 1 : 0.88 }]}>{label}</Text>
-          </Pressable>
+            a11yLabel={options.tabBarAccessibilityLabel ?? label}
+          />
         );
       })}
     </View>
@@ -85,24 +130,19 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
 
 const s = StyleSheet.create({
   bar: {
-    position: 'absolute', left: 14, right: 14, height: 74, borderRadius: 37, padding: PAD,
-    flexDirection: 'row', overflow: 'hidden',
-    backgroundColor: 'rgba(24,30,44,0.72)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
-    shadowColor: '#000', shadowOpacity: 0.28, shadowRadius: 22, shadowOffset: { width: 0, height: 10 },
+    position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 8, paddingHorizontal: PAD,
+    flexDirection: 'row',
+    backgroundColor: C.dark ? 'rgba(18,24,33,0.97)' : 'rgba(255,255,255,0.97)',
+    borderTopWidth: 1, borderTopColor: C.line2,
   },
-  // Bright top edge, as on the rest of the glass.
-  sheen: { position: 'absolute', top: 0, left: 24, right: 24, height: 1, backgroundColor: 'rgba(255,255,255,0.22)' },
-  active: {
-    position: 'absolute', top: PAD, bottom: PAD, left: PAD, borderRadius: 31,
-    backgroundColor: 'rgba(6,10,20,0.5)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
-  },
-  activeBar: { position: 'absolute', bottom: 4, alignSelf: 'center', width: 16, height: 2.5, borderRadius: 2, backgroundColor: '#f7bc31', shadowColor: '#f7bc31', shadowOpacity: 0.8, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
-  label: { color: '#fff', fontSize: 11.5, ...F.nav },
-  // Five tabs: a size that fits "Attendance" on a narrow phone.
-  labelTight: { fontSize: 10.5, letterSpacing: 0 },
-  badgeAt: { position: 'absolute', top: -5, left: 17 },
-  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#61ce70', borderWidth: 1.5, borderColor: 'rgba(24,30,44,0.9)', marginTop: 3 },
-  count: { minWidth: 22, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#61ce70', borderWidth: 1.5, borderColor: 'rgba(24,30,44,0.9)' },
-  countText: { color: '#0b2a12', fontSize: 11.5, ...F[700] },
+  tab: { flex: 1, minWidth: 0, minHeight: 52, paddingHorizontal: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  pill: { width: 56, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  pillOn: { backgroundColor: C.navy50 },
+  label: { maxWidth: '100%', textAlign: 'center', letterSpacing: 0, ...F.nav },
+  labelOn: { color: ICON_ON, ...F.navBold },
+  labelOff: { color: ICON_OFF },
+  badgeAt: { position: 'absolute', top: -4, right: 6 },
+  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#DC2626', borderWidth: 1.5, borderColor: C.dark ? '#121821' : '#fff' },
+  count: { minWidth: 20, height: 18, paddingHorizontal: 5, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: '#DC2626', borderWidth: 1.5, borderColor: C.dark ? '#121821' : '#fff' },
+  countText: { color: '#fff', fontSize: 10.5, ...F[700] },
 });

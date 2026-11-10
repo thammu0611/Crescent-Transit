@@ -16,6 +16,7 @@ import { seedIfEmpty, seedModules } from '../server/seed.js';
 // Without a database URL fall back to a throwaway embedded database in /tmp
 // (the only writable folder): fine for a quick look, but it is wiped often.
 if (!process.env.DATABASE_URL) process.env.PGLITE_DIR ??= '/tmp/pgdata';
+// (Production refuses that below: see start().)
 
 let ready = null;
 
@@ -25,7 +26,10 @@ async function start() {
   if (process.env.NODE_ENV === 'production' && config.usingDevSecret) {
     throw new Error('JWT_SECRET is not set. Add it in the Vercel project settings and redeploy.');
   }
-  if (!config.databaseUrl) console.warn('DATABASE_URL is not set - using a temporary database in /tmp that Vercel wipes.');
+  if (!config.databaseUrl) {
+    if (config.production && !config.allowEmbeddedDb) throw new Error('DATABASE_URL is not set. Connect a PostgreSQL database (e.g. Neon) and redeploy.');
+    console.warn('DATABASE_URL is not set - using a temporary database in /tmp that Vercel wipes.');
+  }
   const db = await openDatabase({ databaseUrl: config.databaseUrl, dataDir: config.pgliteDir });
   await seedIfEmpty(db, config);
   await seedModules(db, config);

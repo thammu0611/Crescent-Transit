@@ -40,7 +40,7 @@ export function SessionProvider({ children }) {
     if (!session?.token) return;
     try {
       const me = await api('/api/me', { token: session.token });
-      const next = { ...session, user: me.user };
+      const next = { ...session, user: me.user, emailCheck: me.emailCheck ?? null };
       write(next);
       setSession(next);
       setEntitlement(me.entitlement ?? null);
@@ -55,7 +55,7 @@ export function SessionProvider({ children }) {
   }, [refresh]);
 
   const value = useMemo(
-    () => ({ token: session?.token ?? null, user: session?.user ?? null, entitlement, signIn, signOut, refresh }),
+    () => ({ token: session?.token ?? null, user: session?.user ?? null, emailCheck: session?.emailCheck ?? null, entitlement, signIn, signOut, refresh }),
     [session, entitlement, signIn, signOut, refresh],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

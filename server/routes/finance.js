@@ -44,7 +44,7 @@ export function financeRouter({ db, config, billing, gateway, jobs }) {
               (SELECT max(valid_to) FROM subscriptions s WHERE s.user_id = u.id AND s.status = 'ACTIVE') AS paid_until,
               (SELECT count(*)::int FROM payments p WHERE p.user_id = u.id AND p.status = 'CAPTURED') AS payments
          FROM users u LEFT JOIN routes r ON r.id = u.home_route_id
-        WHERE u.role = 'student' AND ($1::text IS NULL OR u.username ILIKE '%' || $1 || '%' OR u.full_name ILIKE '%' || $1 || '%')
+        WHERE u.role = 'student' AND u.status <> 'deleted' AND ($1::text IS NULL OR u.username ILIKE '%' || $1 || '%' OR u.full_name ILIKE '%' || $1 || '%')
         ORDER BY u.username LIMIT 500`,
       [q],
     );

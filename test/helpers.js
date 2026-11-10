@@ -17,6 +17,7 @@ export async function startTestServer(overrides = {}) {
   });
   const config = {
     ...base,
+    eveningRunFrom: '24:00', // a trip is the UP run unless a test says otherwise, whatever the hour
     ...overrides,
     // The suites were written for the paid plan; a suite passes
     // subscription: { studentRequired: false } to test the free default.
@@ -55,7 +56,7 @@ export async function startTestServer(overrides = {}) {
     studentCounter += 1;
     const username = `t${Date.now().toString(36)}${studentCounter}`;
     const r = await call('/api/auth/register', {
-      body: { username, email: `${username}@test.edu`, fullName: `Test Student ${studentCounter}`, password: 'password123', routeCode, department: 'CA', ...extra },
+      body: { username, email: `${username}@test.edu`, fullName: `Test Student ${studentCounter}`, password: 'Route-pass-123', routeCode, department: 'CA', ...extra },
     });
     if (r.status !== 201) throw new Error(`register: ${r.status} ${JSON.stringify(r.body)}`);
     return { token: r.body.token, user: r.body.user, username };

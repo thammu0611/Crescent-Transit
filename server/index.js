@@ -60,6 +60,18 @@ if (portTaken) {
   process.exit(1);
 }
 
+// Production must keep its data and its sign-ins safe: refuse to start otherwise.
+if (config.production) {
+  const problems = [];
+  if (config.usingDevSecret) problems.push('JWT_SECRET is not set (use a long random value).');
+  if (config.demoMode && process.env.ALLOW_DEMO_IN_PRODUCTION !== '1') problems.push('DEMO_MODE=1 would let anyone sign in with the shared demo password. Remove it.');
+  if (!config.databaseUrl && !config.allowEmbeddedDb) problems.push('DATABASE_URL is not set (a PostgreSQL connection string, e.g. from Neon). Without it every deploy loses all data.');
+  if (problems.length) {
+    console.error(`Not starting in production:\n  - ${problems.join('\n  - ')}`);
+    process.exit(1);
+  }
+}
+
 let db;
 try {
   db = await openDatabase({ databaseUrl: config.databaseUrl, dataDir: config.pgliteDir });
@@ -68,10 +80,22 @@ try {
   console.error(err.message);
   process.exit(1);
 }
-if (await seedIfEmpty(db, config)) console.log('Loaded the BSACIST 2026-27 bus timetable (28 routes).');
+try {
+  if (await seedIfEmpty(db, config)) console.log('Loaded the BSACIST 2026-27 bus timetable (28 routes).');
+} catch (err) {
+  console.error(err.message);
+  process.exit(1);
+}
 if (await seedModules(db, config)) console.log('Created demo student accounts stu001-stu024 (password: DEMO_PASSWORD).');
 
-const { httpServer, stop, gateway, trackerListeners } = await createServer(db, config);
+const { httpServer, stop, gateway, trackerListeners, monitor } = await createServer(db, config);
+
+// Nothing fails quietly: these reach the administrator as well as the log.
+process.on('unhandledRejection', (err) => monitor.capture('process', err));
+process.on('uncaughtException', (err) => {
+  console.error('[uncaught]', err);
+  monitor.capture('process', err);
+});
 
 // A longer accept queue than Node's default (511): when hundreds of phones
 // connect in the same second, the extra connections wait instead of being reset.
@@ -79,13 +103,14 @@ httpServer.listen({ port: config.port, backlog: 2048 }, () => {
   const base = `http://localhost:${config.port}`;
   console.log('University Bus Tracking System');
   console.log(`  Database : ${db.kind}${config.databaseUrl ? '' : ` in ${config.pgliteDir}`}`);
-  console.log(`  Payments : ${gateway.mode === 'mock' ? 'built-in test gateway (set RAZORPAY_* for Razorpay)' : 'Razorpay'}`);
+  console.log(`  Mode     : ${config.demoMode ? 'demo (shared demo password and demo tools; DEMO_MODE=0 for real use)' : 'live'}`);
   console.log(`  App      : ${base}/`);
   console.log(`  API      : ${base}/api/health`);
   for (const l of trackerListeners) console.log(`  Trackers : ${l.protocol.toUpperCase()} on TCP port ${l.port}`);
   if (config.gps.webhookSecret) console.log(`  Trackers : webhook at ${base}/api/gps/webhook`);
+  console.log(`  Backups  : ${config.backup.enabled ? `daily at ${config.backup.at} to ${config.backup.dir}${config.backup.s3 ? ' and offsite' : ''}` : 'off'}`);
   if (config.usingDevSecret) console.warn('  Warning  : JWT_SECRET not set - using the development secret.');
-  if (config.usingDevWebhookSecret) console.warn('  Warning  : RAZORPAY_WEBHOOK_SECRET not set - using the development secret.');
+  if (config.usingDevWebhookSecret && (config.demoMode || gateway.mode !== 'mock')) console.warn('  Warning  : RAZORPAY_WEBHOOK_SECRET not set - using the development secret.');
 });
 
 // Close the database cleanly however the server is stopped: an abrupt exit

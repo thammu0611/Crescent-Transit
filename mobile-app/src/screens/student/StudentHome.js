@@ -5,71 +5,149 @@ import Icon from '../../components/Icon.js';
 import { MiniMap } from '../../components/maps';
 import SelectRoute from '../../components/SelectRoute.js';
 import {
-  Avatar, Badge, Button, confirm, ErrorText, FoldCard, GradientCard, HeaderIconButton, HeroHeader, IconBubble, KV, LivePulse,
-  LinkButton, Notice, Screen, SectionTitle, Select, Sheet, Skeleton, Text, TextField, Txt,
+  Avatar, Badge, Button, confirm, ErrorText, FadeIn, GradientCard, HeaderIconButton, IconBubble, KV, LivePulse,
+  Notice, Screen, SectionTitle, Select, Sheet, Skeleton, Text, TextField, Txt, DirectionBadge,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
-import { date, dateTime, etaText, longDate, OCCUPANCY, time } from '../../lib/format.js';
+import { date, dateTime, etaText, OCCUPANCY, time } from '../../lib/format.js';
 import { useAsync, useLive, useRefresh } from '../../lib/hooks.js';
 import { ageLabel, estimateArrival, haversineMeters, LEAVE_ALERT_M, leavePlan } from '../../lib/rules.js';
 import { requestNotificationPermission, showNotification } from '../../lib/notify.js';
 import { dailyRuns, formatMinutes, greeting } from '../../lib/schedule.js';
+import DayBanner from '../../components/DayBanner.js';
+import { routeData, useT } from '../../lib/offline.js';
 import { useSession } from '../../lib/session.js';
-import { C, F, FRESH_COLOR, G, R, shadow } from '../../theme.js';
+import { C, F, G, R, shadow } from '../../theme.js';
 import { call } from '../PublicHome.js';
 
-const Pulse = ({ tone = 'live', size = 10 }) => (tone === 'live'
-  ? <LivePulse size={size} />
-  : <View style={{ width: size * 2.4, height: size * 2.4, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: FRESH_COLOR[tone] ?? C.offline }} /></View>);
+/** The status of the next bus, as a chip: a shape and a word, not colour alone. */
+function busChip({ loading, entitled, bus, eta }) {
+  if (loading) return <Badge tone="offline">Checking…</Badge>;
+  if (!entitled) return <Badge tone="offline" dot={false}>Locked</Badge>;
+  if (!bus) return <Badge tone="offline">Not started</Badge>;
+  if (bus.freshness === 'offline') return <Badge tone="offline">Offline</Badge>;
+  if (bus.freshness === 'delayed') return <Badge tone="delayed">Signal late</Badge>;
+  if (eta?.passed) return <Badge tone="info">Passed your stop</Badge>;
+  return <Badge tone="live">Live</Badge>;
+}
 
-/** The emerald route card: which route, the two daily runs, and the live bus. */
-function RouteCard({ routes, route, routeCode, setRouteCode, stopSeq, bus, eta, entitled, loading }) {
-  const runs = dailyRuns(route, stopSeq);
-  const etaBig = entitled && bus && bus.freshness !== 'offline' && eta && !eta.passed;
+/**
+ * The next bus: route, departure time, live arrival estimate and the two
+ * actions that matter (track it, get told when it is near). With no bus left
+ * today it becomes a helpful empty state instead of "No bus running".
+ */
+function NextBusCard({ route, stop, stopSeq, bus, eta, entitled, loading, day, armed, onNotify, onTrack, onSchedule }) {
+  const runs = dailyRuns(route, stopSeq, day);
+  const next = runs.find((r) => r.next) ?? null;
+  const etaLive = entitled && bus && bus.freshness !== 'offline' && eta && !eta.passed;
+  if (!route) return <Skeleton height={250} />;
+  if (!next) {
+    return (
+      <FadeIn style={[card, { gap: 12 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <IconBubble name="clock" accent="navy" size={48} iconSize={24} />
+          <Badge tone="offline">Not started</Badge>
+        </View>
+        <Text style={{ fontSize: 20, lineHeight: 26, ...F.display, color: C.ink }}>No more buses today</Text>
+        <Txt muted>Route {route.code} leaves {stop?.name ?? route.start_point} at {formatMinutes(runs[0]?.minutes)} on the next school day.</Txt>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Button title={armed ? 'Reminder on' : 'Remind me'} icon="bell" onPress={onNotify} style={{ flex: 1 }} />
+          <Button title="Schedule" variant="ghost" onPress={onSchedule} />
+        </View>
+      </FadeIn>
+    );
+  }
   return (
-    <GradientCard colors={G.emerald} style={{ gap: 12 }}>
+    <FadeIn style={[card, { gap: 14, backgroundColor: C.dark ? '#18233A' : '#F3F7FF', borderColor: C.dark ? 'rgba(79,140,255,0.22)' : 'rgba(37,99,235,0.16)' }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="bus" size={21} color="#fff" />
+        <View style={{ minWidth: 48, height: 32, paddingHorizontal: 8, borderRadius: 10, backgroundColor: C.navyFill, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: '#fff', fontSize: 15, ...F.displayBold }}>{route.code}</Text>
         </View>
-        <View style={{ flex: 1 }}>
-          <Select compact value={routeCode} onChange={setRouteCode} label="Route" options={routes.map((r) => ({ value: r.code, label: `Route ${r.code} · ${r.name}` }))} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={{ fontSize: 16, ...F[600], color: C.ink }} numberOfLines={1}>{next.key === 'am' ? 'Next bus to campus' : 'Next bus home'}</Text>
+          <Txt muted small numberOfLines={1}>{next.key === 'am' ? 'Morning trip' : 'Evening trip'} · {route.name}</Txt>
         </View>
+        {busChip({ loading, entitled, bus, eta })}
       </View>
-
-      {etaBig ? (
-        <View style={{ paddingVertical: 4 }}>
-          <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12, ...F[800], letterSpacing: 1 }}>ARRIVES AT YOUR STOP IN</Text>
-          <Text style={{ color: '#fff', fontSize: 40, ...F.display }}>{etaText(eta)}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <View>
+          <Txt muted small>{next.key === 'am' ? 'Leaves your stop' : 'Leaves campus'}</Txt>
+          <Text style={{ fontSize: 34, lineHeight: 40, ...F.displayBold, color: C.ink, fontVariant: ['tabular-nums'] }}>{formatMinutes(next.minutes)}</Text>
         </View>
-      ) : null}
-
-      <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12, ...F[800], letterSpacing: 1 }}>NEXT BUS TIME</Text>
-      {!route ? <Skeleton height={96} /> : (
-        <View style={{ gap: 8 }}>
-          {runs.map((r) => (
-            <View key={r.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: R.md, backgroundColor: r.next ? '#fff' : 'rgba(255,255,255,0.12)', opacity: r.done ? 0.65 : 1 }}>
-              <Icon name={r.key === 'am' ? 'arrow' : 'back'} size={15} color={r.next ? C.emerald700 : '#fff'} />
-              <Text style={{ color: r.next ? C.ink : '#fff', flex: 1, fontWeight: r.next ? '700' : '500' }} numberOfLines={1}>{r.label}</Text>
-              <Text style={{ color: r.next ? C.emerald700 : '#fff', ...F[800], fontVariant: ['tabular-nums'] }}>{formatMinutes(r.minutes)}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(0,0,0,0.14)', padding: 12, borderRadius: R.md }}>
-        {loading ? (
-          <><Pulse tone="offline" /><Text style={{ color: '#fff' }}>Checking live status…</Text></>
-        ) : !entitled ? (
-          <><Icon name="lock" size={16} color="#fff" /><Text style={{ color: '#fff', flex: 1 }}>Live position and arrival estimate come with the ₹60 subscription.</Text></>
-        ) : bus ? (
-          <><Pulse tone={bus.freshness} /><Text style={{ color: '#fff', flex: 1, ...F[600] }}>{bus.fleetCode} · {bus.freshness === 'offline' ? 'offline' : eta?.passed ? 'passed your stop' : `arrives in ${etaText(eta)}`}</Text></>
-        ) : (
-          <><Icon name="clock" size={16} color="#fff" /><Text style={{ color: '#fff', flex: 1 }}>No bus running on this route right now.</Text></>
-        )}
+        {etaLive ? (
+          <View style={{ alignItems: 'flex-end' }}>
+            <Txt muted small>Arrives in</Txt>
+            <Text style={{ fontSize: 26, lineHeight: 32, ...F.displayBold, color: C.navy }}>{etaText(eta)}</Text>
+          </View>
+        ) : null}
       </View>
-    </GradientCard>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Icon name="pin" size={16} color={C.muted} />
+        <Txt small muted style={{ flex: 1 }} numberOfLines={1}>{next.key === 'am' ? `Boarding at ${stop?.name ?? route.start_point}` : `Drop-off at ${stop?.name ?? route.start_point}`}</Txt>
+      </View>
+      <Txt small style={{ color: C.faint }}>
+        {loading ? 'Checking live status…'
+          : !entitled ? 'Live position and arrival estimate come with the ₹60 subscription.'
+            : bus ? `${bus.fleetCode} · ${bus.freshness === 'offline' ? 'offline' : eta?.passed ? 'passed your stop' : `about ${etaText(eta)} away`} · updated ${ageLabel(bus.recordedAt)}`
+              : 'No bus on the road yet. It shows here as soon as the driver starts.'}
+      </Txt>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Button title={entitled ? 'Track live' : 'Subscribe'} icon={entitled ? 'map' : 'card'} onPress={onTrack} style={{ flex: 1 }} />
+        {entitled ? <Button title={armed ? 'Alert on' : 'Notify me'} variant="ghost" icon="bell" onPress={onNotify} /> : null}
+      </View>
+    </FadeIn>
   );
 }
+
+/** Today's two trips as a short timeline, each with its status. */
+function TodayCard({ route, stopSeq, day, bus, entitled }) {
+  const runs = dailyRuns(route, stopSeq, day);
+  if (!route) return null;
+  return (
+    <View style={[card, { paddingVertical: 14, gap: 0 }]}>
+      {runs.map((r, i) => {
+        const live = r.next && entitled && bus && bus.freshness !== 'offline';
+        return (
+          <View key={r.key} style={{ flexDirection: 'row', gap: 14 }}>
+            <View style={{ width: 14, alignItems: 'center', paddingTop: 5 }}>
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: r.next ? C.navy : r.done ? C.faint : 'transparent', borderWidth: r.next || r.done ? 0 : 2, borderColor: C.faint }} />
+              {i < runs.length - 1 ? <View style={{ width: 2, flex: 1, minHeight: 30, backgroundColor: C.line, marginTop: 6 }} /> : null}
+            </View>
+            <View style={{ flex: 1, paddingBottom: i < runs.length - 1 ? 14 : 0, gap: 2 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <Text style={{ fontSize: 16, ...F[600], color: r.done ? C.muted : C.ink, fontVariant: ['tabular-nums'] }}>{formatMinutes(r.minutes)}</Text>
+                {r.done ? <Badge tone="live" dot={false}>Done</Badge> : live ? <Badge tone="live">Live</Badge> : r.next ? <Badge tone="info">Next</Badge> : <Badge tone="offline">Later today</Badge>}
+              </View>
+              <Txt small muted numberOfLines={1}>{r.label}</Txt>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Four big shortcuts. */
+function QuickActions({ items }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 10 }}>
+      {items.map((q) => (
+        <Pressable
+          key={q.label}
+          accessibilityRole="button"
+          accessibilityLabel={q.label}
+          onPress={q.onPress}
+          style={({ pressed }) => [{ flex: 1, minHeight: 86, borderRadius: 18, borderWidth: 1, borderColor: C.line2, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 4 }, pressed && { opacity: 0.8 }]}
+        >
+          <IconBubble name={q.icon} accent={q.accent} size={38} iconSize={20} />
+          <Text style={{ fontSize: 12.5, ...F[600], color: C.ink, textAlign: 'center' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{q.label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+const card = { backgroundColor: C.card, borderRadius: R.lg, padding: 18, borderWidth: 1, borderColor: C.line2, ...shadow };
 
 const km = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`);
 const leaveHeadline = (plan) => (plan.leaveInMin <= 0 ? 'Leave now' : `Leave by ${time(plan.leaveAt)}`);
@@ -99,7 +177,7 @@ function LeaveHome({ plan, bus, stop, armed, onArm, onOpen }) {
         <IconBubble name="check" accent="navy" size={40} />
         <View style={{ flex: 1 }}>
           <Txt bold>Your bus has passed {stop?.name ?? 'your stop'}</Txt>
-          <Txt muted small>{bus.fleetCode} · check the schedule for the next run</Txt>
+          <Txt muted small>{bus.fleetCode} · check the schedule for the next trip</Txt>
         </View>
       </View>
     );
@@ -116,7 +194,7 @@ function LeaveHome({ plan, bus, stop, armed, onArm, onOpen }) {
           <Text style={{ color: 'rgba(255,255,255,0.88)', fontSize: 13.5 }}>
             {plan.leaveInMin > 0 ? `In ${plan.leaveInMin} min · ` : ''}bus arrives {arrivalRange(plan)} · {plan.walkMin} min walk{plan.walkAssumed ? ' (assumed)' : ''}
           </Text>
-          <Text style={{ color: '#fff', ...F[700], fontSize: 13, marginTop: 4 }}>Tap for details →</Text>
+          <Text style={{ color: '#fff', ...F[700], fontSize: 13, marginTop: 4 }}>Tap for details ›</Text>
         </GradientCard>
       </Pressable>
     );
@@ -124,7 +202,7 @@ function LeaveHome({ plan, bus, stop, armed, onArm, onOpen }) {
   return (
     <Pressable onPress={onOpen} accessibilityRole="button" style={({ pressed }) => ({ ...glassCard, gap: 10, opacity: pressed ? 0.9 : 1 })}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <IconBubble name="clock" colors={G.navy} size={40} />
+        <IconBubble name="clock" accent="navy" size={40} />
         <View style={{ flex: 1 }}>
           <Txt bold>When to leave home</Txt>
           <Txt muted small numberOfLines={2}>Bus is {km(plan.distanceM)} away · arrives about {time(plan.arriveTo)}</Txt>
@@ -172,12 +250,12 @@ function LeaveDetails({ plan, bus, stop, me, onLocate, armed, onArm, onClose, lo
   );
 }
 
-const glassCard = { backgroundColor: C.glass, borderRadius: R.lg, padding: 16, borderWidth: 1, borderColor: C.glassEdge, ...shadow };
+const glassCard = { backgroundColor: C.card, borderRadius: R.lg, padding: 16, borderWidth: 1, borderColor: C.line2, ...shadow };
 
 /** "Bus contact": who is driving, and a number to call (doc 4.3). */
 function BusContact({ bus, route }) {
   return (
-    <View style={{ backgroundColor: C.glass, borderRadius: R.lg, padding: 16, gap: 12, ...shadow }}>
+    <View style={{ backgroundColor: C.card, borderRadius: R.lg, padding: 16, gap: 12, borderWidth: 1, borderColor: C.line2, ...shadow }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {bus ? <Avatar name={bus.driverName ?? 'Driver'} size={46} /> : <IconBubble name="bus" accent="navy" size={46} />}
         <View style={{ flex: 1 }}>
@@ -187,7 +265,7 @@ function BusContact({ bus, route }) {
         {OCCUPANCY[bus?.occupancy] ? <Badge tone={OCCUPANCY[bus.occupancy].tone}>{OCCUPANCY[bus.occupancy].label}</Badge> : null}
       </View>
       <Pressable accessibilityRole="button" onPress={() => call('+914422751347')} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: R.md, backgroundColor: pressed ? C.indigo50 : C.surface })}>
-        <IconBubble name="phone" colors={G.indigo} size={38} />
+        <IconBubble name="phone" accent="navy" size={38} />
         <View style={{ flex: 1 }}><Txt bold>Transport office</Txt><Txt muted small>+91 44 2275 1347</Txt></View>
         <Text style={{ color: C.indigo, ...F[800] }}>Call</Text>
       </Pressable>
@@ -198,7 +276,7 @@ function BusContact({ bus, route }) {
 export function FeedItem({ n, hot }) {
   const accent = hot ? 'indigo' : n.kind === 'ANNOUNCEMENT' ? 'navy' : n.kind === 'ROUTE_CHANGE' ? 'violet' : 'red';
   return (
-    <View style={{ flexDirection: 'row', gap: 12, padding: 12, borderRadius: R.md, backgroundColor: hot ? C.indigo50 : '#fff', borderWidth: 1, borderColor: hot ? C.navy100 : C.line2 }}>
+    <View style={{ flexDirection: 'row', gap: 12, padding: 12, borderRadius: R.md, backgroundColor: hot ? C.indigo50 : C.paper, borderWidth: 1, borderColor: hot ? C.navy100 : C.line2 }}>
       <IconBubble name={n.kind === 'ANNOUNCEMENT' ? 'bell' : n.kind === 'ROUTE_CHANGE' ? 'route' : 'alert'} accent={accent} size={38} />
       <View style={{ flex: 1, gap: 2 }}>
         <Txt bold>{n.title}</Txt>
@@ -209,27 +287,7 @@ export function FeedItem({ n, hot }) {
   );
 }
 
-/** What the boarding question is and when it comes (server/boarding.js), folded. */
-function BoardingInfo({ user, stop, onSettings }) {
-  const on = user.boardingReminders;
-  return (
-    <FoldCard
-      icon="bus"
-      title="Boarding check"
-      summary={on ? `Asked when your bus leaves ${stop?.name ?? 'your stop'}` : 'Switched off'}
-      badge={<Badge tone={on ? 'live' : 'offline'}>{on ? 'On' : 'Off'}</Badge>}
-    >
-      <Txt small style={{ color: C.slate }}>
-        {on
-          ? 'A "Did you board?" popup comes from your bus\'s GPS and repeats every 10 minutes until you answer. "Yes" marks your attendance.'
-          : 'Turn it on in Settings to be asked when your bus leaves your stop.'}
-      </Txt>
-      <LinkButton title="Change in Settings" icon="settings" onPress={onSettings} />
-    </FoldCard>
-  );
-}
-
-/** Missing or delayed bus, lost and found, SOS - free for everyone (doc 4.3, 8.4). */
+/** Missing or delayed bus, lost and found, SOS - open to every student (doc 4.3, 8.4). */
 function ReportProblem({ token, user, onClose }) {
   const [kind, setKind] = useState('DELAY');
   const [message, setMessage] = useState('');
@@ -275,7 +333,8 @@ function ReportProblem({ token, user, onClose }) {
 
 export default function StudentHome({ navigation }) {
   const { token, user, entitlement, refresh } = useSession();
-  const routes = useAsync(() => api('/api/routes'), []);
+  const calendar = useAsync(() => api('/api/calendar'), []);
+  const routes = useAsync(() => routeData('/api/routes'), []);
   const [routeCode, setRouteCode] = useState(user?.homeRouteCode ?? '');
   const [reporting, setReporting] = useState(false);
   const [me, setMe] = useState(null);
@@ -284,7 +343,7 @@ export default function StudentHome({ navigation }) {
   const [armed, setArmed] = useState(false);
   const alertedTrip = useRef(null);
   useEffect(() => { if (user?.homeRouteCode) setRouteCode(user.homeRouteCode); }, [user?.homeRouteCode]);
-  const route = useAsync(() => (routeCode ? api(`/api/routes/${encodeURIComponent(routeCode)}`) : Promise.resolve(null)), [routeCode]);
+  const route = useAsync(() => (routeCode ? routeData(`/api/routes/${encodeURIComponent(routeCode)}`) : Promise.resolve(null)), [routeCode]);
   const entitled = Boolean(entitlement?.active);
   const { buses } = useLive(token, routeCode, entitled && Boolean(routeCode));
   const alerts = useAsync(() => (entitled ? api('/api/notifications', { token }) : api('/api/notices')), [token, entitled]);
@@ -293,7 +352,7 @@ export default function StudentHome({ navigation }) {
   // The 2 km alert: once per trip, when the bus first comes within range of the stop.
   const homeStop = route.data?.stops.find((st) => st.seq === user?.homeStopSeq);
   const liveBus = buses.find((b) => b.freshness !== 'offline') ?? null;
-  const liveEta = liveBus && route.data && homeStop && routeCode === user?.homeRouteCode ? estimateArrival(route.data.stops, liveBus, homeStop.seq, route.data.segmentMinutes) : null;
+  const liveEta = liveBus && liveBus.direction !== 'DOWN' && route.data && homeStop && routeCode === user?.homeRouteCode ? estimateArrival(route.data.stops, liveBus, homeStop.seq, route.data.segmentMinutes) : null;
   const nearNow = liveEta && !liveEta.passed && liveEta.remainingM <= LEAVE_ALERT_M;
   useEffect(() => {
     if (!armed || !nearNow || !liveBus || alertedTrip.current === liveBus.tripId) return;
@@ -316,6 +375,7 @@ export default function StudentHome({ navigation }) {
   const walk = me && stop ? haversineMeters(me, stop) : null;
   const plan = leavePlan(eta, { walkMeters: walk });
   const first = user.name.replace(/^(Mr|Mrs|Ms)\.?\s*/i, '').split(' ')[0];
+  const t = useT();
   const unread = (alerts.data ?? []).length;
 
   const arm = async (on) => {
@@ -335,34 +395,23 @@ export default function StudentHome({ navigation }) {
     }
   };
 
-  const hero = (
-    <HeroHeader colors={G.navy}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Profile')} accessibilityLabel="Profile"><Avatar name={user.name} size={48} light /></Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: '#f9d27a', fontSize: 15, ...F[500] }}>{greeting()},</Text>
-          <Text style={{ color: '#fff', fontSize: 26, ...F.display }}>{first}</Text>
-        </View>
-        <HeaderIconButton icon="bell" label="Notifications" badge={entitled ? unread : 0} onPress={() => navigation.navigate('Alerts')} />
-      </View>
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 99, paddingHorizontal: 12, paddingVertical: 6, maxWidth: '100%' }}>
-          <Icon name="pin" size={13} color={C.gold} />
-          <Text style={{ color: '#fff', ...F[700], fontSize: 13, flexShrink: 1 }} numberOfLines={1}>
-            {stop ? `${stop.name} · Route ${route.data.code}` : route.data ? 'Choose your stop in Settings' : `Route ${user.homeRouteCode}`}
-          </Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 99, paddingHorizontal: 12, paddingVertical: 6 }}>
-          <Icon name="clock" size={13} color={C.gold} />
-          <Text style={{ color: '#fff', ...F[700], fontSize: 13 }}>{longDate().split(',')[0]}</Text>
-        </View>
-      </View>
-    </HeroHeader>
-  );
-
   return (
-    <Screen header={hero} refreshing={refreshing} onRefresh={onRefresh}>
-      <RouteCard routes={routes.data ?? []} route={route.data} routeCode={routeCode} setRouteCode={setRouteCode} stopSeq={stopSeq} bus={bus} eta={eta} entitled={entitled} loading={entitlement == null} />
+    <Screen safeTop refreshing={refreshing} onRefresh={onRefresh}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 4 }}>
+        <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Profile')} accessibilityLabel="Profile"><Avatar name={user.name} size={46} /></Pressable>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Txt muted small>{greeting()}</Txt>
+          <Text style={{ color: C.ink, fontSize: 22, lineHeight: 28, ...F.displayBold }} numberOfLines={1}>{first}</Text>
+        </View>
+        <HeaderIconButton dark icon="bell" label="Notifications" badge={entitled ? unread : 0} onPress={() => navigation.navigate('Alerts')} />
+      </View>
+      <View style={{ alignSelf: 'flex-start', maxWidth: '100%', marginTop: -4 }}>
+        <Select compact value={routeCode} onChange={setRouteCode} label="Route" options={(routes.data ?? []).map((r) => ({ value: r.code, label: `Route ${r.code} · ${r.name}` }))} />
+      </View>
+      <NextBusCard
+        route={route.data} stop={stop} stopSeq={stopSeq} bus={bus} eta={eta} entitled={entitled} loading={entitlement == null} day={calendar.data?.today}
+        armed={armed} onNotify={() => arm(!armed)} onTrack={() => navigation.navigate(entitled ? 'Track' : 'Subscription')} onSchedule={() => navigation.navigate('Schedule')}
+      />
 
       {entitlement && !entitled && (
         <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Subscription')}>
@@ -389,12 +438,20 @@ export default function StudentHome({ navigation }) {
         </Pressable>
       )}
 
-      {entitled && isHome ? <LeaveHome plan={plan} bus={bus} stop={stop} armed={armed} onArm={arm} onOpen={() => setLeaveOpen(true)} /> : null}
+      {entitled && bus?.direction ? <View style={{ alignSelf: 'flex-start' }}><DirectionBadge direction={bus.direction} /></View> : null}
+      {entitled && isHome && bus?.direction !== 'DOWN' ? <LeaveHome plan={plan} bus={bus} stop={stop} armed={armed} onArm={arm} onOpen={() => setLeaveOpen(true)} /> : null}
 
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button title="Schedule" variant="indigo" icon="list" onPress={() => navigation.navigate('Schedule')} style={{ flex: 1 }} />
-        <Button title={entitled ? 'Track live' : 'Subscribe'} variant="red" icon={entitled ? 'map' : 'card'} onPress={() => navigation.navigate(entitled ? 'Track' : 'Subscription')} style={{ flex: 1 }} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 16, ...F[600], color: C.ink }}>{t('Today')}</Text>
+        <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Schedule')} hitSlop={10}><Text style={{ color: C.link, ...F[600], fontSize: 14 }}>{t('Full schedule')}</Text></Pressable>
       </View>
+      <TodayCard route={route.data} stopSeq={stopSeq} day={calendar.data?.today} bus={bus} entitled={entitled} />
+      <QuickActions items={[
+        { label: t('Schedule'), icon: 'clock', accent: 'navy', onPress: () => navigation.navigate('Schedule') },
+        { label: t('Bus pass'), icon: 'qr', accent: 'navy', onPress: () => navigation.navigate('BusPass') },
+        { label: t('Attendance'), icon: 'check', accent: 'emerald', onPress: () => navigation.navigate('Attendance') },
+        { label: t('Report issue'), icon: 'alert', accent: 'danger', onPress: () => setReporting(true) },
+      ]} />
 
       <View style={{ borderRadius: R.lg, overflow: 'hidden', backgroundColor: C.glass, ...shadow }}>
         <View>
@@ -413,42 +470,15 @@ export default function StudentHome({ navigation }) {
         </Pressable>
       </View>
 
-      <SectionTitle title="Quick actions" />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        {[
-          ['check', 'Attendance', 'My trips', G.emerald, () => navigation.navigate('Attendance')],
-          entitlement?.required
-            ? ['card', 'Subscription', entitled ? 'Active' : '₹60 / month', G.indigo, () => navigation.navigate('Subscription')]
-            : ['bell', 'Alerts', 'Delays & notices', G.indigo, () => navigation.navigate('Alerts')],
-          ['alert', 'Report', 'Delay or SOS', G.danger, () => setReporting(true)],
-          ['settings', 'Settings', 'Route & privacy', G.dark, () => navigation.navigate('Profile')],
-        ].map(([icon, label, hint, colors, onPress]) => (
-          <Pressable accessibilityRole="button" key={label} onPress={onPress} style={({ pressed }) => ({ flexBasis: '47%', flexGrow: 1, padding: 14, gap: 10, borderRadius: R.lg, backgroundColor: C.glass, transform: [{ scale: pressed ? 0.97 : 1 }], ...shadow })}>
-            <IconBubble name={icon} colors={colors} size={42} />
-            <View>
-              <Txt bold>{label}</Txt>
-              <Txt muted small>{hint}</Txt>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-
+      <DayBanner />
+      <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Services')} style={({ pressed }) => [card, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, shadowOpacity: 0 }, pressed && { opacity: 0.85 }]}>
+        <IconBubble name="sparkle" accent="navy" size={38} />
+        <View style={{ flex: 1 }}><Txt bold>{t('Services')}</Txt><Txt muted small>Parent access, route change, lost and found</Txt></View>
+        <Icon name="arrow" size={18} color={C.faint} />
+      </Pressable>
       <SectionTitle title="Bus contact" />
       <BusContact bus={entitled ? bus : null} route={route.data} />
 
-      <SectionTitle title="Updates" />
-      <BoardingInfo user={user} stop={isHome ? stop : null} onSettings={() => navigation.navigate('Profile')} />
-      <FoldCard
-        icon="bell"
-        title="Notifications"
-        summary={alerts.data == null ? 'Loading…' : alerts.data.length ? alerts.data[0].title : "You're all caught up"}
-        badge={alerts.data?.length ? <Badge tone="info">{alerts.data.length > 9 ? '9+' : alerts.data.length}</Badge> : null}
-      >
-        {alerts.data == null ? <Skeleton /> : alerts.data.length === 0 ? <Txt muted>You're all caught up.</Txt> : (
-          <View style={{ gap: 8 }}>{alerts.data.slice(0, 3).map((n, i) => <FeedItem key={n.id} n={n} hot={i === 0} />)}</View>
-        )}
-        <LinkButton title="See all notifications" icon="arrow" onPress={() => navigation.navigate('Alerts')} />
-      </FoldCard>
       {reporting && <ReportProblem token={token} user={user} onClose={() => setReporting(false)} />}
       {leaveOpen && <LeaveDetails plan={plan} bus={bus} stop={stop} me={me} onLocate={locate} armed={armed} onArm={arm} onClose={() => setLeaveOpen(false)} locError={locError} />}
     </Screen>

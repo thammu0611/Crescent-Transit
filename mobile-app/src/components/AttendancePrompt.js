@@ -4,6 +4,7 @@ import { api, getSocket } from '../lib/api.js';
 import { ATTENDANCE_CHANGED, emit } from '../lib/events.js';
 import { time } from '../lib/format.js';
 import { showNotification } from '../lib/notify.js';
+import { DIRECTION_TEXT } from '../lib/rules.js';
 import { useSession } from '../lib/session.js';
 import { C, F } from '../theme.js';
 import { Button, ErrorText, Sheet, Text, Txt } from './ui.js';
@@ -72,7 +73,7 @@ export default function AttendancePrompt() {
         <Text style={{ fontSize: 22, ...F.display, color: C.ink, textAlign: 'center' }}>
           Are you on {prompt.fleetCode.replace('BSACIST-', 'Bus ')} — {prompt.routeName}?
         </Text>
-        <Txt muted style={{ textAlign: 'center' }}>Boarded around {time(prompt.boardedAt)}{prompt.stopName ? ` at ${prompt.stopName}` : ''}</Txt>
+        <Txt muted style={{ textAlign: 'center' }}>{DIRECTION_TEXT[prompt.direction]} · Boarded around {time(prompt.boardedAt)}{prompt.stopName ? ` at ${prompt.stopName}` : ''}</Txt>
         <ErrorText>{error}</ErrorText>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Button title="No" variant="ghost" disabled={busy} onPress={() => answer('NO')} style={{ flex: 1, minHeight: 60 }} />

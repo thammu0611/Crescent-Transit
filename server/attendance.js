@@ -38,14 +38,17 @@ export const PRESENT_SQL = `(CASE
 
 const busPoint = (b) => ({ lat: b.lat, lng: b.lng, ts: Date.parse(b.recordedAt), speedKmh: b.speedKmh, bearing: b.heading });
 
+const maskEmail = (email) => (email ? email.replace(/^(.)(.*)(@.*)$/, (_m, a, b, c) => `${a}${'\u2022'.repeat(Math.min(b.length, 6))}${c}`) : null);
+
 export class AttendanceService {
-  constructor(db, config, tracking, billing, io = null, push = null) {
+  constructor(db, config, tracking, billing, io = null, push = null, mailer = null) {
     this.db = db;
     this.config = config;
     this.tracking = tracking;
     this.billing = billing;
     this.io = io;
     this.push = push;
+    this.mailer = mailer;
     this.rules = config.attendance.rules;
     this.state = new Map(); // userId -> { lastFix, candidate, cooldowns, alightStrikes, conflict }
     this.flaggedTrips = new Set(); // capacity / tracker incidents raised once per trip
@@ -82,7 +85,7 @@ export class AttendanceService {
    * different phone needs a one-time code, which stops a student leaving their
    * phone on the bus for a friend and signing in on another.
    */
-  async bindDevice(auth, { deviceId, platform = 'WEB', pushToken = null, otp = null } = {}, ip = null) {
+  async bindDevice(auth, { deviceId, platform = 'WEB', pushToken = null, otp = null, resend = false } = {}, ip = null) {
     if (typeof deviceId !== 'string' || deviceId.length < 8 || deviceId.length > 100) throw new HttpError(400, 'deviceId is required');
     const plat = String(platform).toUpperCase();
     if (!['ANDROID', 'IOS', 'WEB'].includes(plat)) throw new HttpError(400, 'platform must be ANDROID, IOS or WEB');
@@ -96,22 +99,7 @@ export class AttendanceService {
       if (pushToken) await this.db.query('UPDATE devices SET push_token = $2 WHERE user_id = $1', [auth.userId, pushToken]);
       return { bound: true };
     }
-    if (!otp) {
-      const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
-      await this.db.query(
-        `INSERT INTO device_otps (user_id, device_uid, code_hash, expires_at) VALUES ($1, $2, $3, now() + make_interval(mins => $4))
-         ON CONFLICT (user_id) DO UPDATE SET device_uid = EXCLUDED.device_uid, code_hash = EXCLUDED.code_hash,
-           attempts = 0, expires_at = EXCLUDED.expires_at`,
-        [auth.userId, deviceId, this.otpHash(auth.userId, code), this.config.otp.ttlMinutes],
-      );
-      // No SMS provider is configured in the prototype: the code is logged
-      // on the server, and returned in development so the flow can be tested.
-      console.log(`[otp] device change code for user ${auth.userId}: ${code}`);
-      throw new HttpError(409, 'This account is bound to another phone. Enter the one-time code to move it here.', {
-        code: 'OTP_REQUIRED',
-        ...(this.config.otp.showInResponse ? { devOtp: code } : {}),
-      });
-    }
+    if (!otp) return this.requireDeviceCode(auth.userId, deviceId, resend);
     const pending = (await this.db.query('SELECT * FROM device_otps WHERE user_id = $1', [auth.userId])).rows[0];
     if (!pending || pending.device_uid !== deviceId || new Date(pending.expires_at) < new Date()) throw new HttpError(400, 'The code has expired. Request a new one.');
     if (pending.attempts >= this.config.otp.maxAttempts) throw new HttpError(429, 'Too many attempts. Request a new code.');
@@ -129,13 +117,65 @@ export class AttendanceService {
     return { bound: true, moved: true };
   }
 
+  /**
+   * The app asks again every few seconds, so one code is issued and kept until
+   * the student asks for another: a new code each time would cancel the one
+   * they are typing, and fill their inbox.
+   */
+  async requireDeviceCode(userId, deviceId, resend) {
+    const settings = this.config.otp;
+    const { rows: [user] } = await this.db.query(
+      `SELECT u.full_name, u.email, o.device_uid, o.sent_at
+         FROM users u LEFT JOIN device_otps o ON o.user_id = u.id WHERE u.id = $1`,
+      [userId],
+    );
+    const refuse = (extra = {}) => {
+      throw new HttpError(409, 'This account is bound to another phone. Enter the one-time code to move it here.', {
+        code: 'OTP_REQUIRED',
+        emailedTo: maskEmail(user.email && this.mailer?.configured ? user.email : null),
+        ...extra,
+      });
+    };
+    if (user.device_uid === deviceId && !resend) refuse();
+    if (user.device_uid === deviceId) {
+      const wait = settings.resendSeconds - Math.floor((Date.now() - new Date(user.sent_at).getTime()) / 1000);
+      if (wait > 0) throw new HttpError(429, `Wait ${wait} s before asking for another code`, { code: 'RESEND_WAIT', retryAfterS: wait });
+    }
+    const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+    await this.db.query(
+      `INSERT INTO device_otps (user_id, device_uid, code_hash, expires_at, sent_at) VALUES ($1, $2, $3, now() + make_interval(mins => $4), now())
+       ON CONFLICT (user_id) DO UPDATE SET device_uid = EXCLUDED.device_uid, code_hash = EXCLUDED.code_hash,
+         attempts = 0, expires_at = EXCLUDED.expires_at, sent_at = now()`,
+      [userId, deviceId, this.otpHash(userId, code), settings.ttlMinutes],
+    );
+    let emailed = false;
+    if (user.email && this.mailer?.configured) {
+      emailed = await this.mailer.send({
+        to: user.email,
+        subject: `${code} is your ${this.config.institution.appName} phone code`,
+        text: `Hello ${user.full_name},\n\nSomeone is moving your bus account to a new phone. The code is ${code}. It expires in ${settings.ttlMinutes} minutes.\n\nIf this was not you, do not share the code, and tell the transport office.`,
+      }).catch((err) => {
+        console.error('[otp] could not email the code:', err.message);
+        return false;
+      });
+    }
+    // Only a test system shows the code; a live one never writes it to the log.
+    if (settings.showInResponse) console.log(`[otp] device change code for user ${userId}: ${code}`);
+    return refuse({
+      emailedTo: emailed ? maskEmail(user.email) : null,
+      ...(settings.showInResponse ? { devOtp: code } : {}),
+    });
+  }
+
   /** What the phone should do: sample or not, how often, and why. */
   async samplingPlan(userId, now = new Date()) {
     const u = await this.riderSettings(userId);
     const windows = this.windowsFor(u);
     const ent = await this.billing.access(userId);
     const inWindow = inWindows(localMinutes(now, this.config.timeZone), windows);
+    const holiday = Boolean(await this.calendar?.isPaused(now.getTime()));
     return {
+      holiday,
       consent: u.location_consent,
       subscribed: ent.active,
       deviceBound: Boolean(u.device_uid),
@@ -145,7 +185,7 @@ export class AttendanceService {
       inTravelWindow: inWindow,
       intervalS: this.config.attendance.sampleIntervalS,
       corridorM: this.rules.corridorM,
-      shouldSample: u.location_consent && ent.active && Boolean(u.device_uid) && inWindow,
+      shouldSample: u.location_consent && ent.active && Boolean(u.device_uid) && inWindow && !holiday,
     };
   }
 
@@ -177,6 +217,7 @@ export class AttendanceService {
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new HttpError(400, 'Invalid coordinates');
     if (!Number.isFinite(ts)) throw new HttpError(400, 'recordedAt must be an ISO date-time');
     if (ts > now + 30000 || now - ts > 120000) return { used: false, reason: 'STALE_OR_FUTURE_FIX' };
+    if (await this.calendar?.isPaused(now)) return { used: false, reason: 'NO_SERVICE_TODAY' };
     if (Number.isFinite(accuracyM) && accuracyM > 100) return { used: false, reason: 'LOW_ACCURACY' };
 
     // Android / iOS mock-location flag: stored, and a flagged record never auto-confirms.
@@ -327,7 +368,7 @@ export class AttendanceService {
   async promptPayload(attendanceId) {
     const { rows } = await this.db.query(
       `SELECT a.attendance_id, a.trip_id, a.bus_id, a.boarded_at, a.prompted_at, a.status,
-              b.fleet_code, r.code AS route_code, r.name AS route_name, s.name AS stop_name
+              t.direction, b.fleet_code, r.code AS route_code, r.name AS route_name, s.name AS stop_name
          FROM attendance a
          JOIN buses b ON b.id = a.bus_id
          JOIN trips t ON t.id = a.trip_id
@@ -340,6 +381,7 @@ export class AttendanceService {
     return {
       attendanceId: a.attendance_id,
       tripId: a.trip_id,
+      direction: a.direction,
       busId: a.bus_id,
       fleetCode: a.fleet_code,
       routeCode: a.route_code,
@@ -456,13 +498,37 @@ export class AttendanceService {
     return out;
   }
 
+  /**
+   * The DOWN run has passed these stops: records with no phone GPS to follow
+   * them close at the student's own stop. Phone records close by themselves.
+   */
+  async alightPassed(tripId, seqs, at) {
+    const { rows } = await this.db.query(
+      `SELECT a.*, home.id AS home_stop_id
+         FROM attendance a
+         JOIN trips t ON t.id = a.trip_id
+         JOIN users u ON u.id = a.user_id
+         JOIN stops home ON home.route_id = t.route_id AND home.seq = u.home_stop_seq
+        WHERE a.trip_id = $1 AND a.status = ANY($2) AND a.alighted_at IS NULL AND a.method <> 'GPS'
+          AND u.home_stop_seq = ANY($3::int[])`,
+      [tripId, ONBOARD, seqs],
+    );
+    for (const a of rows) await this.closeRecord(a, { at, stopId: a.home_stop_id, detail: 'PASSED_HOME_STOP' });
+  }
+
   async onTripEnded({ tripId, lastPosition }) {
     const { rows } = await this.db.query(
-      `SELECT * FROM attendance WHERE trip_id = $1 AND status = ANY($2) AND alighted_at IS NULL`,
+      `SELECT a.*, CASE WHEN t.direction = 'DOWN' THEN home.id END AS home_stop_id
+         FROM attendance a
+         JOIN trips t ON t.id = a.trip_id
+         JOIN users u ON u.id = a.user_id
+         LEFT JOIN stops home ON home.route_id = t.route_id AND home.seq = u.home_stop_seq
+        WHERE a.trip_id = $1 AND a.status = ANY($2) AND a.alighted_at IS NULL`,
       [tripId, ONBOARD],
     );
     for (const a of rows) {
-      await this.closeRecord(a, { at: new Date(), stopId: lastPosition?.nearestStop?.id ?? null, detail: 'TRIP_ENDED' });
+      // Going home, a student gets off at their own stop, not where the bus finishes.
+      await this.closeRecord(a, { at: new Date(), stopId: a.home_stop_id ?? lastPosition?.nearestStop?.id ?? null, detail: 'TRIP_ENDED' });
     }
     for (const s of this.state.values()) {
       if (s.candidate?.tripId === tripId) s.candidate = null;
@@ -664,7 +730,7 @@ export class AttendanceService {
     const range = monthRange(month);
     if (!range) throw new HttpError(400, 'month must be YYYY-MM');
     const { rows } = await this.db.query(
-      `SELECT a.attendance_id, a.trip_id, a.status, a.method, a.boarded_at, a.alighted_at, a.confidence,
+      `SELECT a.attendance_id, a.trip_id, t.direction, a.status, a.method, a.boarded_at, a.alighted_at, a.confidence,
               a.locked, a.flagged, a.auto_confirmed, a.adjusted_present, a.answered_at, a.created_at,
               ${PRESENT_SQL} AS present,
               b.fleet_code, r.code AS route_code, r.name AS route_name,
@@ -685,6 +751,8 @@ export class AttendanceService {
     return {
       month,
       tripsPresent: rows.filter((r) => r.present).length,
+      upPresent: rows.filter((r) => r.present && r.direction === 'UP').length,
+      downPresent: rows.filter((r) => r.present && r.direction === 'DOWN').length,
       records: rows.map((r) => ({ ...r, canDispute: r.status !== 'DISPUTED' && r.status !== 'PROMPTED' && Date.now() - new Date(r.boarded_at).getTime() <= disputeDeadline })),
     };
   }
@@ -705,13 +773,13 @@ export class AttendanceService {
       [tripId],
     );
     const onBoard = rows.filter((r) => ONBOARD.includes(r.status) && !r.alighted_at).length;
-    return { tripId: trip.id, fleetCode: trip.fleet_code, status: trip.status, capacity: trip.capacity, onBoard, records: rows };
+    return { tripId: trip.id, direction: trip.direction, fleetCode: trip.fleet_code, status: trip.status, capacity: trip.capacity, onBoard, records: rows };
   }
 
   async reviewQueue() {
     const { rows } = await this.db.query(
       `SELECT a.attendance_id, a.status, a.method, a.flagged, a.flag_reason, a.boarded_at, a.prompted_at, a.first_match_at,
-              a.last_match_at, a.trip_id, u.username, u.full_name, b.fleet_code, r.code AS route_code,
+              a.last_match_at, a.trip_id, t.direction, u.username, u.full_name, b.fleet_code, r.code AS route_code,
               d.reason AS dispute_reason, d.claimed_present, d.previous_status,
               (SELECT json_agg(e ORDER BY e.server_ts) FROM (
                  SELECT event_type, distance_m, speed_kmph, bearing_delta, detail, server_ts

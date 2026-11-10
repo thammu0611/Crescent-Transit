@@ -52,7 +52,7 @@ export default function Subscription() {
     <Page eyebrow="Student" title="Subscription" subtitle="₹60 a month buys live tracking, arrival estimates, alerts, automatic attendance and receipts.">
       <div className="cols">
         <div className="col">
-          <Panel title="Your access" icon="shield" actions={e && <Badge tone={e.active ? (e.inGrace ? 'delayed' : 'live') : 'offline'}>{e.active ? (e.inGrace ? 'Grace period' : 'Active') : 'Free view'}</Badge>}>
+          <Panel title="Your access" icon="shield" actions={e && <Badge tone={e.active ? (e.inGrace ? 'delayed' : 'live') : 'offline'}>{e.active ? (e.inGrace ? 'Grace period' : 'Active') : 'Basic access'}</Badge>}>
             {e?.active ? (
               <p>
                 {e.planName}: valid {date(e.validFrom)} – {date(e.validTo)}
@@ -62,7 +62,7 @@ export default function Subscription() {
             ) : (
               <p className="muted">
                 No active subscription{e?.lastStatus ? ` (last: ${e.lastStatus.toLowerCase()}${e.lastValidTo ? `, until ${date(e.lastValidTo)}` : ''})` : ''}.
-                Routes, stops, timetable, notices and SOS stay free.
+                Routes, stops, timetable, notices and SOS are always included.
               </p>
             )}
             <p className="fine-print">

@@ -8,7 +8,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import AttendancePrompt from './components/AttendancePrompt.js';
 import BoardingCheck from './components/BoardingCheck.js';
-import { ChangePasswordButton, ChangePasswordSheet } from './components/ChangePassword.js';
+import BusAlternatives from './components/BusAlternatives.js';
+import { ChangePasswordButton, ChangePasswordSheet, ChoosePassword } from './components/ChangePassword.js';
 import GlassTabBar from './components/GlassTabBar.js';
 import Icon from './components/Icon.js';
 import {
@@ -25,6 +26,7 @@ import Reports from './screens/admin/Reports.js';
 import RoutesAdmin from './screens/admin/RoutesAdmin.js';
 import Trips from './screens/admin/Trips.js';
 import DriverApp from './screens/DriverApp.js';
+import VerifyEmail from './screens/student/VerifyEmail.js';
 // The finance office app is switched off for now. To bring it back, restore
 // these imports, FinanceNav below and its entry in BY_ROLE.
 // import Collections from './screens/finance/Collections.js';
@@ -32,6 +34,13 @@ import DriverApp from './screens/DriverApp.js';
 // import Payments from './screens/finance/Payments.js';
 // import Reconcile from './screens/finance/Reconcile.js';
 import LiveMap from './screens/LiveMap.js';
+import BusCare from './screens/admin/BusCare.js';
+import ServiceDesk from './screens/admin/ServiceDesk.js';
+import Appearance from './components/Appearance.js';
+import ParentHome from './screens/parent/ParentHome.js';
+import BusPass from './screens/student/Pass.js';
+import Services from './screens/student/Services.js';
+import { useT } from './lib/offline.js';
 import Login from './screens/Login.js';
 import PublicHome from './screens/PublicHome.js';
 import Alerts from './screens/student/Alerts.js';
@@ -47,7 +56,7 @@ const Stack = createNativeStackNavigator();
 export const navigationRef = createNavigationContainerRef();
 const Tab = createBottomTabNavigator();
 
-const ROLE_LABEL = { student: 'Student', driver: 'Driver', admin: 'Transport admin', finance: 'Finance officer' };
+const ROLE_LABEL = { student: 'Student', driver: 'Driver', admin: 'Transport admin', finance: 'Finance officer', parent: 'Parent' };
 
 // Every header is the floating navigation pill, as in the web app.
 const header = {
@@ -69,7 +78,7 @@ const AccountButtons = () => <><ChangePasswordButton /><SignOutButton /></>;
 /** The signed-in user's initials, as the profile tab's icon. */
 function ProfileTabIcon() {
   const { user } = useSession();
-  return <Avatar name={user?.name} size={27} light />;
+  return <Avatar name={user?.name} size={27} light={C.dark} />;
 }
 
 /**
@@ -85,7 +94,7 @@ const tabOptions = {
   animation: 'shift',
 };
 
-// ---- Guest: the free view and sign-in ------------------------------------------------
+// ---- Guest: the public home and sign-in ------------------------------------------------
 
 function GuestNav() {
   return (
@@ -96,18 +105,37 @@ function GuestNav() {
   );
 }
 
+// A temporary password from the transport office is replaced first.
+function ChoosePasswordNav() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ChoosePassword" component={ChoosePassword} options={{ title: 'Choose your password' }} />
+    </Stack.Navigator>
+  );
+}
+
+// A student whose university email is not confirmed sees only that step.
+function VerifyEmailNav() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="VerifyEmail" component={VerifyEmail} options={{ title: 'Verify your email' }} />
+    </Stack.Navigator>
+  );
+}
+
 // ---- Student: five tabs used daily, like the web app's phone tab bar ---------------------
 
 const STUDENT_ICONS = { Home: 'home', Track: 'map', Schedule: 'clock', Attendance: 'check', Profile: ProfileTabIcon };
 
 function StudentTabs() {
+  const t = useT();
   return (
     <Tab.Navigator safeAreaInsets={{ bottom: 0 }} tabBar={tabBar(STUDENT_ICONS)} screenOptions={tabOptions}>
-      <Tab.Screen name="Home" component={StudentHome} options={{ title: 'Home', headerShown: false }} />
-      <Tab.Screen name="Track" component={LiveMap} options={{ title: 'Live map', tabBarLabel: 'Track' }} />
-      <Tab.Screen name="Schedule" component={Schedule} />
-      <Tab.Screen name="Attendance" component={StudentAttendance} options={{ headerShown: false }} />
-      <Tab.Screen name="Profile" component={Settings} options={{ title: 'Settings', tabBarLabel: 'Profile', headerShown: false }} />
+      <Tab.Screen name="Home" component={StudentHome} options={{ title: t('Home'), headerShown: false }} />
+      <Tab.Screen name="Track" component={LiveMap} options={{ title: t('Live map'), tabBarLabel: t('Track'), headerShown: false }} />
+      <Tab.Screen name="Schedule" component={Schedule} options={{ title: t('Schedule'), headerShown: false }} />
+      <Tab.Screen name="Attendance" component={StudentAttendance} options={{ title: t('Attendance'), headerShown: false }} />
+      <Tab.Screen name="Profile" component={Settings} options={{ title: t('Settings'), tabBarLabel: t('Profile'), headerShown: false }} />
     </Tab.Navigator>
   );
 }
@@ -124,12 +152,26 @@ function StudentNav() {
       <Stack.Navigator screenOptions={header}>
         <Stack.Screen name="StudentTabs" component={StudentTabs} options={{ headerShown: false }} />
         <Stack.Screen name="Alerts" component={Alerts} options={{ title: 'Notifications' }} />
+        <Stack.Screen name="BusPass" component={BusPass} options={{ title: 'Bus pass' }} />
+        <Stack.Screen name="Services" component={Services} options={{ title: 'Services', headerTitle: '' }} />
         {/* Reached only when the university requires the subscription (entitlement.required). */}
         <Stack.Screen name="Subscription" component={Subscription} options={{ headerTitle: '' }} />
       </Stack.Navigator>
       <AttendancePrompt />
       <BoardingCheck />
+      <BusAlternatives onTrack={(routeCode) => navigationRef.navigate('StudentTabs', { screen: 'Track', params: { routeCode } })} />
     </>
+  );
+}
+
+// ---- Parent: one screen --------------------------------------------------------------
+
+function ParentNav() {
+  const t = useT();
+  return (
+    <Stack.Navigator screenOptions={header}>
+      <Stack.Screen name="ParentHome" component={ParentHome} options={{ title: t('My children'), headerShown: false }} />
+    </Stack.Navigator>
   );
 }
 
@@ -138,19 +180,20 @@ function StudentNav() {
 function DriverNav() {
   return (
     <Stack.Navigator screenOptions={header}>
-      <Stack.Screen name="Driver" component={DriverApp} options={{ title: 'My trip', headerRight: () => <AccountButtons /> }} />
+      <Stack.Screen name="Driver" component={DriverApp} options={{ title: 'My trip', headerShown: false }} />
     </Stack.Navigator>
   );
 }
 
 // ---- Transport admin: daily tabs + "More" for the rest of the web menu --------------------
 
-const ADMIN_ICONS = { Dashboard: 'chart', FleetMap: 'map', Trips: 'clock', More: 'menu' };
+const ADMIN_ICONS = { Dashboard: 'chart', FleetMap: 'map', Trips: 'clock', AttendanceAdmin: 'check', More: 'menu' };
 const ADMIN_MORE = [
-  ['AttendanceAdmin', 'Attendance', 'check', 'Review queue, students, corrections', 'emerald'],
   ['RoutesAdmin', 'Routes', 'route', 'Route builder and stops', 'indigo'],
   ['Fleet', 'Buses and drivers', 'bus', 'Add, edit and assign', 'sky'],
   ['Notices', 'Alerts and incidents', 'bell', 'Announcements and incident log', 'red'],
+  ['ServiceDesk', 'Service desk', 'sparkle', 'Complaints, route requests, lost items, driver checks', 'emerald'],
+  ['BusCare', 'Bus care', 'shield', 'Documents, service, fuel, scorecards, stops', 'indigo'],
   ['Reports', 'Reports', 'list', 'Registers, demand, occupancy, accuracy', 'violet'],
 ];
 
@@ -179,6 +222,7 @@ function MoreMenu({ navigation }) {
           </Pressable>
         ))}
       </View>
+      <Appearance />
       <Button title="Change password" variant="ghost" icon="lock" onPress={() => setChangingPassword(true)} />
       <Button title="Sign out" variant="ghost" icon="logout" textStyle={{ color: C.danger }} onPress={async () => (await confirm('Sign out?', '', 'Sign out')) && signOut()} />
       <ChangePasswordSheet visible={changingPassword} onClose={() => setChangingPassword(false)} />
@@ -190,8 +234,9 @@ function AdminTabs() {
   return (
     <Tab.Navigator safeAreaInsets={{ bottom: 0 }} tabBar={tabBar(ADMIN_ICONS)} screenOptions={tabOptions}>
       <Tab.Screen name="Dashboard" component={Dashboard} options={{ title: 'Dashboard', headerShown: false }} />
-      <Tab.Screen name="FleetMap" component={LiveMap} options={{ title: 'Fleet map' }} />
+      <Tab.Screen name="FleetMap" component={LiveMap} options={{ title: 'Fleet map', headerShown: false }} />
       <Tab.Screen name="Trips" component={Trips} options={{ headerShown: false }} />
+      <Tab.Screen name="AttendanceAdmin" component={AttendanceAdmin} options={{ title: 'Attendance' }} />
       <Tab.Screen name="More" component={MoreMenu} />
     </Tab.Navigator>
   );
@@ -201,10 +246,11 @@ function AdminNav() {
   return (
     <Stack.Navigator screenOptions={header}>
       <Stack.Screen name="AdminTabs" component={AdminTabs} options={{ headerShown: false }} />
-      <Stack.Screen name="AttendanceAdmin" component={AttendanceAdmin} options={{ title: 'Attendance', headerTitle: '' }} />
       <Stack.Screen name="RoutesAdmin" component={RoutesAdmin} options={{ title: 'Routes' }} />
       <Stack.Screen name="Fleet" component={Fleet} options={{ title: 'Buses and drivers', headerTitle: '' }} />
       <Stack.Screen name="Notices" component={Notices} options={{ title: 'Alerts', headerTitle: '' }} />
+      <Stack.Screen name="ServiceDesk" component={ServiceDesk} options={{ title: 'Service desk', headerTitle: '' }} />
+      <Stack.Screen name="BusCare" component={BusCare} options={{ title: 'Bus care', headerTitle: '' }} />
       <Stack.Screen name="Reports" component={Reports} options={{ headerTitle: '' }} />
     </Stack.Navigator>
   );
@@ -248,7 +294,7 @@ function FinanceOffNav() {
   );
 }
 
-const BY_ROLE = { student: StudentNav, driver: DriverNav, admin: AdminNav, finance: FinanceOffNav };
+const BY_ROLE = { parent: ParentNav, student: StudentNav, driver: DriverNav, admin: AdminNav, finance: FinanceOffNav };
 
 // Where a tapped notification leads, by role: route alerts to the alerts list,
 // an SOS to the transport office's incident log. The boarding questions need
@@ -276,12 +322,15 @@ function usePushNotifications(token, user) {
 }
 
 export default function RootNavigator() {
-  const { ready, user, token } = useSession();
+  const { ready, user, token, emailCheck } = useSession();
   usePushNotifications(token, user);
   if (!ready) {
     return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg }}><ActivityIndicator size="large" color={C.navy} /></View>;
   }
-  const Nav = BY_ROLE[user?.role] ?? GuestNav;
+  const choosing = Boolean(user?.mustChangePassword);
+  const verifying = user?.role === 'student' && Boolean(emailCheck?.required);
+  const step = choosing ? 'password' : verifying ? 'verify' : '';
+  const Nav = choosing ? ChoosePasswordNav : verifying ? VerifyEmailNav : BY_ROLE[user?.role] ?? GuestNav;
   // A new tree per role, so nothing from one account's screens survives sign-out.
-  return <Nav key={user ? `${user.role}:${user.id}` : 'guest'} />;
+  return <Nav key={user ? `${user.role}:${user.id}:${step}` : 'guest'} />;
 }

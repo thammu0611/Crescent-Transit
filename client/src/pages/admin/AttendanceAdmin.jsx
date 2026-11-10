@@ -4,12 +4,12 @@ import { METHOD_TEXT, STATUS_TEXT, date, dateTime, daysAgo, thisMonth, time, tod
 import { useSession } from '../../lib/session.jsx';
 import { useAction, useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
+import { DIRECTION_TEXT } from '../../../../shared/direction.js';
 import { Avatar, Chips, DetailView, Figure } from '../../components/adminkit.jsx';
-import { Badge, Empty, ErrorText, Field, Modal, Notice, Page, Panel, SearchBox, Segmented, Stat, Table, YesNo } from '../../components/ui.jsx';
+import { Badge, Dropdown, Empty, ErrorText, Field, Modal, Notice, Page, Panel, SearchBox, Segmented, Stat, Table, YesNo, DirectionBadge } from '../../components/ui.jsx';
 
-const DAY_TONE = { PRESENT: 'live', ABSENT: 'danger', PENDING: 'delayed' };
-const DAY_COLOR = { PRESENT: 'var(--live)', ABSENT: 'var(--danger)', PENDING: 'var(--delayed)' };
-const DAY_TEXT = { PRESENT: 'Present', ABSENT: 'Absent', PENDING: 'Pending review' };
+const DAY_TONE = { PRESENT: 'live', PARTIAL: 'delayed', ABSENT: 'danger', PENDING: 'delayed' };
+const DAY_TEXT = { PRESENT: 'Present', PARTIAL: 'One way only', ABSENT: 'Absent', PENDING: 'Pending review' };
 const RECORD_TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISIONAL: 'delayed', PROMPTED: 'delayed', DISPUTED: 'delayed', ADJUSTED: 'info', REJECTED: 'offline', VOID: 'danger' };
 const RECORD_TEXT = { ...STATUS_TEXT, REJECTED: 'Said No', PROMPTED: 'Awaiting answer' };
 
@@ -21,7 +21,7 @@ function Review({ token, item, onClose, onDone }) {
   const disputed = item.status === 'DISPUTED';
   const spanS = item.first_match_at && item.last_match_at ? Math.round((new Date(item.last_match_at) - new Date(item.first_match_at)) / 1000) : null;
   return (
-    <Modal title={`${item.full_name} · ${item.fleet_code} · trip #${item.trip_id}`} onClose={onClose} width={620}>
+    <Modal title={`${item.full_name} · ${item.fleet_code} · ${DIRECTION_TEXT[item.direction]} · trip #${item.trip_id}`} onClose={onClose} width={620}>
       {disputed ? (
         <p>
           <b>Dispute:</b> “{item.dispute_reason}” - the student says they were <b>{item.claimed_present ? 'on' : 'not on'}</b> the bus.
@@ -79,15 +79,67 @@ const periodRange = (p) => {
   return { from: daysAgo(Number(p) - 1), to: today() };
 };
 
+/** Does this day match the run and status chosen in the filters? */
+const dayMatches = (d, run, status) => {
+  const value = run ? d[run].status : d.status;
+  return value != null && (!status || value === status);
+};
+const STATUS_FILTERS = ['PRESENT', 'PARTIAL', 'ABSENT', 'PENDING'];
+
+/** One run's cell in the day register: its status and when the student boarded. */
+function RunCell({ run }) {
+  if (!run.status) return <span className="att-none">No trip</span>;
+  const first = run.records.at(-1);
+  return (
+    <span className="att-cell">
+      <Badge tone={DAY_TONE[run.status]}>{DAY_TEXT[run.status]}</Badge>
+      {first && <small className="tabular">{time(first.boarded_at)}</small>}
+    </span>
+  );
+}
+
+/** One run of a day: whether the student was on it, and the records behind that. */
+function RunDetail({ direction, run }) {
+  if (!run.status) return null;
+  return (
+    <div className="kit-run">
+      <div className="kit-run-head">
+        <DirectionBadge direction={direction} />
+        <Badge tone={DAY_TONE[run.status]}>{DAY_TEXT[run.status]}</Badge>
+      </div>
+      {run.records.length === 0 ? <small className="muted">No boarding recorded.</small> : run.records.map((r) => (
+        <div key={r.attendance_id} className="kit-record">
+          <span className="route-code sm">{r.route_code}</span>
+          <span>
+            <b className="tabular">{time(r.boarded_at)}{r.alighted_at ? ` – ${time(r.alighted_at)}` : ''} · {r.fleet_code}</b>
+            <small>{[r.boarding_stop, r.alighting_stop].filter(Boolean).join(' → ') || r.route_name}</small>
+            <small>{METHOD_TEXT[r.method] ?? r.method} · trip #{r.trip_id}{r.auto_confirmed ? ' · auto-confirmed' : ''}</small>
+          </span>
+          <span className="kit-badges" style={{ justifyContent: 'flex-end' }}>
+            <Badge tone={RECORD_TONE[r.status] ?? 'offline'}>{RECORD_TEXT[r.status] ?? r.status}</Badge>
+            {r.flagged && <Badge tone="danger">{r.flag_reason ?? 'flagged'}</Badge>}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** One student's attendance, date by date, with the phone binding. */
 function StudentHistory({ token, student: initial, onClose, onUnbind }) {
   const [student, setStudent] = useState(initial);
   const [period, setPeriod] = useState('30');
   const [status, setStatus] = useState('');
+  const [run, setRun] = useState('');
+  const [openDay, setOpenDay] = useState(null);
   const q = new URLSearchParams(periodRange(period)).toString();
   const h = useAsync(() => api(`/api/admin/students/${student.id}/attendance?${q}`, { token }), [student.id, q, token]);
   const days = h.data?.days ?? null;
-  const shown = days?.filter((d) => !status || d.status === status);
+  const shown = days?.filter((d) => dayMatches(d, run, status));
+  const chooseRun = (next) => {
+    setRun(next);
+    if (next && status === 'PARTIAL') setStatus(''); // one run alone cannot be partial
+  };
   const sm = h.data?.summary;
   const unbind = async () => {
     if (await onUnbind(student)) setStudent({ ...student, device: null, mock_location_flag: false });
@@ -115,48 +167,61 @@ function StudentHistory({ token, student: initial, onClose, onUnbind }) {
         <div className="kit-divider" />
         <div className="kit-figures">
           <Figure value={sm ? (sm.attendancePct == null ? '—' : `${sm.attendancePct}%`) : '…'} label="Attendance" />
-          <Figure value={sm?.present ?? '…'} label="Present days" />
-          <Figure value={sm?.absent ?? '…'} label="Absent days" />
-          <Figure value={sm?.trips ?? '…'} label="Trips" />
+          <Figure value={sm ? `${sm.up.present}/${sm.up.present + sm.up.absent}` : '…'} label="Inbound trips" />
+          <Figure value={sm ? `${sm.down.present}/${sm.down.present + sm.down.absent}` : '…'} label="Outbound trips" />
+          <Figure value={sm ? sm.up.absent + sm.down.absent : '…'} label="Trips missed" />
         </div>
         {sm?.lastBoardedAt && <p className="muted" style={{ margin: 0 }}>Last boarded {dateTime(sm.lastBoardedAt)}</p>}
       </section>
 
-      <Chips value={period} onChange={setPeriod} options={PERIODS} />
-      <Chips
-        value={status}
-        onChange={setStatus}
-        options={[
-          { value: '', label: 'All days', count: days?.length },
-          { value: 'PRESENT', label: 'Present', count: sm?.present },
-          { value: 'ABSENT', label: 'Absent', count: sm?.absent },
-          { value: 'PENDING', label: 'Pending', count: sm?.pending },
-        ]}
-      />
-      <p className="muted" style={{ margin: 0 }}>A day is listed when the student's route ran a trip or the student was recorded on any bus. Absent: the route ran and nothing was recorded.</p>
+      <div className="att-filters">
+        <Dropdown label="Period" icon="clock" value={period} onChange={setPeriod} options={PERIODS} resting="30" />
+        <Dropdown
+          label="Direction"
+          icon="bus"
+          value={run}
+          onChange={chooseRun}
+          options={[{ value: '', label: 'Both directions' }, { value: 'up', label: DIRECTION_TEXT.UP }, { value: 'down', label: DIRECTION_TEXT.DOWN }]}
+        />
+        <Dropdown
+          label="Status"
+          icon="check"
+          value={status}
+          onChange={setStatus}
+          options={[
+            { value: '', label: 'All days', count: days?.filter((d) => dayMatches(d, run, '')).length ?? 0 },
+            ...STATUS_FILTERS.filter((k) => !run || k !== 'PARTIAL').map((k) => ({ value: k, label: DAY_TEXT[k], count: days?.filter((d) => dayMatches(d, run, k)).length ?? 0 })),
+          ]}
+        />
+      </div>
       <ErrorText>{h.error?.message}</ErrorText>
-      {shown == null ? <div className="skeleton-block" /> : shown.length === 0 ? <Empty>No days in this period.</Empty> : shown.map((d) => (
-        <article key={d.date} className="kit-day" style={{ '--tone': DAY_COLOR[d.status] }}>
-          <div className="kit-day-top">
-            <span><b>{date(`${d.date}T06:30:00Z`)}</b><small>{d.routeTrips ? `Route ran ${d.routeTrips} trip${d.routeTrips === 1 ? '' : 's'}` : 'Rode another route'}</small></span>
-            <Badge tone={DAY_TONE[d.status]}>{DAY_TEXT[d.status]}</Badge>
+      {shown == null ? <div className="skeleton-block" /> : shown.length === 0 ? <Empty>No days match these filters.</Empty> : (
+        <div className="att-register">
+          <div className="att-head">
+            <span>Date</span>
+            <span>Inbound<i> · To college</i></span>
+            <span>Outbound<i> · From college</i></span>
+            <span />
           </div>
-          {d.records.length === 0 ? <small className="muted">No boarding recorded.</small> : d.records.map((r) => (
-            <div key={r.attendance_id} className="kit-record">
-              <span className="route-code sm">{r.route_code}</span>
-              <span>
-                <b className="tabular">{time(r.boarded_at)}{r.alighted_at ? ` – ${time(r.alighted_at)}` : ''} · {r.fleet_code}</b>
-                <small>{[r.boarding_stop, r.alighting_stop].filter(Boolean).join(' → ') || r.route_name}</small>
-                <small>{METHOD_TEXT[r.method] ?? r.method} · trip #{r.trip_id}{r.auto_confirmed ? ' · auto-confirmed' : ''}</small>
-              </span>
-              <span className="kit-badges" style={{ justifyContent: 'flex-end' }}>
-                <Badge tone={RECORD_TONE[r.status] ?? 'offline'}>{RECORD_TEXT[r.status] ?? r.status}</Badge>
-                {r.flagged && <Badge tone="danger">{r.flag_reason ?? 'flagged'}</Badge>}
-              </span>
-            </div>
+          {shown.map((d) => (
+            <button type="button" key={d.date} className="att-row" onClick={() => setOpenDay(d)}>
+              <b>{date(`${d.date}T06:30:00Z`)}</b>
+              <RunCell run={d.up} />
+              <RunCell run={d.down} />
+              <Icon name="arrow" size={14} className="kit-chevron" />
+            </button>
           ))}
-        </article>
-      ))}
+        </div>
+      )}
+      <small className="muted">Each direction is marked separately and the percentage counts trips. Click a day for its details.</small>
+      {openDay && (
+        <Modal title={date(`${openDay.date}T06:30:00Z`)} onClose={() => setOpenDay(null)} width={600}>
+          <div className="att-day-detail">
+            <RunDetail direction="UP" run={openDay.up} />
+            <RunDetail direction="DOWN" run={openDay.down} />
+          </div>
+        </Modal>
+      )}
     </DetailView>
   );
 }

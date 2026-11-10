@@ -1,0 +1,379 @@
+/* Dark mode: the same design on a deep navy ground, for the early morning.
+   The colour variables do most of it; the two lists at the end cover the
+   surfaces the stylesheets paint white or navy directly. */
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0d1524;
+  --card: #18233a;
+  --surface: rgba(255, 255, 255, 0.05);
+  --ink: #e9edf5;
+  --muted: #a7b0c3;
+  --line: rgba(255, 255, 255, 0.13);
+  --line-2: rgba(255, 255, 255, 0.08);
+  --navy: #c6d3f2;
+  --navy-900: #e9edf5;
+  --navy-800: #dce3f3;
+  --navy-700: #b7c3e0;
+  --navy-50: #24324f;
+  --navy-100: #33446b;
+  --dark: #d5dae5;
+  --indigo: #c6d3f2;
+  --indigo-50: #24324f;
+  --live: #6fd487;
+  --live-50: #16321f;
+  --emerald: #6fd487;
+  --emerald-50: #16321f;
+  --delayed: #eabc69;
+  --delayed-50: #3a2d13;
+  --danger: #f28b8d;
+  --danger-50: #3b1a1d;
+  --red-50: #3b1a1d;
+  --offline: #a7b0c3;
+  --offline-50: #252e42;
+  --glass: rgba(26, 37, 60, 0.74);
+  --glass-strong: rgba(26, 37, 60, 0.92);
+  --glass-edge: rgba(255, 255, 255, 0.10);
+  --glass-hi: rgba(255, 255, 255, 0.12);
+  --glass-gloss: linear-gradient(160deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 60%);
+  --glass-shadow: 0 12px 32px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-shadow-hover: 0 18px 44px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --hover-rgb: 150, 175, 235;
+  --emerald-700: #6fd487;
+  --indigo-700: #c6d3f2;
+  --link: #8cc4ee;
+  --chart-navy: #86a2e6;
+  --chart-green: #6fd487;
+  --red-600: #f28b8d;
+  --crimson: #f28b8d;
+  --chart-red: #f28b8d;
+  --chart-slate: #acb6c8;
+  --hover-end: rgba(26, 37, 60, 0.96);
+}
+
+html[data-theme='dark'] .app {
+  background:
+    radial-gradient(42% 38% at 8% 6%, rgba(60, 90, 160, 0.22), transparent 70%),
+    radial-gradient(36% 34% at 96% 22%, rgba(247, 188, 49, 0.08), transparent 70%),
+    radial-gradient(40% 40% at 10% 78%, rgba(60, 130, 170, 0.12), transparent 70%),
+    linear-gradient(135deg, #0d1524 0%, #101a2c 55%, #0d1524 100%);
+  background-attachment: fixed;
+}
+html[data-theme='dark'] .leaflet-tile-pane { filter: invert(1) hue-rotate(190deg) brightness(0.85) contrast(0.9); }
+html[data-theme='dark'] input, html[data-theme='dark'] select, html[data-theme='dark'] textarea { background-color: #18233a; color: var(--ink); border-color: var(--line); }
+html[data-theme='dark'] select option { background: #18233a; color: var(--ink); }
+html[data-theme='dark'] .field select, html[data-theme='dark'] select.full { background-color: #18233a; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23c6d3f2' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E"); }
+html[data-theme='dark'] .glance-value, html[data-theme='dark'] .kit-stats .stat b { color: #fff; }
+html[data-theme='dark'] .glance-card { background: linear-gradient(150deg, rgba(var(--tone), 0.26), rgba(26, 37, 60, 0.92) 62%); }
+html[data-theme='dark'] .tag-picks button.on { background: #2c4680; border-color: #2c4680; }
+html[data-theme='dark'] .profile-switch button.on { background: #2c4680; color: #fff; }
+html[data-theme='dark'] .profile-pic-edit { border-color: #18233a; background: #2c4680; }
+html[data-theme='dark'] .table tbody tr:hover td { background: rgba(255, 255, 255, 0.05); }
+
+html[data-theme='dark'] .stat.live b { color: var(--live); }
+html[data-theme='dark'] .stat.delayed b { color: var(--delayed); }
+html[data-theme='dark'] .stat.danger b { color: var(--danger); }
+html[data-theme='dark'] .badge.offline { background: #2b3550; color: #c9d1e2; }
+html[data-theme='dark'] .badge.info { background: #24324f; color: #c6d3f2; }
+html[data-theme='dark'] .route-bg { opacity: 0.22; }
+html[data-theme='dark'] .kit-avatar, html[data-theme='dark'] .kit-count { background: #24324f; border-color: var(--line); color: #fff; }
+
+/* Text the stylesheets colour directly. */
+html[data-theme='dark'] .stop-name,
+html[data-theme='dark'] .journey li > span,
+html[data-theme='dark'] .notice-list li span,
+html[data-theme='dark'] .be-figures > span { color: var(--ink); }
+html[data-theme='dark'] .feed small,
+html[data-theme='dark'] .land-copy > p,
+html[data-theme='dark'] .timeline li.passed time,
+html[data-theme='dark'] .timeline li.passed .stop-name,
+html[data-theme='dark'] .control-wrap > .icon,
+html[data-theme='dark'] .live-layout .stat-row .stat.offline b { color: var(--muted); }
+html[data-theme='dark'] .timeline li.passed { opacity: 0.7; }
+html[data-theme='dark'] .feed li.hot .feed-icon { color: var(--delayed); }
+html[data-theme='dark'] .badge.live, html[data-theme='dark'] .checklist li.ok { color: var(--live); }
+html[data-theme='dark'] .badge.delayed { color: var(--delayed); }
+html[data-theme='dark'] .badge.danger, html[data-theme='dark'] .error,
+html[data-theme='dark'] .table .link.danger, html[data-theme='dark'] .row-actions .link.danger { color: var(--danger); }
+html[data-theme='dark'] .route-bg-line.navy .line { stroke: rgba(150, 175, 235, 0.2); }
+html[data-theme='dark'] .route-bg-stop circle { stroke: rgba(150, 175, 235, 0.35); }
+html[data-theme='dark'] a { color: var(--link); }
+html[data-theme='dark'] a.btn, html[data-theme='dark'] .tabs a, html[data-theme='dark'] a.kit-row, html[data-theme='dark'] a.glance-card, html[data-theme='dark'] .brand { color: inherit; }
+
+/* Light surfaces the first pass could not see: gradients, greys and tints. */
+html[data-theme='dark'] .settings-hero,
+html[data-theme='dark'] .schedule-body,
+html[data-theme='dark'] .bus-card.selected,
+html[data-theme='dark'] .eta-card,
+html[data-theme='dark'] .paywall,
+html[data-theme='dark'] .sidebar,
+html[data-theme='dark'] .driver-controls { background: var(--glass-strong); }
+html[data-theme='dark'] .kit-hbars-track,
+html[data-theme='dark'] .trip-chip,
+html[data-theme='dark'] .be-track,
+html[data-theme='dark'] .mb-bar,
+html[data-theme='dark'] .kit-chip-count,
+html[data-theme='dark'] .kit-back:hover,
+html[data-theme='dark'] .table th,
+html[data-theme='dark'] .btn.ghost:hover,
+html[data-theme='dark'] .table .link:hover,
+html[data-theme='dark'] .row-actions .link:hover,
+html[data-theme='dark'] .feature-icon.dark { background: var(--navy-50); color: var(--ink); }
+html[data-theme='dark'] .leaflet-container { background: #142033; }
+html[data-theme='dark'] .skeleton, html[data-theme='dark'] .skeleton-block { background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.05) 75%); background-size: 200% 100%; }
+html[data-theme='dark'] .btn.soft:hover { background: #3b1a1d; }
+
+/* Colours that are both text and background: as a background they keep their deep shade. */
+html[data-theme='dark'] .route-pill,
+html[data-theme='dark'] .route-tile.on .tile-icon,
+html[data-theme='dark'] .switch.on,
+html[data-theme='dark'] .leave-switch.on,
+html[data-theme='dark'] .occ.on.live { background: #237a36; color: #fff; }
+html[data-theme='dark'] .occ.on.delayed { background: #9b6a26; color: #fff; }
+html[data-theme='dark'] .btn.danger,
+html[data-theme='dark'] .tile.sos,
+html[data-theme='dark'] .occ.on.danger { background: #a02022; color: #fff; }
+html[data-theme='dark'] .btn.indigo,
+html[data-theme='dark'] .bottom-tabs a.active { background: linear-gradient(135deg, #4f5a80, #3a4262); color: #fff; }
+html[data-theme='dark'] .btn.primary:hover { background: #2c4680; }
+html[data-theme='dark'] .schedule-head { background: linear-gradient(140deg, #2c4680, #1c315e); }
+html[data-theme='dark'] .driver-hero { background: linear-gradient(150deg, #142548, #1c315e 70%, #2c4680); }
+html[data-theme='dark'] .bar i { background: linear-gradient(90deg, #4f6fb5, #86a2e6); }
+html[data-theme='dark'] .route-pill select, html[data-theme='dark'] .route-pick select, html[data-theme='dark'] .page-head select,
+html[data-theme='dark'] .drive-settings select { background-color: transparent; color: #fff; }
+html[data-theme='dark'] .route-pill select option, html[data-theme='dark'] .drive-settings select option { color: var(--ink); }
+
+/* Dark text stays dark on gold. */
+html[data-theme='dark'] .stop-name em.you,
+html[data-theme='dark'] .settings-avatar,
+html[data-theme='dark'] .journey em,
+html[data-theme='dark'] .tabs a.nav-cta,
+html[data-theme='dark'] .tabs a.nav-cta:hover,
+html[data-theme='dark'] .dot-count,
+html[data-theme='dark'] .driver-hero .btn.primary,
+html[data-theme='dark'] .stop-name em,
+html[data-theme='dark'] .journey em,
+html[data-theme='dark'] .settings-avatar { color: #142548; }
+html[data-theme='dark'] .glance-card { --tone: 134, 162, 230; }
+html[data-theme='dark'] .glance-card.gold { --tone: 240, 190, 90; }
+html[data-theme='dark'] .glance-card.green { --tone: 111, 212, 135; }
+html[data-theme='dark'] .glance-card.slate { --tone: 172, 182, 200; }
+html[data-theme='dark'] .route-card, html[data-theme='dark'] .contact-card { background: var(--motif) center / 100% 100% no-repeat, linear-gradient(145deg, #2b3950, #1e2a3f); }
+
+html[data-theme='dark'] .table tbody tr:hover { background: transparent; }
+html[data-theme='dark'] .feed li.hot b, html[data-theme='dark'] .feed li.hot small, html[data-theme='dark'] .feed li.hot time { color: #fff; }
+
+/* Pale panels and rows set in translucent white. */
+html[data-theme='dark'] .feed li { background: rgba(255, 255, 255, 0.05); border-color: var(--line-2); }
+html[data-theme='dark'] .feed li.urgent { background: var(--danger-50); border-color: rgba(242, 139, 141, 0.28); }
+html[data-theme='dark'] .table-wrap { background: rgba(255, 255, 255, 0.03); }
+html[data-theme='dark'] .table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.035); }
+html[data-theme='dark'] .mini-map { background: var(--card); }
+html[data-theme='dark'] .switch { background: #3a4560; }
+html[data-theme='dark'] .leave-hero { background: var(--navy-50); }
+html[data-theme='dark'] .leave-hero.near { background: var(--red-50); }
+html[data-theme='dark'] .leave-hero.near b { color: var(--danger); }
+html[data-theme='dark'] .btn.start-trip:hover { background: var(--live-50); }
+html[data-theme='dark'] input[type='file']::file-selector-button:hover { background: var(--navy-100); }
+html[data-theme='dark'] .journey li.campus em { background: #2c4680; color: #fff; }
+
+/* Public pages. */
+html[data-theme='dark'] .land, html[data-theme='dark'] .auth, html[data-theme='dark'] .phone-screen { background: var(--bg); }
+html[data-theme='dark'] .land-stats > div, html[data-theme='dark'] .pv-actions span { background: var(--card); }
+html[data-theme='dark'] .auth-card, html[data-theme='dark'] .auth-main .panel { background: var(--glass-gloss), var(--card); }
+html[data-theme='dark'] .auth-main .field input { background: rgba(255, 255, 255, 0.06); }
+
+/* Painted white in the stylesheets. */
+html[data-theme='dark'] .page-head input,
+html[data-theme='dark'] .page-head select,
+html[data-theme='dark'] .full,
+html[data-theme='dark'] .field input,
+html[data-theme='dark'] .field select,
+html[data-theme='dark'] .field textarea,
+html[data-theme='dark'] .segmented button.on,
+html[data-theme='dark'] .search-box,
+html[data-theme='dark'] .modal,
+html[data-theme='dark'] .feature,
+html[data-theme='dark'] .timetable li::before,
+html[data-theme='dark'] .legend,
+html[data-theme='dark'] .dot.approx,
+html[data-theme='dark'] .chip-btn,
+html[data-theme='dark'] .sq-btn,
+html[data-theme='dark'] .btn.light,
+html[data-theme='dark'] .btn.soft,
+html[data-theme='dark'] .bell,
+html[data-theme='dark'] .back,
+html[data-theme='dark'] .route-pick,
+html[data-theme='dark'] .map-card,
+html[data-theme='dark'] .mini-map .leaflet-control-attribution,
+html[data-theme='dark'] .contact-avatar,
+html[data-theme='dark'] .contact-row .badge,
+html[data-theme='dark'] .soft-card,
+html[data-theme='dark'] .feed-icon,
+html[data-theme='dark'] .quick-actions > *,
+html[data-theme='dark'] .select-route,
+html[data-theme='dark'] .route-tile,
+html[data-theme='dark'] .schedule-card,
+html[data-theme='dark'] .empty-hero,
+html[data-theme='dark'] .control-wrap > input:focus,
+html[data-theme='dark'] .control-wrap > select:focus,
+html[data-theme='dark'] .bottom-tabs,
+html[data-theme='dark'] .kpi-strip .stat,
+html[data-theme='dark'] .kpi-grid .stat,
+html[data-theme='dark'] .drive-card .error,
+html[data-theme='dark'] .btn.start-trip,
+html[data-theme='dark'] .tile,
+html[data-theme='dark'] .occ,
+html[data-theme='dark'] .panel-head input[type='month'],
+html[data-theme='dark'] .panel-head input[type='date'],
+html[data-theme='dark'] .pill-badge,
+html[data-theme='dark'] .float-card,
+html[data-theme='dark'] .steps li,
+html[data-theme='dark'] .auth-logo,
+html[data-theme='dark'] .auth-card,
+html[data-theme='dark'] .btn.ghost,
+html[data-theme='dark'] .field > input:focus,
+html[data-theme='dark'] .field > select:focus,
+html[data-theme='dark'] .field > textarea:focus,
+html[data-theme='dark'] .full:focus,
+html[data-theme='dark'] .inline-form input:focus,
+html[data-theme='dark'] .search-box:focus-within,
+html[data-theme='dark'] .kit-stats .stat,
+html[data-theme='dark'] .kit-block,
+html[data-theme='dark'] .kit-chips button,
+html[data-theme='dark'] .kit-row,
+html[data-theme='dark'] .kit-bus,
+html[data-theme='dark'] .kit-profile,
+html[data-theme='dark'] .kit-day,
+html[data-theme='dark'] .kit-shortcut,
+html[data-theme='dark'] .kit-detail-head,
+html[data-theme='dark'] .kit-shortcut span,
+html[data-theme='dark'] .kit-back,
+html[data-theme='dark'] .feed li.hot .feed-icon,
+html[data-theme='dark'] .inline-form input,
+html[data-theme='dark'] textarea.full,
+html[data-theme='dark'] .segmented,
+html[data-theme='dark'] .panel,
+html[data-theme='dark'] .stat,
+html[data-theme='dark'] .kit-detail,
+html[data-theme='dark'] .auth-main .field input,
+html[data-theme='dark'] .leave-switch::after,
+html[data-theme='dark'] .driver-students li,
+html[data-theme='dark'] .drive-card .btn.light,
+html[data-theme='dark'] .att-register,
+html[data-theme='dark'] .journey li > span::before,
+html[data-theme='dark'] .contact-tiles a,
+html[data-theme='dark'] .filters-row select,
+html[data-theme='dark'] select.full,
+html[data-theme='dark'] .dropdown-btn,
+html[data-theme='dark'] .dropdown-menu,
+html[data-theme='dark'] .tag-picks button,
+html[data-theme='dark'] .profile-menu {
+  background: var(--glass-strong);
+}
+
+/* Painted navy or slate in the stylesheets: the text variables are light here. */
+html[data-theme='dark'] .topbar,
+html[data-theme='dark'] .btn.primary,
+html[data-theme='dark'] .route-code,
+html[data-theme='dark'] .stop-pin,
+html[data-theme='dark'] .dot.stop,
+html[data-theme='dark'] .stop-editor .seq,
+html[data-theme='dark'] .segmented button.on,
+html[data-theme='dark'] .kit-chips button.on,
+html[data-theme='dark'] .skip-link,
+html[data-theme='dark'] .journey li.campus > span::before,
+html[data-theme='dark'] .journey li.campus em,
+html[data-theme='dark'] .dropdown.is-set .dropdown-icon,
+html[data-theme='dark'] .dropdown.is-open .dropdown-icon,
+html[data-theme='dark'] .dropdown-btn:hover .dropdown-icon,
+html[data-theme='dark'] .tag-picks button.on,
+html[data-theme='dark'] .profile-pic-edit,
+html[data-theme='dark'] .profile-photo-actions button,
+html[data-theme='dark'] .profile-switch button.on {
+  background: #2c4680;
+}
+html[data-theme='dark'] .btn.dark,
+html[data-theme='dark'] .map-card-bar .btn.light,
+html[data-theme='dark'] .login .btn.primary,
+html[data-theme='dark'] .btn.primary,
+html[data-theme='dark'] .bus-tip,
+html[data-theme='dark'] .btn.end-trip {
+  background: #33415c;
+}
+
+html[data-theme='dark'] .util-item a { color: #fff; }
+html[data-theme='dark'] .masthead { background: transparent; }
+
+html[data-theme='dark'] .route-code { background: #1c315e; color: #f7bc31; }
+html[data-theme='dark'] .step-n { color: rgba(242, 139, 141, 0.5); -webkit-text-stroke: 0; }
+html[data-theme='dark'] .contact-tiles a { color: var(--ink); }
+
+/* Main buttons on the public pages keep their colour. */
+html[data-theme='dark'] .land-cta .btn.dark { background: var(--g-red); }
+html[data-theme='dark'] .auth-card .btn.dark { background: linear-gradient(135deg, #3a5aa0, #2c4680); }
+html[data-theme='dark'] .tabs a.nav-cta.active { color: #fff; }
+html[data-theme='dark'] .segmented { box-shadow: inset 0 0 0 1px var(--line-2); }
+
+/* The browser paints saved logins white; keep them on the dark field. */
+html[data-theme='dark'] input:-webkit-autofill,
+html[data-theme='dark'] input:-webkit-autofill:hover,
+html[data-theme='dark'] input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px #1a253c inset;
+  box-shadow: 0 0 0 1000px #1a253c inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+/* The bar is the same on every page; the contact strip sits on the page itself. */
+html[data-theme='dark'] .app .topbar,
+html[data-theme='dark'] .app:has(.auth, .land-hero) .topbar { background: linear-gradient(120deg, #2c4680, #1c315e); border-color: rgba(255, 255, 255, 0.14); }
+
+@media (hover: hover) {
+  html[data-theme='dark'] .auth-card:hover { background: var(--glass-gloss), #1d2a45; }
+}
+html[data-theme='dark'] .utility-bar { background: transparent; border: 0; }
+
+/* The bar is the same dark glass as every card, on every page. */
+html[data-theme='dark'] .app .topbar,
+html[data-theme='dark'] .app:has(.auth, .land-hero) .topbar {
+  background: var(--glass-gloss), var(--glass-strong);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+}
+html[data-theme='dark'] .app.scrolled .topbar { box-shadow: var(--glass-shadow-hover); }
+html[data-theme='dark'] .app .topbar::after { display: none; }
+html[data-theme='dark'] .app .topbar .brand-text strong { color: var(--ink); }
+html[data-theme='dark'] .app .topbar .brand-sub { color: var(--muted); }
+html[data-theme='dark'] .app .topbar .brand-icon { box-shadow: 0 0 0 1px var(--glass-edge), 0 4px 12px rgba(0, 0, 0, 0.3); }
+@media (min-width: 1061px) {
+  html[data-theme='dark'] .app .topbar .nav-track { background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05); }
+  html[data-theme='dark'] .app .topbar .nav-glider { background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+}
+html[data-theme='dark'] .app .topbar .tabs a { color: #cdd5e5; }
+html[data-theme='dark'] .app .topbar .tabs a.active { color: #fff; }
+html[data-theme='dark'] .app .topbar .tabs a:not(.active):not(.nav-cta):hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+html[data-theme='dark'] .app .topbar .user-chip { border-left-color: var(--line-2); }
+html[data-theme='dark'] .app .topbar .profile-btn { background: rgba(255, 255, 255, 0.04); border-color: var(--glass-edge); }
+html[data-theme='dark'] .app .topbar .menu-toggle { background: rgba(255, 255, 255, 0.05); border-color: var(--glass-edge); }
+
+/* The navy banner cards take the same mild dark glass as the rest. */
+html[data-theme='dark'] .page > .page-head,
+html[data-theme='dark'] .app-greet,
+html[data-theme='dark'] .app-title,
+html[data-theme='dark'] .kit-fleet,
+html[data-theme='dark'] .fleet-card,
+html[data-theme='dark'] .drive-card,
+html[data-theme='dark'] .driver-hero,
+html[data-theme='dark'] .schedule-head,
+html[data-theme='dark'] .route-card,
+html[data-theme='dark'] .contact-card,
+html[data-theme='dark'] .upsell,
+html[data-theme='dark'] .money-card {
+  background: var(--motif, none) center / 100% 100% no-repeat, var(--glass-gloss), var(--glass-strong);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}

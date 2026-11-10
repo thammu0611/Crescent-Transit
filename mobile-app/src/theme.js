@@ -1,125 +1,187 @@
-// Crescent Transit's palette, taken from crescent.education: navy #1c315e,
-// gold #f7bc31 for accents on navy, crimson #a02022 for the main buttons and
-// for accent text on light surfaces, slate #3e4c57 and #454e70 for dark cards
-// and secondary actions, light grey #f1f1f1 behind white cards, near-black
-// text. Status colours (live / delayed / offline) stay functional. The
-// gradients, shadows and radii the mobile design is built from live here too,
-// so every screen picks up a change made in this file.
+// Crescent Transit's palette (the 2026 redesign): a calm neutral ground, white
+// cards, one blue accent (#2563EB) for actions and links, and functional status
+// colours. Dark mode (applyDarkPalette) uses a near-black ground with
+// elevated card surfaces. Older token names (navy, gold, red ...) are kept and
+// mapped onto the new roles, so every screen picks up a change made here:
+//   navy / red    -> accent (links, icons, selected states, primary buttons)
+//   navyFill      -> primary button fill (white text passes AA in both themes)
+//   gold          -> highlight on deep-blue hero surfaces
+//   ink / muted / faint -> text, secondary text, captions
 export const C = {
-  navy: '#1c315e',
-  navy900: '#142548',
-  navy700: '#454e70',
-  navy100: '#d9dee8',
-  navy50: '#eef1f6',
-  // Gold is the website's accent: lines, highlighted text and active states on navy.
-  gold: '#f7bc31',
-  // Crimson: buttons, and accent text or lines on white (gold is unreadable there).
-  red: '#a02022',
-  red600: '#a02022',
-  red50: '#f9e9e9',
-  crimson: '#a02022',
-  slate: '#3e4c57',
-  link: '#0170b9',
-  skyBlue: '#6ec1e4',
-  // Liquid glass: the site's light grey base under a soft glow (GlassBackdrop), and translucent
-  // surfaces with a bright edge that let the glow through.
-  bg: '#f1f1f1',
-  card: 'rgba(255,255,255,0.7)',
-  surface: 'rgba(255,255,255,0.5)',
-  glass: 'rgba(255,255,255,0.68)',
-  glassStrong: 'rgba(255,255,255,0.84)',
-  // Outline of glass surfaces: a fine navy hairline (the bright top edge is Sheen).
-  glassEdge: 'rgba(28,49,94,0.10)',
-  glassDark: 'rgba(20,37,72,0.58)',
-  ink: '#141414',
-  muted: '#54595f',
-  // Hints, timestamps and placeholders: still quiet, but readable (AA 4.5:1 on white and grey).
-  faint: '#646a73',
-  line: 'rgba(28,49,94,0.14)',
-  line2: 'rgba(28,49,94,0.09)',
-  live: '#237a36',
-  live50: '#e9f7eb',
-  delayed: '#b9832a',
-  delayed50: '#f9f0de',
-  offline: '#8b909b',
-  offline50: '#f0eff0',
-  danger: '#a02022',
-  danger50: '#f9e9e9',
-  emerald: '#237a36',
-  emerald700: '#1f6b2f',
-  emerald50: '#e9f7eb',
-  indigo: '#454e70',
-  indigo700: '#363e5a',
-  indigo50: '#eceef3',
-  violet: '#454e70',
-  sky: '#454e70',
-  rose: '#a02022',
+  navy: '#2563EB',
+  navyFill: '#2563EB',
+  navy900: '#0F172A',
+  navy700: '#475569',
+  navy100: '#D6E2FB',
+  navy50: '#EAF1FF',
+  gold: '#FBBF24',
+  onGold: '#111827',
+  red: '#2563EB',
+  red600: '#1D4ED8',
+  red50: '#EAF1FF',
+  crimson: '#1D4ED8',
+  slate: '#475569',
+  link: '#1D4ED8',
+  skyBlue: '#38BDF8',
+  bg: '#F4F6F9',
+  card: '#FFFFFF',
+  surface: '#FFFFFF',
+  raised: '#EEF2F7',
+  glass: '#FFFFFF',
+  glassStrong: '#FFFFFF',
+  glassEdge: 'rgba(15,23,42,0.08)',
+  glassDark: 'rgba(15,23,42,0.72)',
+  paper: '#FFFFFF',
+  ink: '#0F172A',
+  muted: '#475569',
+  faint: '#64748B',
+  line: 'rgba(15,23,42,0.14)',
+  line2: 'rgba(15,23,42,0.08)',
+  live: '#15803D',
+  live50: '#DCFCE7',
+  delayed: '#B45309',
+  delayed50: '#FEF3C7',
+  offline: '#64748B',
+  offline50: '#EEF2F7',
+  danger: '#DC2626',
+  danger50: '#FEE2E2',
+  dangerFill: '#DC2626',
+  emerald: '#15803D',
+  emerald700: '#166534',
+  emerald50: '#DCFCE7',
+  indigo: '#1D4ED8',
+  indigo700: '#1E40AF',
+  indigo50: '#EAF1FF',
+  violet: '#6D28D9',
+  sky: '#0369A1',
+  rose: '#DC2626',
 };
 
-/** Two-stop gradients, top-left to bottom-right; kept close in tone, as the website's flat colours. */
+/** Two-stop gradients. Hero surfaces are deep blue in both themes (white text, AA). */
 export const G = {
-  navy: ['#1c315e', '#142548'],
-  // Big cards (route card, contact card) use the website's slate.
-  emerald: ['#4a5a66', '#3e4c57'],
-  indigo: ['#4f5a80', '#3a4262'],
-  violet: ['#454e70', '#1c315e'],
-  red: ['#b5282a', '#8a1a1c'],
-  gold: ['#f9c94f', '#e0a414'],
-  danger: ['#b5282a', '#7d1618'],
-  dark: ['#3e4c57', '#2c3740'],
-  sunrise: ['#f7bc31', '#a02022'],
+  navy: ['#1E3A8A', '#172554'],
+  emerald: ['#334155', '#1E293B'],
+  indigo: ['#2563EB', '#1D4ED8'],
+  violet: ['#1E3A8A', '#172554'],
+  red: ['#2563EB', '#2563EB'],
+  gold: ['#FBBF24', '#F59E0B'],
+  danger: ['#DC2626', '#B91C1C'],
+  dark: ['#334155', '#1E293B'],
+  sunrise: ['#2563EB', '#1E3A8A'],
+  primary: ['#2563EB', '#2563EB'],
 };
 
 /** Soft accent pairs for icon bubbles: [background, foreground]. */
-export const ACCENT = {
+const accents = () => ({
   indigo: [C.indigo50, C.indigo],
   emerald: [C.emerald50, C.emerald700],
-  red: [C.red50, C.red600],
+  red: [C.danger50, C.danger],
   amber: [C.delayed50, C.delayed],
   navy: [C.navy50, C.navy],
   danger: [C.danger50, C.danger],
   violet: [C.indigo50, C.violet],
   sky: [C.indigo50, C.sky],
-  rose: [C.red50, C.rose],
-};
+  rose: [C.danger50, C.rose],
+});
+export const ACCENT = accents();
 
-export const TONE = {
+const tones = () => ({
   live: { fg: C.live, bg: C.live50 },
   delayed: { fg: C.delayed, bg: C.delayed50 },
   offline: { fg: C.offline, bg: C.offline50 },
   danger: { fg: C.danger, bg: C.danger50 },
   info: { fg: C.indigo, bg: C.indigo50 },
-};
+});
+export const TONE = tones();
 
 export const FRESH_COLOR = { live: C.live, delayed: C.delayed, offline: C.offline };
 
-export const R = { sm: 12, md: 16, lg: 22, xl: 28, pill: 999 };
+export const THEME_KEY = 'ubts.theme';
+
+/** The dark theme: near-black ground, elevated surfaces. Runs once, before any screen loads (index.js). */
+export function applyDarkPalette() {
+  Object.assign(C, {
+    dark: true,
+    navy: '#4F8CFF',
+    navyFill: '#2563EB',
+    navy900: '#E6EDF5',
+    navy700: '#94A3B8',
+    navy100: 'rgba(79,140,255,0.30)',
+    navy50: 'rgba(79,140,255,0.14)',
+    gold: '#FBBF24',
+    red: '#4F8CFF',
+    red600: '#7AA7FF',
+    red50: 'rgba(79,140,255,0.14)',
+    crimson: '#7AA7FF',
+    bg: '#0B0F14',
+    card: '#161D27',
+    surface: '#121821',
+    raised: '#1C2531',
+    glass: '#161D27',
+    glassStrong: '#121821',
+    glassEdge: 'rgba(255,255,255,0.08)',
+    glassDark: 'rgba(5,8,12,0.72)',
+    paper: '#161D27',
+    ink: '#E6EDF5',
+    muted: '#94A3B8',
+    faint: '#7C8AA0',
+    line: 'rgba(255,255,255,0.14)',
+    line2: 'rgba(255,255,255,0.08)',
+    live: '#4ADE80',
+    live50: 'rgba(34,197,94,0.14)',
+    delayed: '#FBBF24',
+    delayed50: 'rgba(245,158,11,0.14)',
+    offline: '#94A3B8',
+    offline50: 'rgba(148,163,184,0.12)',
+    danger: '#F87171',
+    danger50: 'rgba(239,68,68,0.14)',
+    dangerFill: '#DC2626',
+    emerald: '#4ADE80',
+    emerald700: '#4ADE80',
+    emerald50: 'rgba(34,197,94,0.14)',
+    indigo: '#93B8FF',
+    indigo700: '#93B8FF',
+    indigo50: 'rgba(79,140,255,0.14)',
+    violet: '#C4B5FD',
+    sky: '#7DD3FC',
+    rose: '#F87171',
+    slate: '#94A3B8',
+    link: '#7AA7FF',
+  });
+  Object.assign(G, { navy: ['#1A2740', '#161D27'], violet: ['#1A2740', '#161D27'], emerald: ['#1C2531', '#161D27'], dark: ['#1C2531', '#161D27'] });
+  Object.assign(ACCENT, accents());
+  Object.assign(TONE, tones());
+  Object.assign(FRESH_COLOR, { live: C.live, delayed: C.delayed, offline: C.offline });
+  Object.assign(glass, { backgroundColor: C.card, borderColor: C.glassEdge, shadowColor: '#000', shadowOpacity: 0.35 });
+}
+
+export const R = { sm: 12, md: 14, lg: 20, xl: 24, pill: 999 };
 
 /** Wide, faint shadows: cards float rather than sit in a box. */
 // No Android elevation: on a translucent surface it draws a grey shadow
 // through the glass. iOS and the web keep the soft drop shadow.
 export const shadow = {
-  shadowColor: '#142548',
-  shadowOpacity: 0.08,
-  shadowRadius: 24,
-  shadowOffset: { width: 0, height: 10 },
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.06,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 6 },
   elevation: 0,
 };
 
 /** A liquid glass surface: translucent fill, bright edge, soft depth. */
 export const glass = {
-  backgroundColor: 'rgba(255,255,255,0.68)',
+  backgroundColor: '#FFFFFF',
   borderWidth: 1,
-  borderColor: 'rgba(28,49,94,0.10)',
+  borderColor: 'rgba(15,23,42,0.08)',
   ...shadow,
 };
 
 export const shadowLg = {
-  shadowColor: '#142548',
-  shadowOpacity: 0.16,
-  shadowRadius: 28,
-  shadowOffset: { width: 0, height: 14 },
-  elevation: 7,
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.12,
+  shadowRadius: 24,
+  shadowOffset: { width: 0, height: 10 },
+  elevation: 4,
 };
 
 export const glow = (color) => ({
@@ -144,13 +206,16 @@ export const F = {
   600: { fontFamily: 'Inter_600SemiBold', fontWeight: 'normal' },
   700: { fontFamily: 'Inter_700Bold', fontWeight: 'normal' },
   800: { fontFamily: 'Inter_700Bold', fontWeight: 'normal' },
-  display: { fontFamily: 'Poppins_600SemiBold', fontWeight: 'normal', letterSpacing: -0.3 },
-  displayBold: { fontFamily: 'Poppins_700Bold', fontWeight: 'normal', letterSpacing: -0.3 },
+  // Large headings and figures: Plus Jakarta Sans, tight tracking.
+  display: { fontFamily: 'PlusJakartaSans_700Bold', fontWeight: 'normal', letterSpacing: -0.3 },
+  displayBold: { fontFamily: 'PlusJakartaSans_800ExtraBold', fontWeight: 'normal', letterSpacing: -0.5 },
   // The app name: a refined serif wordmark.
   // The app name and navigation labels: Montserrat, as in the web app's navbar.
   brand: { fontFamily: 'Montserrat_800ExtraBold', fontWeight: 'normal', letterSpacing: -0.2 },
-  nav: { fontFamily: 'Montserrat_600SemiBold', fontWeight: 'normal', letterSpacing: 0.2 },
-  navBold: { fontFamily: 'Montserrat_700Bold', fontWeight: 'normal', letterSpacing: 0.1 },
+  // Navigation (header titles, tab labels): Plus Jakarta Sans, crisp at small sizes.
+  nav: { fontFamily: 'PlusJakartaSans_600SemiBold', fontWeight: 'normal', letterSpacing: 0.1 },
+  navBold: { fontFamily: 'PlusJakartaSans_700Bold', fontWeight: 'normal', letterSpacing: 0 },
+  navTitle: { fontFamily: 'PlusJakartaSans_800ExtraBold', fontWeight: 'normal', letterSpacing: -0.3 },
 };
 
 /** The Inter family for a fontWeight ('bold', '600', 500 ...). */

@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api.js';
 import { METHOD_TEXT, STATUS_TEXT, dateTime, thisMonth, time } from '../../lib/format.js';
-import { refreshPlan, setSource, submitOtp, useSampler } from '../../lib/sampler.js';
+import { refreshPlan, setSource, requestNewOtp, submitOtp, useSampler } from '../../lib/sampler.js';
+import { useServerInfo } from '../../lib/serverInfo.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
-import { Badge, Empty, ErrorText, Field, Modal, Notice, Page, Panel, Table } from '../../components/ui.jsx';
+import { Badge, DirectionBadge, Empty, ErrorText, Field, Modal, Notice, Page, Panel, Table } from '../../components/ui.jsx';
+import { Chips, ViewCard } from '../../components/adminkit.jsx';
+import RateTrip from '../../components/RateTrip.jsx';
+import { useT } from '../../lib/i18n.js';
 
 const QUEUE_KEY = 'ubts.qrQueue';
 const readQueue = () => {
@@ -27,6 +31,8 @@ const TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISION
 
 function SamplingStatus({ token, user }) {
   const s = useSampler();
+  // "Ride along with a bus" stands in for a real ride in demonstrations only.
+  const demo = Boolean(useServerInfo()?.demoMode);
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState(null);
   const buses = useAsync(
@@ -34,15 +40,22 @@ function SamplingStatus({ token, user }) {
     [s.plan?.subscribed, user.homeRouteCode, token],
   );
   const p = s.plan;
-  if (!p) return <Panel title="Automatic attendance"><p className="muted">Checking…</p></Panel>;
+  if (!p) return <ViewCard icon="signal" title="Automatic attendance" summary="Checking…" />;
   const checks = [
     ...(p.subscribed ? [] : [['Subscription', false, <a key="a" href="#/pay">Subscribe</a>]]),
     ['Location consent', p.consent, <a key="b" href="#/settings">Give consent in Settings</a>],
     ['This phone bound to your account', p.deviceBound && !s.otp, null],
     ['Inside your travel window', p.inTravelWindow, <span key="c">Window: {p.travelWindows}</span>],
   ];
+  const allOk = checks.every((c) => c[1]);
+  // Folded: the status badge and the first thing to fix are enough at a glance.
   return (
-    <Panel title="Automatic attendance" icon="signal" actions={<Badge tone={checks.every((c) => c[1]) ? 'live' : 'offline'}>{checks.every((c) => c[1]) ? 'Active' : 'Paused'}</Badge>}>
+    <ViewCard
+      icon="signal"
+      title="Automatic attendance"
+      summary={allOk ? 'Your phone confirms trips by itself' : `Paused · ${checks.find((c) => !c[1])?.[0] ?? 'check the steps'}`}
+      badge={<Badge tone={allOk ? 'live' : 'offline'}>{allOk ? 'Active' : 'Paused'}</Badge>}
+    >
       <ul className="checklist">
         {checks.map(([label, ok, fix]) => (
           <li key={label} className={ok ? 'ok' : 'no'}>
@@ -53,11 +66,15 @@ function SamplingStatus({ token, user }) {
       </ul>
       {s.otp && (
         <form className="otp" onSubmit={async (e) => { e.preventDefault(); setOtpError(null); try { await submitOtp(otp); } catch (err) { setOtpError(err.message); } }}>
-          <p className="muted">Your account is bound to another phone. Enter the one-time code to move it here{s.otp.devOtp ? ` (test mode code: ${s.otp.devOtp})` : ''}.</p>
+          <p className="muted">
+            {s.otp.emailedTo ? `Your account is bound to another phone. We emailed a code to ${s.otp.emailedTo}. Enter it to move your account here.` : 'Your account is bound to another phone. If you have no code, ask the transport office to reset your phone.'}
+            {s.otp.devOtp ? ` (test mode code: ${s.otp.devOtp})` : ''}
+          </p>
           <div className="inline-form">
             <input value={otp} onChange={(e) => setOtp(e.target.value)} inputMode="numeric" maxLength={6} placeholder="6-digit code" aria-label="One-time code" />
             <button className="btn ghost">Move here</button>
           </div>
+          <button type="button" className="link" onClick={async () => { setOtpError(null); try { await requestNewOtp(); setOtp(''); } catch (err) { setOtpError(err.message); } }}>Send a new code</button>
           <ErrorText>{otpError}</ErrorText>
         </form>
       )}
@@ -66,7 +83,7 @@ function SamplingStatus({ token, user }) {
           <Field label="Location source">
             <select value={s.source === 'ride' ? `ride:${s.rideBusId}` : 'gps'} onChange={(e) => (e.target.value === 'gps' ? setSource('gps') : setSource('ride', Number(e.target.value.split(':')[1])))}>
               <option value="gps">This phone's location</option>
-              {(buses.data ?? []).map((b) => <option key={b.busId} value={`ride:${b.busId}`}>Demo: ride along with {b.fleetCode}</option>)}
+              {demo && (buses.data ?? []).map((b) => <option key={b.busId} value={`ride:${b.busId}`}>Demo: ride along with {b.fleetCode}</option>)}
             </select>
           </Field>
           <p className="muted">
@@ -77,7 +94,7 @@ function SamplingStatus({ token, user }) {
       )}
       <ErrorText>{s.error}</ErrorText>
       <button className="btn ghost" onClick={refreshPlan}>Refresh</button>
-    </Panel>
+    </ViewCard>
   );
 }
 
@@ -168,7 +185,7 @@ function CheckIn({ token, user, onDone }) {
   }, [scanning]);
 
   return (
-    <Panel title="No GPS? Check in with the bus code" icon="qr">
+    <ViewCard icon="qr" title="Check in with the bus code" summary="No GPS? Scan the QR or type the code">
       <p className="muted">Scan the QR code on the driver's screen, or type the route and the 6-digit code shown under it.</p>
       {'BarcodeDetector' in window && (
         <button className="btn ghost" onClick={() => setScanning(true)}>Scan QR code</button>
@@ -186,7 +203,7 @@ function CheckIn({ token, user, onDone }) {
           <video ref={videoRef} className="scanner" playsInline muted />
         </Modal>
       )}
-    </Panel>
+    </ViewCard>
   );
 }
 
@@ -228,7 +245,14 @@ export default function StudentAttendance() {
   const record = useAsync(() => (entitlement?.active ? api(`/api/attendance/me?month=${month}`, { token }) : Promise.resolve(null)), [token, month, entitlement?.active]);
   // Only the latest three trips at first (the server sends newest first); the rest fold away.
   const [showAll, setShowAll] = useState(false);
-  const records = record.data?.records ?? [];
+  const [run, setRun] = useState('');
+  const t = useT();
+  const [rating, setRating] = useState(null);
+  const rated = useAsync(() => (entitlement?.active ? api('/api/feedback/me', { token }) : Promise.resolve([])), [token, entitlement?.active]);
+  const ratedTrips = new Set((rated.data ?? []).map((f) => f.trip_id));
+  const canRate = (r) => r.present && Date.now() - new Date(r.boarded_at).getTime() < 7 * 86400000;
+  const all = record.data?.records ?? [];
+  const records = all.filter((r) => !run || r.direction === run);
 
   useEffect(() => {
     const reload = () => record.reload();
@@ -237,7 +261,7 @@ export default function StudentAttendance() {
   }, [record]);
 
   return (
-    <Page eyebrow="Student" title="Attendance" subtitle="Marked when you answer “Did you board?” after your bus leaves your stop, when your phone and the bus travel together, or by the bus QR code.">
+    <Page eyebrow="Student" title={t('Attendance')}>
       <div className="cols">
         <div className="col">
           <SamplingStatus token={token} user={user} />
@@ -246,21 +270,40 @@ export default function StudentAttendance() {
         <div className="col wide">
           <Panel
             icon="check"
-            title={record.data ? `My record · ${record.data.tripsPresent} trip${record.data.tripsPresent === 1 ? '' : 's'} present` : 'My record'}
+            title={record.data ? `${t('My record')} · ${record.data.upPresent} ${t('inbound')} · ${record.data.downPresent} ${t('outbound')} ${t('present')}` : t('My record')}
             actions={<input type="month" value={month} onChange={(e) => setMonth(e.target.value)} aria-label="Month" />}
           >
             {!entitlement?.active ? <Empty>Your attendance record is part of the subscription. <a href="#/pay">Subscribe</a>.</Empty> : (
               <>
                 <ErrorText>{record.error?.message}</ErrorText>
+                <Chips
+                  value={run}
+                  onChange={setRun}
+                  options={[
+                    { value: '', label: t('Both directions'), count: all.length },
+                    { value: 'UP', label: t('Inbound · To college'), count: all.filter((r) => r.direction === 'UP').length },
+                    { value: 'DOWN', label: t('Outbound · From college'), count: all.filter((r) => r.direction === 'DOWN').length },
+                  ]}
+                />
                 <Table
                   rows={record.data ? (showAll ? records : records.slice(0, 3)) : undefined}
                   rowKey={(r) => r.attendance_id}
                   empty="No trips recorded this month."
                   columns={[
                     { key: 'boarded_at', label: 'Trip', render: (r) => <><b>{dateTime(r.boarded_at)}</b><small><span className="route-code sm">{r.route_code}</span>{r.route_name} · {METHOD_TEXT[r.method] ?? r.method}</small></> },
+                    { key: 'direction', label: 'Direction', render: (r) => <DirectionBadge direction={r.direction} /> },
                     { key: 'stops', label: 'From → to', wrap: true, render: (r) => <>{r.boarding_stop ?? '—'} <span className="muted">→</span> {r.alighting_stop ?? (r.alighted_at ? '—' : <i>on board</i>)}</> },
                     { key: 'status', label: 'Status', render: (r) => <><Badge tone={TONE[r.status]}>{STATUS_TEXT[r.status]}{r.auto_confirmed ? ' (auto)' : ''}</Badge><small>{r.present ? 'Counted present' : 'Not counted'}</small></> },
-                    { key: 'x', label: '', render: (r) => (r.canDispute ? <button className="link" onClick={() => setDisputing(r)}>Dispute</button> : <small>{r.dispute?.resolution ?? ''}</small>) },
+                    {
+                      key: 'x',
+                      label: '',
+                      render: (r) => (
+                        <>
+                          {r.canDispute ? <button className="link" onClick={() => setDisputing(r)}>Dispute</button> : <small>{r.dispute?.resolution ?? ''}</small>}
+                          {ratedTrips.has(r.trip_id) ? <small>{t('Rated')}</small> : canRate(r) ? <button className="link" onClick={() => setRating(r)}>{t('Rate trip')}</button> : null}
+                        </>
+                      ),
+                    },
                   ]}
                 />
                 {records.length > 3 && (
@@ -275,6 +318,7 @@ export default function StudentAttendance() {
           </Panel>
         </div>
       </div>
+      {rating && <RateTrip trip={rating} onClose={() => setRating(null)} onDone={() => { setRating(null); rated.reload(); }} />}
       {disputing && <DisputeDialog token={token} record={disputing} onClose={() => setDisputing(null)} onDone={() => { setDisputing(null); record.reload(); }} />}
     </Page>
   );

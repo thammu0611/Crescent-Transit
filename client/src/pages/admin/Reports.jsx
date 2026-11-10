@@ -4,8 +4,8 @@ import { METHOD_TEXT, daysAgo, thisMonth, today } from '../../lib/format.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAction, useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
-import { Block, Chips, ColumnChart, HBars, dayLabel } from '../../components/adminkit.jsx';
-import { Badge, ErrorText, Field, FoldPanel, Modal, Page, Stat, Table, YesNo } from '../../components/ui.jsx';
+import { Block, Chips, ColumnChart, DetailView, HBars, dayLabel } from '../../components/adminkit.jsx';
+import { Badge, Empty, ErrorText, Field, ListCard, Modal, Page, SearchBox, Stat, Table, YesNo, DirectionBadge } from '../../components/ui.jsx';
 
 const STATUS_TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISIONAL: 'delayed', PROMPTED: 'delayed', DISPUTED: 'delayed', ADJUSTED: 'offline', REJECTED: 'offline', VOID: 'danger' };
 const statusText = (s) => s.replace('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
@@ -95,9 +95,13 @@ function byBus(rows) {
     if (!buses.has(r.bus)) buses.set(r.bus, { bus: r.bus, route: r.route, rows: [], students: new Map() });
     const b = buses.get(r.bus);
     b.rows.push(r);
-    const st = b.students.get(r.username) ?? { username: r.username, name: r.full_name, reg: r.register_no, dept: r.department, trips: 0, present: 0, last: null };
+    const st = b.students.get(r.username) ?? { username: r.username, name: r.full_name, reg: r.register_no, dept: r.department, trips: 0, present: 0, up: 0, down: 0, last: null };
     st.trips += 1;
-    if (r.present) st.present += 1;
+    if (r.present) {
+      st.present += 1;
+      if (r.direction === 'DOWN') st.down += 1;
+      else st.up += 1;
+    }
     const when = `${r.date} ${r.boarded ?? ''}`;
     if (!st.last || when > st.last) st.last = when;
     b.students.set(r.username, st);
@@ -108,13 +112,12 @@ function byBus(rows) {
 }
 
 /** One bus's attendance report: its students, then every record. */
-function BusRegister({ group, onRow, onCsv }) {
+function BusRegister({ group, onRow, onCsv, onClose }) {
   return (
-    <FoldPanel
-      icon="bus"
+    <DetailView
       title={`${group.bus} · Route ${group.route}`}
-      summary={`${group.students.length} student${group.students.length === 1 ? '' : 's'} · ${group.rows.length} record${group.rows.length === 1 ? '' : 's'} · ${group.present} present`}
-      badge={<Badge tone="live">{group.present}/{group.rows.length}</Badge>}
+      subtitle={`${group.students.length} student${group.students.length === 1 ? '' : 's'} · ${group.rows.length} record${group.rows.length === 1 ? '' : 's'} · ${group.present} present`}
+      onClose={onClose}
     >
       <div className="bus-register-bar">
         <span className="muted">Students on this bus and every record in the period. Click a record for details.</span>
@@ -125,6 +128,8 @@ function BusRegister({ group, onRow, onCsv }) {
         rowKey={(st) => st.username}
         columns={[
           { key: 'name', label: 'Student', render: (st) => <><b>{st.name}</b><small>{[st.reg ?? st.username, st.dept].filter(Boolean).join(' · ')}</small></> },
+          { key: 'up', label: 'Inbound', align: 'right' },
+          { key: 'down', label: 'Outbound', align: 'right' },
           { key: 'present', label: 'Present', align: 'right', render: (st) => `${st.present} of ${st.trips}` },
           { key: 'rate', label: 'Rate', align: 'right', render: (st) => <Badge tone={st.present === st.trips ? 'live' : st.present ? 'delayed' : 'danger'}>{Math.round((st.present / st.trips) * 100)}%</Badge> },
           { key: 'last', label: 'Last boarded', render: (st) => st.last },
@@ -135,6 +140,7 @@ function BusRegister({ group, onRow, onCsv }) {
         rowKey={(r) => `${r.trip_id}:${r.username}`}
         columns={[
           { key: 'date', label: 'Date' },
+          { key: 'direction', label: 'Direction', render: (r) => <DirectionBadge direction={r.direction} /> },
           { key: 'full_name', label: 'Student', render: (r) => <button type="button" className="kit-name-btn" onClick={() => onRow(r)}><b>{r.full_name}</b><small>{r.register_no ?? r.username}</small></button> },
           { key: 'boarded', label: 'Boarded', render: (r) => <>{r.boarded ?? '—'}<small>{r.boarding_stop ?? ''}</small></> },
           { key: 'alighted', label: 'Alighted', render: (r) => <>{r.alighted ?? '—'}<small>{r.alighting_stop ?? ''}</small></> },
@@ -143,7 +149,7 @@ function BusRegister({ group, onRow, onCsv }) {
           { key: 'present', label: 'Present', render: (r) => <YesNo value={r.present} /> },
         ]}
       />
-    </FoldPanel>
+    </DetailView>
   );
 }
 const CsvButton = ({ title = 'Export CSV', onClick }) => <button className="btn ghost inline" onClick={onClick}><Icon name="download" size={14} />{title}</button>;
@@ -154,6 +160,8 @@ export default function Reports() {
   const [range, setRange] = useState({ from: daysAgo(29), to: today(), route: '' });
   const [tab, setTab] = useState('register');
   const [row, setRow] = useState(null);
+  const [busId, setBusId] = useState(null);
+  const [busQuery, setBusQuery] = useState('');
   const q = new URLSearchParams(Object.entries(range).filter(([, v]) => v)).toString();
   const [error, setError] = useState(null);
   const routes = useAsync(() => api('/api/routes'), []);
@@ -188,6 +196,9 @@ export default function Reports() {
   }, [reg]);
 
   const regBuses = useMemo(() => (reg ? byBus(reg) : []), [reg]);
+  const openBus = regBuses.find((g) => g.bus === busId);
+  const busNeedle = busQuery.trim().toLowerCase();
+  const shownBuses = regBuses.filter((g) => !busNeedle || `${g.bus} ${g.route}`.toLowerCase().includes(busNeedle));
 
   const demandByStop = useMemo(() => Object.values((demand.data ?? []).reduce((m, r) => {
     const k = `${r.route}:${r.seq}`;
@@ -242,16 +253,19 @@ export default function Reports() {
             <Block
               title="Attendance register by bus"
               caption={`${regBuses.length} bus${regBuses.length === 1 ? '' : 'es'} · ${reg.length} records · open a bus for its students and records`}
-              actions={<><CsvButton title="CSV per trip" onClick={() => csv('/api/reports/attendance', 'attendance-register')} /><CsvButton title="CSV per student" onClick={() => csv('/api/reports/attendance', 'attendance-per-student', '&group=student')} /></>}
+              actions={<><SearchBox value={busQuery} onChange={setBusQuery} placeholder="Search bus or route" /><CsvButton title="CSV per trip" onClick={() => csv('/api/reports/attendance', 'attendance-register')} /><CsvButton title="CSV per student" onClick={() => csv('/api/reports/attendance', 'attendance-per-student', '&group=student')} /></>}
             >
-              {regBuses.length === 0 ? <p className="muted">No attendance in this period.</p> : (
-                <div className="bus-registers">
-                  {regBuses.map((g) => (
-                    <BusRegister
+              {shownBuses.length === 0 ? <Empty>{busNeedle ? 'No buses match.' : 'No attendance in this period.'}</Empty> : (
+                <div className="kit-list cols-2">
+                  {shownBuses.map((g) => (
+                    <ListCard
                       key={g.bus}
-                      group={g}
-                      onRow={setRow}
-                      onCsv={() => download(`/api/reports/attendance?${new URLSearchParams({ from: range.from, to: range.to, route: g.route })}&format=csv`, token, `attendance-${g.bus}.csv`).catch((e) => setError(e.message))}
+                      onClick={() => setBusId(g.bus)}
+                      lead={<span className="route-code">{g.route}</span>}
+                      title={g.bus}
+                      lines={[`${g.students.length} student${g.students.length === 1 ? '' : 's'}`, `${g.rows.length} record${g.rows.length === 1 ? '' : 's'}`]}
+                      count={g.present}
+                      countLabel="PRESENT"
                     />
                   ))}
                 </div>
@@ -272,7 +286,7 @@ export default function Reports() {
                 <Bars rows={demandByStop} label={(r) => r.label} value={(r) => r.n} />
               </Block>
               <Block title="Boardings by hour" caption="Hour of the day (campus time)">
-                <ColumnChart data={demandByHour.map((h) => ({ label: h.label.slice(0, 2), value: h.value }))} highlightLast={false} color="#237a36" />
+                <ColumnChart data={demandByHour.map((h) => ({ label: h.label.slice(0, 2), value: h.value }))} highlightLast={false} color="var(--chart-green)" />
               </Block>
             </div>
           </>
@@ -347,6 +361,14 @@ export default function Reports() {
         {tab === 'accuracy' && <Block title="Attendance accuracy against a manual register"><AccuracyUpload token={token} /></Block>}
       </div>
 
+      {openBus && (
+        <BusRegister
+          group={openBus}
+          onRow={setRow}
+          onClose={() => setBusId(null)}
+          onCsv={() => download(`/api/reports/attendance?${new URLSearchParams({ from: range.from, to: range.to, route: openBus.route })}&format=csv`, token, `attendance-${openBus.bus}.csv`).catch((e) => setError(e.message))}
+        />
+      )}
       {row && (
         <Modal title={row.full_name} onClose={() => setRow(null)} width={520}>
           <dl className="kit-kv">
@@ -354,6 +376,7 @@ export default function Reports() {
             <div><dt>Date</dt><dd>{row.date}</dd></div>
             <div><dt>Route / bus</dt><dd>{row.route} · {row.bus}</dd></div>
             <div><dt>Trip</dt><dd>#{row.trip_id}</dd></div>
+            <div><dt>Direction</dt><dd><DirectionBadge direction={row.direction} /></dd></div>
             <div><dt>Status</dt><dd><Badge tone={STATUS_TONE[row.status] ?? 'offline'}>{statusText(row.status)}{row.auto_confirmed ? ' (auto)' : ''}</Badge></dd></div>
             <div><dt>Method</dt><dd>{METHOD_TEXT[row.method] ?? row.method}</dd></div>
             <div><dt>Boarded</dt><dd>{row.boarded ?? '—'} {row.boarding_stop ?? ''}</dd></div>

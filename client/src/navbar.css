@@ -6,10 +6,10 @@
    uses the same wordmark (mobile-app/src/components/ui.js: Wordmark). */
 
 :root {
-  /* Montserrat, the heading face of crescent.education, for the app name and the
-     navigation in both apps (the phone app loads the same weights). */
+  /* Montserrat, the heading face of crescent.education, for the app name. */
   --brand-font: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
-  --nav-font: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+  /* Navigation labels in Plus Jakarta Sans, as in the phone app's header and tab bar. */
+  --nav-font: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
 }
 
 /* ---- Bar ------------------------------------------------------------------------ */
@@ -33,25 +33,25 @@
 }
 
 /* ---- Brand ------------------------------------------------------------------------ */
-.brand { gap: 12px; padding: 8px 0; }
-.brand-icon { flex-shrink: 0; display: block; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.28)); transition: transform 0.2s var(--ease); }
-.brand:hover .brand-icon { transform: translateY(-1px) rotate(-3deg); }
+.brand { gap: 12px; padding: 6px 0; }
+.brand-icon { flex-shrink: 0; display: block; border-radius: 15%; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 4px 12px rgba(0, 0, 0, 0.3); transition: transform 0.2s var(--ease); }
+.brand:hover .brand-icon { transform: translateY(-1px) scale(1.04); }
 .brand-text { display: flex; flex-direction: column; justify-content: center; line-height: 1; }
 .brand-text strong {
   font-family: var(--brand-font);
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.2px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
   text-transform: none;
   color: #fff;
   line-height: 1.05;
 }
 .brand-sub {
-  display: inline-flex; align-items: center; gap: 7px; margin-top: 3px;
-  font-family: var(--nav-font); font-size: 9.5px; font-weight: 700; letter-spacing: 3.8px; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 7px; margin-top: 4px;
+  font-family: Georgia, 'Times New Roman', serif; font-size: 11px; font-weight: 400; letter-spacing: 4px; text-transform: uppercase;
   color: var(--gold);
 }
-.brand-sub::before { content: ''; width: 14px; height: 1px; background: currentColor; opacity: 0.8; }
+.brand-sub::before { content: ''; width: 18px; height: 1px; background: currentColor; opacity: 0.8; }
 .brand-text small { display: none; }
 
 /* ---- Page links (wide screens) -------------------------------------------------------- */
@@ -75,6 +75,7 @@
     width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--gold);
   }
   .tabs a.nav-cta { padding: 10px 20px; font-weight: 700; }
+  .tabs a.nav-cta.active { color: #fff; }
 
   /* Account corner, set apart by a hairline. */
   .user-chip { margin-left: 14px; padding-left: 16px; gap: 8px; border-left: 1px solid rgba(255, 255, 255, 0.14); }
@@ -93,7 +94,7 @@
 }
 @media (min-width: 1061px) and (max-width: 1240px) {
   .tabs a { padding: 9px 10px; font-size: 13px; }
-  .brand-text strong { font-size: 21px; }
+  .brand-text strong { font-size: 22px; }
 }
 
 /* ---- Utility line above the bar ----------------------------------------------------------- */
@@ -103,9 +104,9 @@
 @media (max-width: 1060px) {
   .topbar { min-height: 62px; padding: 6px 8px 6px 10px; }
   .topbar::after { left: 32px; right: 32px; }
-  .brand-icon { width: 40px; height: 40px; }
+  .brand-icon { width: 42px; height: 42px; }
   .brand-text strong { font-size: 19px; }
-  .brand-sub { font-size: 8.5px; letter-spacing: 3.2px; }
+  .brand-sub { font-size: 9.5px; letter-spacing: 3.2px; }
 }
 
 /* Every navigation label in the same face, on every screen width. */
@@ -142,11 +143,36 @@
   .tabs a.active .icon { opacity: 1; color: var(--gold); }
   .tabs a:not(.active):not(.nav-cta):hover { background: rgba(255, 255, 255, 0.05); }
 }
-/* Room for icons only on wide screens; the transport office has eight links. */
-@media (min-width: 1061px) and (max-width: 1400px) {
-  .tabs a .icon { display: none; }
-  .tabs a { padding: 8px 11px; }
+/* What fits is decided by measuring (MainNav.jsx): first the links tighten, then they move to More. */
+.tabs { min-width: 0; }
+.brand, .user-chip { flex: none; }
+.nav-measure { position: absolute; width: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; display: flex; }
+.nav-measure > * { flex: none; white-space: nowrap; }
+.nav-track > a { flex: none; white-space: nowrap; }
+.nav-more { position: relative; flex: none; display: inline-flex; }
+.nav-more-btn {
+  z-index: 1; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 0; border-radius: 999px; background: none; cursor: pointer;
+  font-family: var(--nav-font); font-size: 13px; font-weight: 600; letter-spacing: 0.2px; white-space: nowrap; color: rgba(255, 255, 255, 0.72);
+  transition: color 0.18s, background 0.18s;
 }
+.nav-more-btn .icon { opacity: 0.7; }
+.nav-more-btn:hover, .nav-more.is-open .nav-more-btn { color: #fff; background: rgba(255, 255, 255, 0.08); }
+.nav-more-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.nav-more-menu {
+  position: absolute; top: calc(100% + 14px); right: 0; z-index: 60; min-width: 220px; display: flex; flex-direction: column; gap: 2px; padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 18px; background: #16284e; box-shadow: 0 22px 48px rgba(20, 37, 72, 0.4);
+}
+.topbar .nav-more-menu a {
+  display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 14px; font-weight: 600; white-space: nowrap;
+  color: rgba(255, 255, 255, 0.86); text-decoration: none;
+}
+.topbar .nav-more-menu a .icon { display: inline-block; opacity: 0.8; color: var(--gold); }
+.topbar .nav-more-menu a:hover, .topbar .nav-more-menu a:focus-visible { color: #fff; background: rgba(255, 255, 255, 0.09); }
+@media (min-width: 1061px) {
+  .tabs .nav-compact a { padding: 8px 9px; }
+  .user-meta { display: flex; }
+}
+@media (max-width: 1060px) { .nav-measure, .nav-more { display: none; } }
 
 /* Once the page scrolls the bar keeps its size and only casts a deeper shadow. */
 .topbar { transition: box-shadow 0.28s var(--ease); }

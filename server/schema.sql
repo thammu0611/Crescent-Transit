@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS users (
   username      TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   full_name     TEXT NOT NULL,
-  role          TEXT NOT NULL CHECK (role IN ('admin', 'driver', 'student', 'finance')),
+  role          TEXT NOT NULL CHECK (role IN ('admin', 'driver', 'student', 'finance', 'parent')),
   bus_id        INTEGER REFERENCES buses(id)      -- set for drivers only
 );
 
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS rejected_pings (
 -- ===========================================================================
 
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
-ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'driver', 'student', 'finance'));
+ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'driver', 'student', 'finance', 'parent'));
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email            TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone            TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS register_no      TEXT;
@@ -456,3 +456,262 @@ CREATE TABLE IF NOT EXISTS boarding_checks (
   UNIQUE (user_id, trip_id)
 );
 CREATE INDEX IF NOT EXISTS idx_boarding_checks_pending ON boarding_checks (last_sent_at) WHERE status = 'PENDING';
+
+-- A student's university email, confirmed with an emailed code (STUDENT_EMAIL_VERIFY).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+CREATE TABLE IF NOT EXISTS email_codes (
+  user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  email      TEXT NOT NULL,
+  code_hash  TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  sent_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- An account the administrator set a temporary password for must choose its own first.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+-- Forgot password: a 6-digit code emailed to the account's address.
+CREATE TABLE IF NOT EXISTS password_resets (
+  user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  code_hash  TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  sent_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Every trip is one run: UP (boarding point to college) or DOWN (college to
+-- boarding point). Attendance is kept per trip, so each run has its own record.
+-- Trips from before this column follow the time of day they ran.
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS direction TEXT CHECK (direction IN ('UP', 'DOWN'));
+UPDATE trips SET direction = CASE WHEN extract(hour FROM coalesce(started_at, scheduled_for) AT TIME ZONE 'Asia/Kolkata') >= 12 THEN 'DOWN' ELSE 'UP' END
+ WHERE direction IS NULL;
+ALTER TABLE trips ALTER COLUMN direction SET DEFAULT 'UP';
+ALTER TABLE trips ALTER COLUMN direction SET NOT NULL;
+
+-- "Another bus can take you" (server/alternatives.js): one alert per student per run.
+CREATE TABLE IF NOT EXISTS bus_alternative_alerts (
+  user_id    INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  day        DATE NOT NULL,
+  direction  TEXT NOT NULL CHECK (direction IN ('UP', 'DOWN')),
+  reason     TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, day, direction)
+);
+
+-- Parents: a read-only account a student links with a one-time code (server/guardians.js).
+CREATE TABLE IF NOT EXISTS guardian_codes (
+  code_hash  TEXT PRIMARY KEY,
+  student_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL
+);
+CREATE TABLE IF NOT EXISTS guardian_links (
+  parent_id  INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  student_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (parent_id, student_id)
+);
+CREATE INDEX IF NOT EXISTS guardian_links_student ON guardian_links (student_id);
+CREATE TABLE IF NOT EXISTS guardian_notices (
+  parent_id     INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  attendance_id BIGINT NOT NULL,
+  kind          TEXT NOT NULL CHECK (kind IN ('BOARDED', 'REACHED')),
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (parent_id, attendance_id, kind)
+);
+
+-- The digital bus pass shows this photo (server/pass.js).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS photo TEXT;
+
+-- "Your bus is almost at your stop": one push per student per trip (server/automation.js).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS arrival_alerts BOOLEAN NOT NULL DEFAULT TRUE;
+CREATE TABLE IF NOT EXISTS stop_alerts (
+  user_id    INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  trip_id    INT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, trip_id)
+);
+
+ALTER TABLE incidents DROP CONSTRAINT IF EXISTS incidents_kind_check;
+ALTER TABLE incidents ADD CONSTRAINT incidents_kind_check CHECK (kind IN (
+  'BREAKDOWN', 'DELAY', 'EMERGENCY', 'SOS', 'MISSING_BUS', 'LOST_AND_FOUND', 'OTHER',
+  'ATTENDANCE_CONFLICT', 'CAPACITY_BREACH', 'TRACKER_OFFLINE', 'MOCK_LOCATION', 'SPEEDING', 'VEHICLE_CHECK', 'VEHICLE_DOCUMENT'));
+
+-- Rating a trip, and complaints the transport office answers (server/routes/services.js).
+CREATE TABLE IF NOT EXISTS trip_feedback (
+  id           SERIAL PRIMARY KEY,
+  user_id      INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  trip_id      INT NOT NULL REFERENCES trips(id),
+  bus_id       INT NOT NULL REFERENCES buses(id),
+  route_id     INT NOT NULL REFERENCES routes(id),
+  rating       INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  tags         JSONB NOT NULL DEFAULT '[]',
+  comment      TEXT,
+  status       TEXT NOT NULL DEFAULT 'NOTED' CHECK (status IN ('NOTED', 'OPEN', 'RESOLVED')),
+  response     TEXT,
+  responded_by INT REFERENCES users(id),
+  responded_at TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, trip_id)
+);
+
+-- A student asks to move route or stop; the transport office decides.
+CREATE TABLE IF NOT EXISTS route_requests (
+  id            SERIAL PRIMARY KEY,
+  user_id       INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  from_route_id INT REFERENCES routes(id),
+  from_stop_seq INT,
+  to_route_id   INT NOT NULL REFERENCES routes(id),
+  to_stop_seq   INT NOT NULL,
+  reason        TEXT,
+  status        TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
+  admin_note    TEXT,
+  decided_by    INT REFERENCES users(id),
+  decided_at    TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS route_requests_one_waiting ON route_requests (user_id) WHERE status = 'PENDING';
+
+-- Lost and found, per bus.
+CREATE TABLE IF NOT EXISTS lost_items (
+  id          SERIAL PRIMARY KEY,
+  kind        TEXT NOT NULL CHECK (kind IN ('LOST', 'FOUND')),
+  bus_id      INT REFERENCES buses(id),
+  title       TEXT NOT NULL,
+  description TEXT,
+  status      TEXT NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'RETURNED', 'CLOSED')),
+  reported_by INT NOT NULL REFERENCES users(id),
+  closed_by   INT REFERENCES users(id),
+  closed_at   TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- The driver's check before a run: one per bus, day and direction.
+CREATE TABLE IF NOT EXISTS bus_checklists (
+  id         SERIAL PRIMARY KEY,
+  bus_id     INT NOT NULL REFERENCES buses(id),
+  driver_id  INT REFERENCES users(id),
+  day        DATE NOT NULL,
+  direction  TEXT NOT NULL CHECK (direction IN ('UP', 'DOWN')),
+  results    JSONB NOT NULL,
+  failed     INT NOT NULL DEFAULT 0,
+  note       TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (bus_id, day, direction)
+);
+
+-- One "running late" message per trip (server/automation.js).
+CREATE TABLE IF NOT EXISTS late_alerts (
+  trip_id    INT PRIMARY KEY REFERENCES trips(id) ON DELETE CASCADE,
+  minutes    INT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- What a parent has been told: running late, breakdowns, SOS.
+CREATE TABLE IF NOT EXISTS parent_alerts (
+  id         SERIAL PRIMARY KEY,
+  parent_id  INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kind       TEXT NOT NULL,
+  title      TEXT NOT NULL,
+  body       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS parent_alerts_time ON parent_alerts (parent_id, created_at DESC);
+
+-- Holidays and special days (server/calendar.js).
+CREATE TABLE IF NOT EXISTS special_days (
+  day           DATE PRIMARY KEY,
+  kind          TEXT NOT NULL CHECK (kind IN ('HOLIDAY', 'EXAM', 'SPECIAL')),
+  title         TEXT NOT NULL,
+  note          TEXT,
+  no_service    BOOLEAN NOT NULL DEFAULT FALSE,
+  morning_shift INT NOT NULL DEFAULT 0,
+  evening_shift INT NOT NULL DEFAULT 0,
+  created_by    INT REFERENCES users(id),
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Bus documents, service by distance, fuel (server/fleetcare.js).
+ALTER TABLE buses ADD COLUMN IF NOT EXISTS odometer_km         INT;
+ALTER TABLE buses ADD COLUMN IF NOT EXISTS service_interval_km INT NOT NULL DEFAULT 10000;
+ALTER TABLE buses ADD COLUMN IF NOT EXISTS last_service_km     INT;
+ALTER TABLE buses ADD COLUMN IF NOT EXISTS last_service_on     DATE;
+CREATE TABLE IF NOT EXISTS bus_documents (
+  bus_id     INT NOT NULL REFERENCES buses(id) ON DELETE CASCADE,
+  kind       TEXT NOT NULL CHECK (kind IN ('INSURANCE', 'FITNESS', 'PERMIT', 'PUC')),
+  doc_number TEXT,
+  expires_on DATE NOT NULL,
+  PRIMARY KEY (bus_id, kind)
+);
+CREATE TABLE IF NOT EXISTS care_reminders (
+  key        TEXT PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS fuel_logs (
+  id          SERIAL PRIMARY KEY,
+  bus_id      INT NOT NULL REFERENCES buses(id) ON DELETE CASCADE,
+  entered_by  INT REFERENCES users(id),
+  day         DATE NOT NULL,
+  odometer_km INT NOT NULL,
+  litres      NUMERIC(7, 2) NOT NULL,
+  cost_paise  BIGINT NOT NULL,
+  note        TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS fuel_logs_bus_day ON fuel_logs (bus_id, day);
+
+-- ===========================================================================
+-- Running it for real: retention, backups, monitoring, the yearly roster
+-- ===========================================================================
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check;
+ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('active', 'suspended', 'graduated', 'deleted'));
+ALTER TABLE users ADD COLUMN IF NOT EXISTS graduation_year INT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS users_graduation ON users (graduation_year) WHERE role = 'student';
+
+-- The nightly clean-up finds old location history by time.
+CREATE INDEX IF NOT EXISTS location_pings_recorded ON location_pings (recorded_at);
+CREATE INDEX IF NOT EXISTS rejected_pings_received ON rejected_pings (received_at);
+
+-- Attendance older than the retention period survives only as these totals.
+CREATE TABLE IF NOT EXISTS attendance_totals (
+  month    DATE NOT NULL,
+  route_id INT NOT NULL REFERENCES routes(id),
+  records  INT NOT NULL DEFAULT 0,
+  present  INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (month, route_id)
+);
+
+CREATE TABLE IF NOT EXISTS backup_runs (
+  id          SERIAL PRIMARY KEY,
+  started_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  finished_at TIMESTAMPTZ,
+  ok          BOOLEAN,
+  file        TEXT,
+  bytes       BIGINT,
+  row_count   BIGINT,
+  offsite     BOOLEAN NOT NULL DEFAULT FALSE,
+  error       TEXT
+);
+
+-- Errors and warnings for the dashboard; nothing personal goes in here.
+CREATE TABLE IF NOT EXISTS system_events (
+  id         BIGSERIAL PRIMARY KEY,
+  level      TEXT NOT NULL CHECK (level IN ('error', 'warning', 'info')),
+  source     TEXT NOT NULL,
+  message    TEXT NOT NULL,
+  detail     TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS system_events_time ON system_events (created_at DESC);
+
+-- Something still wrong: a silent bus stays here until it reports again.
+CREATE TABLE IF NOT EXISTS system_alerts (
+  key       TEXT PRIMARY KEY,
+  kind      TEXT NOT NULL,
+  message   TEXT NOT NULL,
+  opened_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  closed_at TIMESTAMPTZ
+);
+
+-- When the phone-change code was last sent, to space out requests for a new one.
+ALTER TABLE device_otps ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ NOT NULL DEFAULT now();

@@ -1,7 +1,9 @@
 import { haversineMeters } from '../shared/geo.js';
+import { DIRECTIONS, DOWN, UP, travelOrder } from '../shared/direction.js';
 import { freshnessOf } from '../shared/freshness.js';
 import { estimateArrival, timetableSegmentMinutes } from '../shared/eta.js';
 import { HttpError } from './auth.js';
+import { localMinutes } from './clock.js';
 import { REJECT, serviceAreaFromStops, validateFix } from './validation.js';
 
 const MAX_BATCH = 200;
@@ -28,6 +30,7 @@ export class TrackingService {
     this.busLocks = new Map(); // busId -> tail of that bus's ingest queue
     this.jumpChains = new Map(); // busId -> consecutive rejected jumps
     this.lastArrivedSeq = new Map(); // tripId -> seq of the last stop reached
+    this.underWay = new Set(); // trips seen away from any stop
     this.lastPrediction = new Map(); // busId -> ms of the last logged ETA sample
     this.segmentMinutes = new Map(); // routeId -> { minutes: [...], learned: n }
     this.lastTrackerFixAt = new Map(); // busId -> ms (server clock) of the tracker's last accepted fix
@@ -57,8 +60,9 @@ export class TrackingService {
     const { rows } = await this.db.query(`${LIVE_SELECT} WHERE t.status = 'active'`);
     for (const row of rows) this.latest.set(row.bus_id, this.toSnapshot(row));
     const arrived = await this.db.query(
-      `SELECT a.trip_id, max(a.stop_seq) AS seq FROM stop_arrivals a JOIN trips t ON t.id = a.trip_id
-        WHERE t.status = 'active' GROUP BY a.trip_id`,
+      `SELECT a.trip_id, CASE WHEN t.direction = 'DOWN' THEN min(a.stop_seq) ELSE max(a.stop_seq) END AS seq
+         FROM stop_arrivals a JOIN trips t ON t.id = a.trip_id
+        WHERE t.status = 'active' GROUP BY a.trip_id, t.direction`,
     );
     for (const r of arrived.rows) this.lastArrivedSeq.set(r.trip_id, r.seq);
     await this.refreshSegmentTimes();
@@ -67,13 +71,13 @@ export class TrackingService {
   /** Re-read stops (after the administrator edits a route). */
   async reloadStops() {
     const { rows: stops } = await this.db.query(
-      'SELECT id, route_id, seq, name, lat, lng, offset_minutes FROM stops ORDER BY route_id, seq',
+      'SELECT id, route_id, seq, name, lat, lng, offset_minutes, scheduled_time FROM stops ORDER BY route_id, seq',
     );
     this.stopsByRoute = new Map();
     for (const s of stops) {
       if (!this.stopsByRoute.has(s.route_id)) this.stopsByRoute.set(s.route_id, []);
       this.stopsByRoute.get(s.route_id).push({
-        id: s.id, seq: s.seq, name: s.name, lat: s.lat, lng: s.lng, offset_minutes: s.offset_minutes,
+        id: s.id, seq: s.seq, name: s.name, lat: s.lat, lng: s.lng, offset_minutes: s.offset_minutes, scheduled_time: s.scheduled_time,
       });
     }
     this.area = stops.length ? serviceAreaFromStops(stops, this.config.validation.serviceAreaMarginDeg) : null;
@@ -83,7 +87,8 @@ export class TrackingService {
   /**
    * Segment travel times per route (doc 7.2): the average of recorded stop
    * arrivals where at least `minSegmentSamples` trips exist, otherwise the
-   * timetable's scheduled minutes for that segment.
+   * timetable's scheduled minutes for that segment. Learned from the UP run;
+   * the DOWN run uses the same segments backwards.
    */
   async refreshSegmentTimes() {
     const { rows } = await this.db.query(
@@ -189,6 +194,7 @@ export class TrackingService {
       routeName: row.route_name,
       driverName: row.driver_name,
       tripId: row.trip_id,
+      direction: row.direction ?? UP,
       capacity: row.capacity,
       occupancy: row.occupancy ?? null,
       lat: row.lat,
@@ -226,7 +232,7 @@ export class TrackingService {
 
   async activeTrip(busId) {
     const { rows } = await this.db.query(
-      `SELECT t.id, t.bus_id, t.route_id, t.started_at, t.occupancy, t.started_by, r.code AS route_code
+      `SELECT t.id, t.bus_id, t.route_id, t.direction, t.started_at, t.occupancy, t.started_by, r.code AS route_code
          FROM trips t JOIN routes r ON r.id = t.route_id
         WHERE t.bus_id = $1 AND t.status = 'active'`,
       [busId],
@@ -234,13 +240,21 @@ export class TrackingService {
     return rows[0] ?? null;
   }
 
+  /** The run a trip starting at this time is, by the clock: UP before eveningRunFrom, DOWN after. */
+  defaultDirection(at = new Date()) {
+    const [h, m] = this.config.eveningRunFrom.split(':').map(Number);
+    return localMinutes(at, this.config.timeZone) >= h * 60 + (m || 0) ? DOWN : UP;
+  }
+
   /**
    * Start a trip for the driver's bus. Returns the running trip if one exists.
    * A trip the administrator scheduled around now is activated rather than
-   * creating a second one. The bus tracker starts trips too (startedBy
-   * 'tracker'), with the bus's assigned driver if there is one.
+   * creating a second one, unless the driver chose the other run. The bus
+   * tracker starts trips too (startedBy 'tracker'), with the bus's assigned
+   * driver if there is one. `direction` defaults to the time of day.
    */
-  async startTrip({ userId, busId }, { startedBy = 'driver' } = {}) {
+  async startTrip({ userId, busId }, { startedBy = 'driver', direction = null } = {}) {
+    if (direction != null && !DIRECTIONS.includes(direction)) throw new HttpError(400, "direction must be 'UP' or 'DOWN'");
     if (!busId) throw new HttpError(400, 'This driver has no bus assigned');
     const existing = await this.activeTrip(busId);
     if (existing) return { trip: existing, resumed: true };
@@ -252,16 +266,18 @@ export class TrackingService {
         `UPDATE trips SET status = 'active', started_at = now(), driver_id = coalesce($2, driver_id), route_id = $3, started_by = $4
           WHERE id = (SELECT id FROM trips WHERE bus_id = $1 AND status = 'scheduled'
                         AND scheduled_for BETWEEN now() - interval '3 hours' AND now() + interval '3 hours'
+                        AND ($5::text IS NULL OR direction = $5)
                       ORDER BY scheduled_for LIMIT 1)
           RETURNING id`,
-        [busId, userId ?? null, bus.rows[0].route_id, startedBy],
+        [busId, userId ?? null, bus.rows[0].route_id, startedBy, direction],
       );
       if (!scheduled.rows[0]) {
-        await this.db.query('INSERT INTO trips (bus_id, route_id, driver_id, started_by) VALUES ($1, $2, $3, $4)', [
+        await this.db.query('INSERT INTO trips (bus_id, route_id, driver_id, started_by, direction) VALUES ($1, $2, $3, $4, $5)', [
           busId,
           bus.rows[0].route_id,
           userId ?? null,
           startedBy,
+          direction ?? this.defaultDirection(),
         ]);
       }
     } catch (err) {
@@ -284,6 +300,7 @@ export class TrackingService {
     const snap = this.latest.get(busId);
     this.latest.delete(busId);
     this.lastArrivedSeq.delete(tripId);
+    this.underWay.delete(tripId);
     this.lastPrediction.delete(busId);
     this.motion.delete(busId);
     if (snap) this.emit(snap.routeCode, 'bus:trip-ended', { busId, tripId, status });
@@ -309,14 +326,28 @@ export class TrackingService {
 
   // ---- ETA evaluation data (doc 7.3) --------------------------------------
 
+  /** The stops this trip has still to reach, in the order it reaches them. */
+  stopsAhead(snap) {
+    const stops = travelOrder(this.stopsByRoute.get(snap.routeId) ?? [], snap.direction);
+    const last = this.lastArrivedSeq.get(snap.tripId);
+    return stops.slice(stops.findIndex((s) => s.seq === last) + 1);
+  }
+
   /** Record the first time the bus comes within the arrival radius of each next stop. */
   async recordStopArrival(snap, at) {
-    const last = this.lastArrivedSeq.get(snap.tripId) ?? 0;
+    const ahead = this.stopsAhead(snap);
     let reached = null;
-    for (const s of this.stopsByRoute.get(snap.routeId) ?? []) {
-      if (s.seq > last && haversineMeters(s, snap) <= this.config.eta.stopArrivalRadiusM) reached = s;
+    for (const s of ahead) {
+      if (haversineMeters(s, snap) <= this.config.eta.stopArrivalRadiusM) reached = s;
     }
-    if (!reached) return;
+    if (!reached) {
+      this.underWay.add(snap.tripId);
+      return;
+    }
+    // Parked at the run's far end before setting off: nothing has been reached yet.
+    // A bus that has been seen elsewhere first really has arrived there.
+    const parked = !this.lastArrivedSeq.has(snap.tripId) && !this.underWay.has(snap.tripId) && ahead.length > 1 && reached === ahead.at(-1);
+    if (parked) return;
     this.lastArrivedSeq.set(snap.tripId, reached.seq);
     await this.db.query('INSERT INTO stop_arrivals (trip_id, stop_seq, arrived_at) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [
       snap.tripId,
@@ -330,9 +361,7 @@ export class TrackingService {
     const lastAt = this.lastPrediction.get(snap.busId) ?? 0;
     if (nowMs - lastAt < this.config.eta.predictionSampleS * 1000 || snap.freshness !== 'live') return;
     this.lastPrediction.set(snap.busId, nowMs);
-    const last = this.lastArrivedSeq.get(snap.tripId) ?? 0;
-    const ahead = (this.stopsByRoute.get(snap.routeId) ?? []).filter((s) => s.seq > last).slice(0, 3);
-    for (const s of ahead) {
+    for (const s of this.stopsAhead(snap).slice(0, 3)) {
       const eta = this.estimate(snap.routeId, snap, s.seq, nowMs);
       if (!eta || eta.passed) continue;
       await this.db.query(
@@ -464,7 +493,7 @@ export class TrackingService {
 
 const LIVE_SELECT = `
   SELECT bl.bus_id, bl.trip_id, bl.lat, bl.lng, bl.speed_kmh, bl.heading, bl.accuracy_m, bl.recorded_at, bl.source,
-         b.fleet_code, b.capacity, t.occupancy, r.id AS route_id, r.code AS route_code, r.name AS route_name,
+         b.fleet_code, b.capacity, t.occupancy, t.direction, r.id AS route_id, r.code AS route_code, r.name AS route_name,
          u.full_name AS driver_name
     FROM bus_latest bl
     JOIN trips t  ON t.id = bl.trip_id

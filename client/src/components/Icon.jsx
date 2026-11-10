@@ -20,7 +20,7 @@ const PATHS = {
   alert: 'M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01',
   signal: 'M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16',
   swap: 'M16 3l4 4-4 4M20 7H4M8 21l-4-4 4-4M4 17h16',
-  arrow: 'M5 12h14M13 6l6 6-6 6',
+  arrow: 'M9 5.5l6.5 6.5L9 18.5', // a thin chevron, as on the phone's own lists
   back: 'M19 12H5M11 18l-6-6 6-6',
   lock: 'M5 11h14v10H5zM8 11V7a4 4 0 018 0v4',
   mail: 'M3 5h18v14H3zM3 6l9 7 9-7',

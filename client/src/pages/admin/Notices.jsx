@@ -3,9 +3,10 @@ import { api } from '../../lib/api.js';
 import { dateTime } from '../../lib/format.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAction, useAsync } from '../../lib/useAsync.js';
-import { Badge, ErrorText, Field, FoldPanel, Notice, Page, Panel, Segmented, Table } from '../../components/ui.jsx';
+import Icon from '../../components/Icon.jsx';
+import { Badge, Empty, ErrorText, Field, ListCard, Notice, Page, Panel, Segmented } from '../../components/ui.jsx';
 
-const LATEST = 5;
+const LATEST = 3;
 const updatedAt = (i) => i.resolved_at ?? i.created_at;
 
 /** Announcements to all or one route, and the incident log (doc 4.1). */
@@ -50,16 +51,15 @@ export default function Notices() {
               <Field label="Message"><textarea value={f.message} onChange={set('message')} rows={3} required /></Field>
               <button className="btn primary" disabled={a.busy}>Send</button>
             </form>
-            <p className="fine-print">Network-wide notices are on the free notice board. Route alerts go to that route's subscribers.</p>
+            <p className="fine-print">Network-wide notices go on the public notice board. Route alerts go to that route's subscribers.</p>
             <Notice>{a.message}</Notice>
             <ErrorText>{a.error}</ErrorText>
           </Panel>
         </div>
         <div className="col wide">
-          <FoldPanel
+          <Panel
             icon="alert"
             title="Incidents"
-            initiallyOpen
             summary={sorted == null ? 'Loading…' : sorted.length === 0 ? 'Nothing here' : `Latest: ${sorted[0].kind.replaceAll('_', ' ').toLowerCase()} · ${dateTime(updatedAt(sorted[0]))}`}
             badge={sorted?.length ? <Badge tone={status === 'OPEN' ? 'danger' : 'offline'}>{sorted.length}</Badge> : null}
           >
@@ -67,23 +67,32 @@ export default function Notices() {
               <Segmented value={status} onChange={(v) => { setStatus(v); setShowAll(false); }} options={[{ value: 'OPEN', label: 'Open' }, { value: 'RESOLVED', label: 'Resolved' }, { value: '', label: 'All' }]} />
               <span className="muted">{sorted ? (showAll || sorted.length <= LATEST ? `${sorted.length} incident${sorted.length === 1 ? '' : 's'}` : `${LATEST} most recently updated of ${sorted.length}`) : ''}</span>
             </div>
-            <Table
-              rows={rows}
-              empty={status === 'OPEN' ? 'No open incidents.' : 'No incidents.'}
-              columns={[
-                { key: 'created_at', label: 'Updated', render: (i) => <>{dateTime(updatedAt(i))}{i.resolved_at && <small>reported {dateTime(i.created_at)}</small>}</> },
-                { key: 'kind', label: 'Kind', render: (i) => <><Badge tone={['SOS', 'EMERGENCY', 'BREAKDOWN', 'CAPACITY_BREACH'].includes(i.kind) ? 'danger' : 'delayed'}>{i.kind.replaceAll('_', ' ')}</Badge><small>{i.source}{i.username ? ` · ${i.username}` : ''}</small></> },
-                { key: 'where', label: 'Bus / route', render: (i) => i.fleet_code ?? (i.route_code ? `Route ${i.route_code}` : '—') },
-                { key: 'message', label: 'Detail', wrap: true, render: (i) => <>{i.message ?? '—'}{i.lat != null && <> · <a href={`https://www.openstreetmap.org/?mlat=${i.lat}&mlon=${i.lng}#map=16/${i.lat}/${i.lng}`} target="_blank" rel="noreferrer">map</a></>}</> },
-                { key: 'x', label: '', render: (i) => (i.status === 'OPEN' ? <button className="btn ghost inline incident-resolve" onClick={() => resolve(i)}>Resolve</button> : <small>{i.resolution}</small>) },
-              ]}
-            />
+            {rows == null ? <div className="skeleton-block short" /> : rows.length === 0 ? <Empty>{status === 'OPEN' ? 'No open incidents.' : 'No incidents.'}</Empty> : (
+              <div className="kit-list">
+                {rows.map((i) => {
+                  const urgent = ['SOS', 'EMERGENCY', 'BREAKDOWN', 'CAPACITY_BREACH'].includes(i.kind);
+                  return (
+                    <ListCard
+                      key={i.id}
+                      tone={i.status === 'OPEN' && urgent ? 'alert' : ''}
+                      lead={<span className="kit-row-icon" style={{ background: urgent ? 'color-mix(in srgb, var(--danger) 12%, transparent)' : 'color-mix(in srgb, var(--delayed) 12%, transparent)', color: urgent ? 'var(--danger)' : 'var(--delayed)' }}><Icon name="alert" size={18} /></span>}
+                      title={`${i.kind.replaceAll('_', ' ')} · ${i.fleet_code ?? (i.route_code ? `Route ${i.route_code}` : 'Network')}`}
+                      lines={[
+                        <span key="m" className="wrap">{i.message ?? 'No details given'}{i.lat != null && <> · <a href={`https://www.openstreetmap.org/?mlat=${i.lat}&mlon=${i.lng}#map=16/${i.lat}/${i.lng}`} target="_blank" rel="noreferrer">map</a></>}</span>,
+                        `${dateTime(updatedAt(i))} · ${i.source}${i.username ? ` · ${i.username}` : ''}`,
+                      ]}
+                      side={i.status === 'OPEN' ? <button className="btn ghost inline incident-resolve" onClick={() => resolve(i)}>Resolve</button> : <small className="muted">{i.resolution}</small>}
+                    />
+                  );
+                })}
+              </div>
+            )}
             {sorted && sorted.length > LATEST && (
               <button type="button" className="btn ghost inline" onClick={() => setShowAll((x) => !x)}>
                 {showAll ? `Show the ${LATEST} most recent` : `Show all ${sorted.length}`}
               </button>
             )}
-          </FoldPanel>
+          </Panel>
         </div>
       </div>
     </Page>

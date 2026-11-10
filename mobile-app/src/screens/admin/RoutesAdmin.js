@@ -49,7 +49,7 @@ function StopPin({ stop, onMoved }) {
       description="Long-press and drag to move"
       onDragEnd={(e) => onMoved({ lat: e.nativeEvent.coordinate.latitude, lng: e.nativeEvent.coordinate.longitude })}
     >
-      <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: C.navy, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: C.navyFill, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ color: '#fff', fontSize: 11, ...F[800] }}>{stop.seq}</Text>
       </View>
     </Marker>
@@ -57,7 +57,7 @@ function StopPin({ stop, onMoved }) {
 }
 
 const SqBtn = ({ icon, onPress, disabled, danger, label }) => (
-  <Pressable accessibilityRole="button" onPress={onPress} disabled={disabled} accessibilityLabel={label} hitSlop={4} style={{ width: 34, height: 34, borderRadius: 10, borderWidth: 1, borderColor: danger ? C.danger50 : C.line, backgroundColor: danger ? C.danger50 : '#fff', alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.35 : 1 }}>
+  <Pressable accessibilityRole="button" onPress={onPress} disabled={disabled} accessibilityLabel={label} hitSlop={4} style={{ width: 34, height: 34, borderRadius: 10, borderWidth: 1, borderColor: danger ? C.danger50 : C.line, backgroundColor: danger ? C.danger50 : C.paper, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.35 : 1 }}>
     <Icon name={icon} size={15} color={danger ? C.danger : C.navy} />
   </Pressable>
 );
@@ -114,7 +114,7 @@ export default function RoutesAdmin() {
         </MapBox>
         {adding && (
           <View style={{ position: 'absolute', top: 8, left: 8, right: 8, backgroundColor: C.gold, padding: 8, borderRadius: 10 }}>
-            <Text style={{ ...F[700], color: C.ink, textAlign: 'center' }}>Long-press the map where the new stop is</Text>
+            <Text style={{ ...F[700], color: C.onGold, textAlign: 'center' }}>Long-press the map where the new stop is</Text>
           </View>
         )}
       </View>
@@ -147,7 +147,7 @@ export default function RoutesAdmin() {
         {list.map((st, i) => (
           <View key={st.id} style={{ gap: 6, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.line2 }}>
             <Row>
-              <Text style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: C.navy, color: '#fff', textAlign: 'center', lineHeight: 26, ...F[800], fontSize: 12, overflow: 'hidden' }}>{st.seq}</Text>
+              <Text style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: C.navyFill, color: '#fff', textAlign: 'center', lineHeight: 26, ...F[800], fontSize: 12, overflow: 'hidden' }}>{st.seq}</Text>
               <TextInput
                 defaultValue={st.name}
                 accessibilityLabel={`Name of stop ${st.seq}`}

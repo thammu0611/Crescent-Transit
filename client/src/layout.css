@@ -18,6 +18,8 @@
 .app-page:not(.wide-app) { --page-max: 1120px; }
 .page > .page-head { margin-bottom: 20px; }
 .page > .panel, .page > .kit-stack > .panel { margin-bottom: 0; }
+/* Blocks placed directly on a page keep the same 20px rhythm as a stack. */
+.page > * + .panel, .page > * + .kit-stats, .page > * + .kit-block, .page > * + .kit-stack, .page > * + .segmented { margin-top: 20px; }
 
 /* ---- One vertical rhythm ------------------------------------------------------------ */
 .kit-stack { gap: 20px; }
@@ -114,13 +116,23 @@
 /* Contact lists: rows aligned with the card's padding, numbers as pills. */
 .contact-list li { padding: 11px 2px; align-items: center; }
 
-/* ---- Folding panels (FoldPanel) and the leave-home card ------------------------------------ */
-.kit-fold .fold-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px 18px; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: 24px; }
+/* ---- Panel headings with a summary, list cards and the leave-home card ---------------------- */
+.panel-title-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.panel-title-text small { font-size: 13px; font-weight: 400; color: var(--muted); }
+a.kit-row { text-decoration: none; }
+.kit-row-icon { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+.kit-row-main small .wrap { display: block; white-space: normal; }
+.kit-row.is-alert { box-shadow: var(--glass-shadow), inset 4px 0 0 var(--red-600, #a02022); }
+.panel.kit-view-card { display: flex; flex-direction: row; align-items: center; gap: 12px; width: 100%; padding: 16px 18px; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.panel.kit-view-card:hover { box-shadow: var(--glass-shadow-hover); }
+.kit-view-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kit-view-text b { font-size: 16px; font-weight: 600; color: var(--ink); }
+.kit-view-text small { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kit-detail-title { flex: 1; min-width: 0; }
+.kit-detail-head .search-box { margin: 0; min-width: 260px; }
+@media (max-width: 720px) { .kit-detail-head { flex-wrap: wrap; } .kit-detail-head .search-box { width: 100%; min-width: 0; } }
+.kit-detail-body > * { flex-shrink: 0; }
 .kit-fold-icon { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; color: var(--gold); background: var(--g-navy, #1c315e); }
-.kit-fold-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.kit-fold-text b { font-size: 16px; font-weight: 600; color: var(--ink); }
-.kit-fold-text small { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kit-fold .fold-body { display: flex; flex-direction: column; gap: 12px; }
 
 .leave-card { display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: 24px; text-align: left; font: inherit; color: inherit; width: 100%; cursor: pointer; border: 1px solid var(--glass-edge); background: var(--glass-gloss), var(--glass); box-shadow: var(--glass-shadow); }
 .leave-card:hover { box-shadow: var(--glass-shadow-hover); }
@@ -262,3 +274,30 @@
 /* In Settings the choice fills its section, with compact options so all four fit on one line. */
 .settings-section .segmented { display: flex; width: 100%; }
 .settings-section .segmented button { flex: 1 1 auto; padding: 9px 10px; font-size: 13px; }
+
+/* A day of attendance: its UP and DOWN runs, one under the other. */
+.kit-run { display: flex; flex-direction: column; gap: 8px; }
+.kit-run + .kit-run { padding-top: 10px; border-top: 1px solid var(--line); }
+.kit-run-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+/* "Another bus can take you": the buses on offer. */
+.alt-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; text-align: left; }
+.alt-list a { text-decoration: none; }
+
+/* A student's attendance: one line of filters, one short row per day. */
+.att-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.att-register { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.att-head, .att-row { display: grid; grid-template-columns: minmax(96px, 1fr) minmax(0, 1.3fr) minmax(0, 1.3fr) 16px; gap: 10px; align-items: center; padding: 9px 14px; }
+.att-head { font-size: 12px; font-weight: 600; color: var(--muted); }
+.att-head i { font-style: normal; }
+.att-row { width: 100%; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.att-row:hover { background: rgba(20, 37, 72, 0.04); }
+.att-row b { font-weight: 600; font-size: 14px; }
+.att-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.att-cell small { color: var(--muted); }
+.att-none { font-size: 13px; color: var(--muted); }
+.att-day-detail { display: flex; flex-direction: column; gap: 12px; }
+@media (max-width: 640px) {
+  .att-head i, .att-cell small { display: none; }
+  .att-head, .att-row { padding: 9px 10px; gap: 6px; }
+}

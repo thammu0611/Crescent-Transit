@@ -2,12 +2,14 @@
 // attendance, reports): simple charts drawn with views and SVG, an aligned
 // table, filter chips and a full-screen detail view. They sit on top of
 // ui.js and the theme, so they look like the rest of the app.
+import { useT } from '../lib/offline.js';
+import { useState } from 'react';
 import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
-import { C, F, R, shadow } from '../theme.js';
+import { C, F, G, R, shadow } from '../theme.js';
 import Icon from './Icon.js';
-import { Empty, Screen, Sheen, Skeleton, Text, Txt } from './ui.js';
+import { Empty, GlassBackdrop, IconBubble, PillIconButton, Screen, Sheen, Skeleton, Text, Txt } from './ui.js';
 
 /** Series colours: navy, gold, emerald, crimson, slate, sky - readable on white. */
 export const SERIES = [C.navy, C.gold, C.emerald, C.red, C.slate, '#6ec1e4'];
@@ -133,7 +135,7 @@ export function Table({ columns, rows, keyOf = (r, i) => r.id ?? i, onRowPress, 
         ))}
       </View>
       {rows.map((row, i) => {
-        const rowStyle = { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingHorizontal: 6, backgroundColor: i % 2 ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.55)', borderTopWidth: 1, borderTopColor: C.line2 };
+        const rowStyle = { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingHorizontal: 6, backgroundColor: C.dark ? (i % 2 ? 'rgba(255,255,255,0.035)' : 'transparent') : i % 2 ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.55)', borderTopWidth: 1, borderTopColor: C.line2 };
         const Wrap = onRowPress ? Pressable : View;
         return (
           <Wrap
@@ -159,10 +161,12 @@ export function Table({ columns, rows, keyOf = (r, i) => r.id ?? i, onRowPress, 
   return minWidth ? <ScrollView horizontal showsHorizontalScrollIndicator={false}>{body}</ScrollView> : body;
 }
 
-/** Small pill filters that scroll sideways. */
-export function Chips({ value, onChange, options }) {
+/** Pill filters that wrap onto the next line, as on the website: every option stays in view. */
+export function Chips({ value, onChange, options: list }) {
+  const t = useT();
+  const options = list.map((o) => ({ ...o, label: t(o.label) }));
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingVertical: 2 }}>
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -171,9 +175,9 @@ export function Chips({ value, onChange, options }) {
             onPress={() => onChange(o.value)}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: R.pill, borderWidth: 1, borderColor: on ? C.navy : C.line, backgroundColor: on ? C.navy : '#fff' }}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: R.pill, borderWidth: 1, borderColor: on ? (C.dark ? 'rgba(198,211,242,0.55)' : C.navyFill) : C.line, backgroundColor: on ? C.navyFill : C.dark ? 'transparent' : C.paper, opacity: pressed ? 0.8 : 1 })}
           >
-            <Text style={{ fontSize: 13, ...F[600], color: on ? '#fff' : C.ink }}>{o.label}</Text>
+            <Text style={{ fontSize: 14, ...F[700], color: on ? '#fff' : C.ink }}>{o.label}</Text>
             {o.count != null ? (
               <View style={{ minWidth: 20, paddingHorizontal: 5, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.2)' : C.navy50 }}>
                 <Text style={{ fontSize: 11, ...F[700], color: on ? '#fff' : C.navy }}>{o.count}</Text>
@@ -182,7 +186,7 @@ export function Chips({ value, onChange, options }) {
           </Pressable>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -191,23 +195,54 @@ export function DetailModal({ title, subtitle, onClose, children, refreshing, on
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'left', 'right']}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingVertical: 12, backgroundColor: C.glassStrong, borderBottomWidth: 1, borderBottomColor: C.glassEdge }}>
-          <Pressable accessibilityRole="button" onPress={onClose} hitSlop={10} accessibilityLabel="Back" style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: C.navy50, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="back" size={18} color={C.navy} />
-          </Pressable>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 17, ...F[700], color: C.ink }} numberOfLines={1}>{title}</Text>
+        {/* One backdrop behind the title and the page, so they meet without a strip or line. */}
+        <GlassBackdrop />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6 }}>
+          <PillIconButton icon="back" label="Back" onPress={onClose} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={{ fontSize: 24, lineHeight: 30, ...F.navTitle, color: C.dark ? C.ink : C.navy }} numberOfLines={1} accessibilityRole="header">{title}</Text>
             {subtitle ? <Txt small muted numberOfLines={1}>{subtitle}</Txt> : null}
           </View>
         </View>
-        <Screen refreshing={refreshing} onRefresh={onRefresh}>{children}</Screen>
+        <Screen transparent refreshing={refreshing} onRefresh={onRefresh}>{children}</Screen>
       </SafeAreaView>
     </Modal>
   );
 }
 
+/**
+ * A compact card for one section of a screen: icon, title and a one-line summary.
+ * Its contents open in their own full view. `children` may be a function of `close`,
+ * for buttons that leave the screen.
+ */
+export function ViewCard({ title: name, icon, summary, badge, children }) {
+  const title = useT()(name);
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+  return (
+    <>
+      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={title} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: R.lg, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassEdge, overflow: 'hidden', ...shadow }, pressed && { opacity: 0.85 }]}>
+        <Sheen />
+        {icon ? <IconBubble name={icon} colors={G.navy} size={36} iconSize={18} /> : null}
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Txt bold numberOfLines={1}>{title}</Txt>
+          {summary ? <Txt muted small numberOfLines={1}>{summary}</Txt> : null}
+        </View>
+        {badge}
+        <Icon name="arrow" size={16} color={C.faint} />
+      </Pressable>
+      {open ? (
+        <DetailModal title={title} subtitle={summary} onClose={close}>
+          <View style={{ gap: 12 }}>{typeof children === 'function' ? children(close) : children}</View>
+        </DetailModal>
+      ) : null}
+    </>
+  );
+}
+
 /** A white card with a small heading, for chart and list blocks. */
-export function Block({ title, caption, right, children, style }) {
+export function Block({ title: name, caption, right, children, style }) {
+  const title = useT()(name);
   return (
     <View style={[{ backgroundColor: C.glass, borderRadius: R.lg, padding: 18, gap: 14, borderWidth: 1, borderColor: C.glassEdge, overflow: 'hidden', ...shadow }, style]}>
       <Sheen />
@@ -226,7 +261,8 @@ export function Block({ title, caption, right, children, style }) {
 }
 
 /** A compact key figure inside a header or block: value over label. */
-export function Figure({ value, label, light, align = 'flex-start' }) {
+export function Figure({ value, label: name, light, align = 'flex-start' }) {
+  const label = useT()(name);
   return (
     <View style={{ alignItems: align, flex: 1 }}>
       <Text style={{ fontSize: 22, ...F.display, color: light ? '#fff' : C.ink, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit>{value ?? '—'}</Text>

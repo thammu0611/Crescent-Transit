@@ -2,7 +2,9 @@
 // trip scheduling, announcements, incidents, students and attendance review.
 // Every route here is behind requireRole('admin') (see app.js).
 import express from 'express';
-import { HttpError, hashPassword } from '../auth.js';
+import { DIRECTIONS } from '../../shared/direction.js';
+import { passwordProblem } from '../../shared/password.js';
+import { HttpError, hashPassword, refusePassword } from '../auth.js';
 import { localDate } from '../clock.js';
 import { PRESENT_SQL } from '../attendance.js';
 import { audit, intParam } from '../util.js';
@@ -146,11 +148,12 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
     const username = str(b.username, 30)?.toLowerCase();
     if (!username || !/^[a-z0-9._-]{3,30}$/.test(username)) throw new HttpError(400, 'username: 3-30 letters or digits');
     if (!str(b.fullName)) throw new HttpError(400, 'fullName is required');
+    refusePassword(b.password, { username: b.username });
     if (typeof b.password !== 'string' || b.password.length < 8) throw new HttpError(400, 'password must be at least 8 characters');
     const busId = b.fleetCode ? await assignBus(null, b.fleetCode) : null;
     try {
       const { rows } = await db.query(
-        `INSERT INTO users (username, password_hash, full_name, role, phone, bus_id) VALUES ($1, $2, $3, 'driver', $4, $5)
+        `INSERT INTO users (username, password_hash, full_name, role, phone, bus_id, must_change_password) VALUES ($1, $2, $3, 'driver', $4, $5, TRUE)
          RETURNING id, username, full_name`,
         [username, await hashPassword(b.password), str(b.fullName, 100), str(b.phone, 20) ?? null, busId],
       );
@@ -169,7 +172,9 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
       phone: str(b.phone, 20),
       status: b.status === undefined ? undefined : ['active', 'suspended'].includes(b.status) ? b.status : (() => { throw new HttpError(400, 'status must be active or suspended'); })(),
       bus_id: b.fleetCode === undefined ? undefined : await assignBus(id, b.fleetCode),
-      password_hash: b.password === undefined ? undefined : b.password.length >= 8 ? await hashPassword(b.password) : (() => { throw new HttpError(400, 'password must be at least 8 characters'); })(),
+      password_hash: b.password === undefined ? undefined : !passwordProblem(b.password, { username: b.username }) ? await hashPassword(b.password) : (() => { throw new HttpError(400, 'password must be at least 8 characters'); })(),
+      // A password set by the administrator is temporary: the driver picks their own at next sign-in.
+      must_change_password: b.password === undefined ? undefined : true,
     };
     const { sql, values } = setClause(fields);
     const { rows } = await db.query(`UPDATE users SET ${sql} WHERE id = $1 AND role = 'driver' RETURNING id, username`, [id, ...values]);
@@ -359,7 +364,7 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
     const { status, route, date } = req.query;
     const driver = req.query.driver ? intParam(req.query.driver, 'driver') : null;
     const { rows } = await db.query(
-      `SELECT t.id, t.status, t.started_at, t.ended_at, t.scheduled_for, t.flagged, t.flag_reason, t.occupancy, t.started_by,
+      `SELECT t.id, t.status, t.direction, t.started_at, t.ended_at, t.scheduled_for, t.flagged, t.flag_reason, t.occupancy, t.started_by,
               r.code AS route_code, r.name AS route_name, b.fleet_code, u.full_name AS driver_name, t.driver_id,
               (SELECT count(*)::int FROM location_pings p WHERE p.trip_id = t.id) AS fixes,
               (SELECT count(*)::int FROM attendance a WHERE a.trip_id = t.id) AS attendance
@@ -382,13 +387,15 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
     if (!busId) throw new HttpError(400, 'fleetCode is required');
     const when = new Date(req.body?.scheduledFor);
     if (Number.isNaN(when.getTime())) throw new HttpError(400, 'scheduledFor must be a date-time');
+    const direction = req.body?.direction ?? tracking.defaultDirection(when);
+    if (!DIRECTIONS.includes(direction)) throw new HttpError(400, "direction must be 'UP' or 'DOWN'");
     const { rows } = await db.query(
-      `INSERT INTO trips (bus_id, route_id, driver_id, status, scheduled_for, started_at)
-       SELECT b.id, b.route_id, u.id, 'scheduled', $2, $2
+      `INSERT INTO trips (bus_id, route_id, driver_id, status, scheduled_for, started_at, direction)
+       SELECT b.id, b.route_id, u.id, 'scheduled', $2, $2, $3
          FROM buses b JOIN users u ON u.bus_id = b.id AND u.role = 'driver'
         WHERE b.id = $1 AND b.route_id IS NOT NULL
        RETURNING id`,
-      [busId, when],
+      [busId, when, direction],
     );
     if (!rows[0]) throw new HttpError(409, 'The bus needs a route and a driver before a trip can be scheduled');
     await audit(db, { actorId: req.auth.userId, action: 'TRIP_SCHEDULED', entity: 'trip', entityId: rows[0].id });
@@ -471,7 +478,7 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
          LEFT JOIN routes r ON r.id = u.home_route_id
          LEFT JOIN stops s ON s.route_id = u.home_route_id AND s.seq = u.home_stop_seq
          LEFT JOIN devices d ON d.user_id = u.id
-        WHERE u.role = 'student' AND ($3::text IS NULL OR u.username ILIKE '%' || $3 || '%' OR u.full_name ILIKE '%' || $3 || '%'
+        WHERE u.role = 'student' AND u.status <> 'deleted' AND ($3::text IS NULL OR u.username ILIKE '%' || $3 || '%' OR u.full_name ILIKE '%' || $3 || '%'
                                        OR u.register_no ILIKE '%' || $3 || '%')
           AND ($4::text IS NULL OR r.code = $4)
         ORDER BY ${req.query.route ? 'u.home_stop_seq NULLS LAST, u.full_name' : 'u.username'} LIMIT 500`,
@@ -481,10 +488,12 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
   });
 
   /**
-   * One student's attendance, day by day. A day counts when the student's own
-   * route ran a trip, or when the student was recorded on any bus: Present
-   * (a present record), Pending (only provisional or disputed records) or
-   * Absent (the route ran and nothing was recorded).
+   * One student's attendance, day by day. Each day has two runs, UP and DOWN,
+   * marked on their own. A run counts when the student's route ran it, or when
+   * the student was recorded on it: Present (a present record), Pending (only
+   * provisional or disputed records) or Absent (it ran and nothing was recorded).
+   * The day reads Present when every run that counted is present, Partial when
+   * only some are. The attendance percentage counts runs, not days.
    */
   r.get('/students/:id/attendance', async (req, res) => {
     const id = intParam(req.params.id, 'id');
@@ -501,7 +510,7 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
     if (!st) throw new HttpError(404, 'Student not found');
     const [records, routeDays] = await Promise.all([
       db.query(
-        `SELECT a.attendance_id, a.trip_id, a.status, a.method, a.flagged, a.flag_reason, a.auto_confirmed,
+        `SELECT a.attendance_id, a.trip_id, t.direction, a.status, a.method, a.flagged, a.flag_reason, a.auto_confirmed,
                 ${PRESENT_SQL} AS present,
                 to_char(coalesce(a.boarded_at, t.started_at) AT TIME ZONE $2, 'YYYY-MM-DD') AS date,
                 a.boarded_at, a.alighted_at, bs.name AS boarding_stop, als.name AS alighting_stop,
@@ -517,26 +526,54 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
         [id, tz, from, to],
       ),
       st.home_route_id ? db.query(
-        `SELECT to_char(t.started_at AT TIME ZONE $2, 'YYYY-MM-DD') AS date, count(*)::int AS trips
+        `SELECT to_char(t.started_at AT TIME ZONE $2, 'YYYY-MM-DD') AS date, t.direction, count(*)::int AS trips
            FROM trips t
           WHERE t.route_id = $1 AND t.status IN ('active', 'completed')
             AND (t.started_at AT TIME ZONE $2)::date BETWEEN $3 AND $4
-          GROUP BY 1`,
+          GROUP BY 1, 2`,
         [st.home_route_id, tz, from, to],
       ) : { rows: [] },
     ]);
-    const days = new Map(routeDays.rows.map((d) => [d.date, { date: d.date, routeTrips: d.trips, records: [] }]));
-    for (const rec of records.rows) {
-      if (!days.has(rec.date)) days.set(rec.date, { date: rec.date, routeTrips: 0, records: [] });
-      days.get(rec.date).records.push(rec);
+    const days = new Map();
+    const dayOf = (date) => {
+      if (!days.has(date)) days.set(date, { date, routeTrips: 0, records: [], up: { routeTrips: 0, records: [] }, down: { routeTrips: 0, records: [] } });
+      return days.get(date);
+    };
+    const runOf = (day, direction) => (direction === 'DOWN' ? day.down : day.up);
+    for (const r of routeDays.rows) {
+      const day = dayOf(r.date);
+      day.routeTrips += r.trips;
+      runOf(day, r.direction).routeTrips = r.trips;
     }
-    const list = [...days.values()].sort((a, b) => b.date.localeCompare(a.date)).map((d) => ({
-      ...d,
-      status: d.records.some((x) => x.present) ? 'PRESENT'
-        : d.records.some((x) => ['PROVISIONAL', 'DISPUTED', 'PROMPTED'].includes(x.status)) ? 'PENDING' : 'ABSENT',
-    }));
+    for (const rec of records.rows) {
+      const day = dayOf(rec.date);
+      day.records.push(rec);
+      runOf(day, rec.direction).records.push(rec);
+    }
+    const runStatus = (run) => {
+      if (!run.routeTrips && !run.records.length) return null; // no such run that day
+      if (run.records.some((x) => x.present)) return 'PRESENT';
+      return run.records.some((x) => ['PROVISIONAL', 'DISPUTED', 'PROMPTED'].includes(x.status)) ? 'PENDING' : 'ABSENT';
+    };
+    const dayStatus = (statuses) => {
+      if (statuses.every((x) => x === 'PRESENT')) return 'PRESENT';
+      if (statuses.includes('PRESENT')) return 'PARTIAL';
+      return statuses.includes('PENDING') ? 'PENDING' : 'ABSENT';
+    };
+    const list = [...days.values()].sort((a, b) => b.date.localeCompare(a.date)).map((d) => {
+      const up = { ...d.up, status: runStatus(d.up) };
+      const down = { ...d.down, status: runStatus(d.down) };
+      return { ...d, up, down, status: dayStatus([up.status, down.status].filter(Boolean)) };
+    });
     const count = (k) => list.filter((d) => d.status === k).length;
-    const decided = count('PRESENT') + count('ABSENT');
+    const runs = (side) => {
+      const n = (k) => list.filter((d) => d[side].status === k).length;
+      return { present: n('PRESENT'), absent: n('ABSENT'), pending: n('PENDING') };
+    };
+    const up = runs('up');
+    const down = runs('down');
+    const present = up.present + down.present;
+    const decided = present + up.absent + down.absent;
     res.json({
       student: st,
       from,
@@ -544,10 +581,13 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
       summary: {
         days: list.length,
         present: count('PRESENT'),
+        partial: count('PARTIAL'),
         absent: count('ABSENT'),
         pending: count('PENDING'),
+        up,
+        down,
         trips: records.rows.filter((x) => x.present).length,
-        attendancePct: decided ? Math.round((count('PRESENT') / decided) * 100) : null,
+        attendancePct: decided ? Math.round((present / decided) * 100) : null,
         lastBoardedAt: records.rows.find((x) => x.present)?.boarded_at ?? null,
       },
       days: list,

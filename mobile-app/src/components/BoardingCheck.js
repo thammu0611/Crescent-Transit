@@ -4,6 +4,7 @@ import { api, getSocket } from '../lib/api.js';
 import { ATTENDANCE_CHANGED, emit } from '../lib/events.js';
 import { time } from '../lib/format.js';
 import { cancelReminder, cancelReminders, pushRegistered, scheduleRepeatingReminder, showNotification } from '../lib/notify.js';
+import { DIRECTION_TEXT } from '../lib/rules.js';
 import { useSession } from '../lib/session.js';
 import { C, F, R } from '../theme.js';
 import Icon from './Icon.js';
@@ -120,9 +121,9 @@ export default function BoardingCheck() {
           <Icon name="bus" size={28} color={C.red600} />
         </View>
         {check.reminders > 0 ? <View style={{ alignSelf: 'center' }}><Badge tone="delayed">{`Reminder ${check.reminders}`}</Badge></View> : null}
-        <Text style={{ fontSize: 22, ...F.display, color: C.ink, textAlign: 'center' }}>Did you board {busName(check.fleetCode)}?</Text>
+        <Text style={{ fontSize: 22, ...F.display, color: C.ink, textAlign: 'center' }}>Did you board {busName(check.fleetCode)}{check.direction === 'DOWN' ? ' at college' : ''}?</Text>
         <Txt muted style={{ textAlign: 'center' }}>
-          Route {check.routeCode} · {check.routeName}{'\n'}The bus left {check.stopName ?? 'your stop'} at {time(check.departedAt)}{check.tripRunning ? '' : ' · trip finished'}
+          {DIRECTION_TEXT[check.direction]}{'\n'}Route {check.routeCode} · {check.routeName}{'\n'}The bus left {check.stopName ?? 'your stop'} at {time(check.departedAt)}{check.tripRunning ? '' : ' · trip finished'}
         </Txt>
         <ErrorText>{error}</ErrorText>
         <View style={{ flexDirection: 'row', gap: 12 }}>

@@ -15,7 +15,7 @@ import { estimateArrival } from '../../../shared/eta.js';
 const CAMPUS = { lat: 12.8737, lng: 80.0823 };
 const STATE_LABEL = { live: 'Live', delayed: 'Delayed', offline: 'Offline' };
 
-const campusIcon = L.divIcon({ className: '', html: '<div class="campus-marker">BSACIST</div>', iconSize: [76, 26], iconAnchor: [38, 13] });
+const campusIcon = L.divIcon({ className: '', html: '<div class="campus-pin"><i></i><b>BSACIST</b></div>', iconSize: [84, 38], iconAnchor: [42, 6] });
 
 /** Moves the map when the user picks a route or a bus. */
 function MapFocus({ route, focusBus }) {
@@ -36,7 +36,6 @@ function Paywall({ reason }) {
       <h2>Live tracking is for subscribers</h2>
       <p className="muted">
         {reason === 'LOGIN_REQUIRED' ? 'Sign in to see live buses.' : 'Live bus positions, arrival estimates and alerts come with the ₹60 monthly subscription.'}
-        {' '}The route list, stops and timetable stay free.
       </p>
       <a className="btn primary inline" href={reason === 'LOGIN_REQUIRED' ? '#/login' : '#/pay'}>{reason === 'LOGIN_REQUIRED' ? 'Sign in' : 'Subscribe for ₹60'}</a>
     </div>
@@ -46,8 +45,23 @@ function Paywall({ reason }) {
 export default function LiveMap() {
   const { token, user } = useSession();
   const [routes, setRoutes] = useState([]);
-  const [routeCode, setRouteCode] = useState(user?.role === 'student' ? user.homeRouteCode ?? '' : '');
-  const [stopSeq, setStopSeq] = useState(user?.role === 'student' ? user.homeStopSeq ?? null : null);
+  // "Another bus can take you" opens the map on that bus's route.
+  const [asked] = useState(() => {
+    try {
+      return sessionStorage.getItem('ubts.mapRoute');
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem('ubts.mapRoute');
+    } catch {
+      // Nothing was stored.
+    }
+  }, []);
+  const [routeCode, setRouteCode] = useState(asked ?? (user?.role === 'student' ? user.homeRouteCode ?? '' : ''));
+  const [stopSeq, setStopSeq] = useState(!asked && user?.role === 'student' ? user.homeStopSeq ?? null : null);
   const [route, setRoute] = useState(null);
   const [buses, setBuses] = useState({}); // busId -> snapshot
   const [selectedBusId, setSelectedBusId] = useState(null);
@@ -168,7 +182,7 @@ export default function LiveMap() {
           {list.length === 0 && !denied && (
             <li className="empty">
               No bus on this {routeCode ? 'route' : 'network'} is on a trip right now.
-              <small>A driver starts a trip from the driver app, or run <code>npm run simulate</code>.</small>
+              <small>Buses appear here as soon as the driver starts the trip.</small>
             </li>
           )}
           {list.map((b) => (

@@ -4,11 +4,17 @@ import BaseTiles from '../components/BaseTiles.jsx';
 import QRCode from 'qrcode';
 import { api, ApiError } from '../lib/api.js';
 import { OCCUPANCY, time } from '../lib/format.js';
+import { useServerInfo } from '../lib/serverInfo.js';
 import { useSession } from '../lib/session.jsx';
 import Icon from '../components/Icon.jsx';
-import { Badge, ErrorText, FoldPanel, Modal, Notice, Panel } from '../components/ui.jsx';
+import { Badge, ErrorText, Modal, Notice, SearchBox } from '../components/ui.jsx';
+import { ViewCard } from '../components/adminkit.jsx';
+import { FoundItem, FuelEntry, PassScanner, PreTripCheck } from '../components/DriverTools.jsx';
+import DayBanner from '../components/DayBanner.jsx';
+import { useT } from '../lib/i18n.js';
 import { PathWalker } from '../../../shared/geo.js';
 import { projectOnRoute } from '../../../shared/eta.js';
+import { DIRECTIONS, DIRECTION_PATH, DIRECTION_TEXT, travelOrder } from '../../../shared/direction.js';
 import { useNow } from '../lib/useNow.js';
 
 const MAX_BUFFER = 200;
@@ -32,6 +38,7 @@ function Follow({ position }) {
 
 /** Breakdown, delay, emergency and SOS as large tiles (doc B.7 "Problem" state). */
 function ProblemTiles({ token, disabled }) {
+  const t = useT();
   const [kind, setKind] = useState(null);
   const [message, setMessage] = useState('');
   const [done, setDone] = useState(null);
@@ -56,9 +63,9 @@ function ProblemTiles({ token, disabled }) {
   };
   return (
     <div className="panel">
-      <h3><Icon name="alert" size={17} className="panel-icon" />Report a problem</h3>
+      <h3><Icon name="alert" size={17} className="panel-icon" />{t('Report a problem')}</h3>
       <div className="tiles">
-        {[['BREAKDOWN', 'Breakdown'], ['DELAY', 'Delay'], ['EMERGENCY', 'Emergency'], ['SOS', 'SOS']].map(([k, label]) => (
+        {[['BREAKDOWN', t('Breakdown')], ['DELAY', t('Delay')], ['EMERGENCY', t('Emergency')], ['SOS', 'SOS']].map(([k, label]) => (
           <button key={k} className={`tile ${k === 'SOS' ? 'sos' : ''}`} disabled={disabled && k !== 'SOS'} onClick={() => { setKind(k); setDone(null); }}>{label}</button>
         ))}
       </div>
@@ -67,10 +74,10 @@ function ProblemTiles({ token, disabled }) {
         <Modal title={`Report ${kind.toLowerCase()}`} onClose={() => setKind(null)}>
           <label className="field">
             <span>What happened? (optional)</span>
-            <input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="e.g. Flat tyre near Guindy" />
+            <input value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t('e.g. Flat tyre near Guindy')} />
           </label>
           <ErrorText>{error}</ErrorText>
-          <button className={`btn ${kind === 'SOS' || kind === 'EMERGENCY' ? 'danger' : 'primary'}`} onClick={send}>Send now</button>
+          <button className={`btn ${kind === 'SOS' || kind === 'EMERGENCY' ? 'danger' : 'primary'}`} onClick={send}>{t('Send now')}</button>
         </Modal>
       )}
     </div>
@@ -79,6 +86,7 @@ function ProblemTiles({ token, disabled }) {
 
 /** The rotating in-bus code (QR and six digits) for students without GPS (doc 9.7). */
 function BoardingCode({ token }) {
+  const t = useT();
   const [code, setCode] = useState(null);
   const [qr, setQr] = useState(null);
   useEffect(() => {
@@ -101,9 +109,9 @@ function BoardingCode({ token }) {
     <div className="boarding-code">
       {qr && <img src={qr} alt={`Boarding QR code, code ${code.code}`} width={150} height={150} />}
       <div>
-        <span className="muted">Students without GPS scan this, or type</span>
+        <span className="muted">{t('Students without GPS scan this, or type')}</span>
         <b className="tabular big-code">{code.code}</b>
-        <span className="muted">Changes every minute</span>
+        <span className="muted">{t('Changes every minute')}</span>
       </div>
     </div>
   );
@@ -111,6 +119,7 @@ function BoardingCode({ token }) {
 
 /** Students recorded on board, and marking one by hand (doc 4.2). */
 function BoardedList({ token, tripId }) {
+  const t = useT();
   const [data, setData] = useState(null);
   const [username, setUsername] = useState('');
   const [error, setError] = useState(null);
@@ -133,14 +142,13 @@ function BoardedList({ token, tripId }) {
   };
   const onBoard = data?.records.filter((r) => ['CONFIRMED', 'ON_BOARD', 'PROVISIONAL'].includes(r.status) && !r.alighted_at) ?? [];
   return (
-    // Folded until opened, like "Students on this bus"; the seat count stays visible.
-    <FoldPanel
+    <ViewCard
       icon="check"
       title="On board"
-      summary={!data ? 'Loading…' : onBoard.length ? `${onBoard.length} student${onBoard.length === 1 ? '' : 's'} on board · mark one by hand` : 'Nobody recorded yet · mark one by hand'}
+      summary={!data ? t('Loading…') : onBoard.length ? `${onBoard.length} student${onBoard.length === 1 ? '' : 's'} on board · mark one by hand` : 'Nobody recorded yet · mark one by hand'}
       badge={<Badge tone={data && data.capacity && data.onBoard > data.capacity ? 'danger' : 'live'}>{data?.onBoard ?? 0} / {data?.capacity ?? '—'} seats</Badge>}
     >
-      {onBoard.length === 0 ? <p className="muted">Nobody recorded yet.</p> : (
+      {onBoard.length === 0 ? <p className="muted">{t('Nobody recorded yet.')}</p> : (
         <ul className="boarded">
           {onBoard.map((r) => (
             <li key={r.attendance_id}>
@@ -151,11 +159,11 @@ function BoardedList({ token, tripId }) {
         </ul>
       )}
       <form className="inline-form" onSubmit={mark}>
-        <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username (no phone or GPS)" aria-label="Student username" required />
-        <button className="btn ghost">Mark on board</button>
+        <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username (no phone or GPS)" aria-label={t('Student username')} required />
+        <button className="btn ghost">{t('Mark on board')}</button>
       </form>
       <ErrorText>{error}</ErrorText>
-    </FoldPanel>
+    </ViewCard>
   );
 }
 
@@ -163,28 +171,33 @@ const ONBOARD = ['CONFIRMED', 'ON_BOARD', 'PROVISIONAL'];
 
 /** Every student whose home route is this bus's route, by stop, with details and today's boarding. */
 function StudentList({ token, tripId }) {
+  const t = useT();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [query, setQuery] = useState('');
   const load = useCallback(() => api('/api/driver/students', { token }).then(setData).catch((e) => setError(e.message)), [token]);
   useEffect(() => { load(); const id = setInterval(load, 20000); return () => clearInterval(id); }, [load, tripId]);
   const mark = (st) => api('/api/attendance/manual', { token, body: { tripId, username: st.username } }).then(load).catch((e) => setError(e.message));
   const students = data?.students ?? [];
   const boarded = students.filter((s) => s.attendance && ONBOARD.includes(s.attendance.status) && !s.attendance.alightedAt).length;
   const groups = [];
-  for (const st of students) {
+  const needle = query.trim().toLowerCase();
+  const shown = students.filter((st) => !needle || [st.fullName, st.registerNo, st.username, st.department, st.stopName].some((v) => v && String(v).toLowerCase().includes(needle)));
+  for (const st of shown) {
     const key = st.stopSeq ?? 'none';
     let g = groups.find((x) => x.key === key);
-    if (!g) groups.push((g = { key, name: st.stopName ?? 'No stop chosen', time: st.stopTime, rows: [] }));
+    if (!g) groups.push((g = { key, name: st.stopName ?? t('No stop chosen'), time: st.stopTime, rows: [] }));
     g.rows.push(st);
   }
   return (
-    <FoldPanel
+    <ViewCard
       icon="users"
       title="Students on this bus"
-      summary={!data ? 'Loading…' : !students.length ? 'No students on this route yet' : `${students.length} students · ${groups.length} stop${groups.length === 1 ? '' : 's'}`}
+      summary={!data ? t('Loading…') : !students.length ? t('No students on this route yet') : `${students.length} students · ${groups.length} stop${groups.length === 1 ? '' : 's'}`}
       badge={<Badge tone={tripId && boarded ? 'live' : 'info'}>{tripId ? `${boarded}/${students.length} boarded` : `${students.length}`}</Badge>}
+      actions={students.length > 6 ? <SearchBox value={query} onChange={setQuery} placeholder={t('Search name, register no or stop')} /> : null}
     >
-      {data && !students.length && <p className="muted">No students have this route as their home route yet.</p>}
+      {data && !students.length && <p className="muted">{t('No students have this route as their home route yet.')}</p>}
       {groups.map((g) => (
         <div key={g.key} className="driver-stop">
           <div className="driver-stop-head"><Icon name="pin" size={13} /><b>{g.name}</b><small>{g.time ?? ''}</small></div>
@@ -198,8 +211,8 @@ function StudentList({ token, tripId }) {
                     <b>{st.fullName}</b>
                     <small>{[st.registerNo ?? st.username, st.department].filter(Boolean).join(' · ')}{st.phone ? <> · <a href={`tel:${st.phone}`}>{st.phone}</a></> : null}</small>
                   </span>
-                  <Badge tone={st.passActive ? 'live' : 'danger'}>{st.passActive ? 'Pass' : 'No pass'}</Badge>
-                  {on ? <Badge tone="live">On board</Badge> : tripId ? <button type="button" className="btn ghost inline driver-mark" onClick={() => mark(st)}>Mark</button> : null}
+                  <Badge tone={st.passActive ? 'live' : 'danger'}>{st.passActive ? t('Pass') : t('No pass')}</Badge>
+                  {on ? <Badge tone="live">On board</Badge> : tripId ? <button type="button" className="btn ghost inline driver-mark" onClick={() => mark(st)}>{t('Mark')}</button> : null}
                 </li>
               );
             })}
@@ -207,12 +220,14 @@ function StudentList({ token, tripId }) {
         </div>
       ))}
       <ErrorText>{error}</ErrorText>
-    </FoldPanel>
+    </ViewCard>
   );
 }
 
 export default function DriverApp() {
   const { token, user, signOut } = useSession();
+  // The simulated bus, the bad-fix buttons and the transmission log are demo tools.
+  const demo = Boolean(useServerInfo()?.demoMode);
   const now = useNow(15000);
   const [route, setRoute] = useState(null);
   const [trip, setTrip] = useState(null);
@@ -239,7 +254,12 @@ export default function DriverApp() {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip, trackerTripId, token]);
+  const t = useT();
   const [intervalS, setIntervalS] = useState(10);
+  // The run the next trip will be: the driver's choice, else what the time of day suggests.
+  const [suggested, setSuggested] = useState(null);
+  const [picked, setPicked] = useState(null);
+  const direction = picked ?? suggested ?? 'UP';
   const [position, setPosition] = useState(null);
   const [gpsError, setGpsError] = useState(null);
   const [log, setLog] = useState([]);
@@ -267,21 +287,34 @@ export default function DriverApp() {
   // Load the driver's route and any trip that is still running.
   useEffect(() => {
     if (!token || !user?.routeCode) return;
-    api(`/api/routes/${encodeURIComponent(user.routeCode)}`).then((r) => {
-      setRoute(r);
-      walkerRef.current = new PathWalker(r.stops.map((s) => ({ lat: s.lat, lng: s.lng })));
-    });
+    api(`/api/routes/${encodeURIComponent(user.routeCode)}`).then(setRoute);
     api('/api/driver/trip', { token })
-      .then(({ trip: t }) => { setTrip(t); setOccupancy(t?.occupancy ?? null); })
+      .then(({ trip: t, suggestedDirection }) => { setTrip(t); setOccupancy(t?.occupancy ?? null); setSuggested(suggestedDirection); })
       .catch((err) => (err instanceof ApiError && err.status === 401 ? logout() : setError(err.message)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user?.routeCode]);
+
+  // A trip can end without this phone: at the geofence, or by the transport office.
+  useEffect(() => {
+    if (!trip) return undefined;
+    const id = setInterval(() => {
+      api('/api/driver/trip', { token }).then(({ trip: t }) => { if (!t) setTrip(null); }).catch(() => {});
+    }, 30000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.id, token]);
+
+  // The simulated bus walks the stops in the order this run reaches them.
+  useEffect(() => {
+    if (route) walkerRef.current = new PathWalker(travelOrder(route.stops, trip?.direction).map((s) => ({ lat: s.lat, lng: s.lng })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route, trip?.direction]);
 
   // Phone GPS: keep the most recent fix; the send loop picks it up.
   useEffect(() => {
     if (!trip || source !== 'gps') return;
     if (!('geolocation' in navigator)) {
-      setGpsError('This browser has no GPS access.');
+      setGpsError(t('This browser has no GPS access.'));
       return;
     }
     setGpsError(null);
@@ -302,6 +335,25 @@ export default function DriverApp() {
     );
     return () => navigator.geolocation.clearWatch(id);
   }, [trip, source]);
+
+  // A browser stops the GPS when the screen sleeps: keep it awake during a trip.
+  const sendingFromPhone = Boolean(trip) && source !== 'tracker';
+  useEffect(() => {
+    if (!sendingFromPhone || !navigator.wakeLock) return undefined;
+    let lock = null;
+    let done = false;
+    const hold = () => {
+      if (document.visibilityState !== 'visible') return;
+      navigator.wakeLock.request('screen').then((l) => { if (done) l.release(); else lock = l; }).catch(() => {});
+    };
+    hold();
+    document.addEventListener('visibilitychange', hold);
+    return () => {
+      done = true;
+      document.removeEventListener('visibilitychange', hold);
+      lock?.release().catch(() => {});
+    };
+  }, [sendingFromPhone]);
 
   const nextFix = useCallback(() => {
     if (source === 'gps') {
@@ -380,11 +432,11 @@ export default function DriverApp() {
   const startTrip = async () => {
     setError(null);
     if (source === 'gps' && !('geolocation' in navigator)) {
-      setError('Location permission is needed before a trip can start.');
+      setError(t('Location permission is needed before a trip can start.'));
       return;
     }
     try {
-      const { trip: t } = await api('/api/driver/trips', { token, method: 'POST' });
+      const { trip: t } = await api('/api/driver/trips', { token, body: { direction } });
       distanceRef.current = 0;
       setCounts({ sent: 0, accepted: 0, rejected: 0 });
       setLog([]);
@@ -406,6 +458,8 @@ export default function DriverApp() {
     setBuffered(0);
     setStandby(false);
     setTrip(null);
+    setPicked(null);
+    api('/api/driver/trip', { token }).then((r) => setSuggested(r.suggestedDirection)).catch(() => {});
     navigator.vibrate?.([120, 60, 120]);
   };
 
@@ -437,8 +491,8 @@ export default function DriverApp() {
     return (
       <main className="center-page">
         <div className="panel login">
-          <h2>No bus assigned</h2>
-          <p className="muted">Ask the transport office to assign a bus to your account.</p>
+          <h2>{t('No bus assigned')}</h2>
+          <p className="muted">{t('Ask the transport office to assign a bus to your account.')}</p>
           <button className="btn ghost" onClick={logout}>Sign out</button>
         </div>
       </main>
@@ -458,19 +512,20 @@ export default function DriverApp() {
     return sec < 60 ? `${sec} s ago` : sec < 3600 ? `${Math.floor(sec / 60)} min ago` : `${Math.floor(sec / 3600)} h ago`;
   };
   let statusText;
-  if (!trip) statusText = useTracker ? 'The bus GPS tracker shares the location while a trip is running.' : 'Location is shared only while a trip is running.';
+  if (!trip) statusText = useTracker ? t('The bus GPS tracker shares the location while a trip is running.') : t('Location is shared only while a trip is running.');
   else if (useTracker) {
-    if (trackerReporting) statusText = 'Bus GPS tracker is sharing live location';
-    else if (!tracker) statusText = 'No GPS tracker is fitted on this bus. Switch Location to phone GPS.';
+    if (trackerReporting) statusText = t('Bus GPS tracker is sharing live location');
+    else if (!tracker) statusText = t('No GPS tracker is fitted on this bus. Switch Location to phone GPS.');
     else statusText = `Bus GPS tracker is not reporting (last heard ${ago(tracker.lastSeenAt)}). Switch Location to phone GPS.`;
-  } else if (standby) statusText = 'The bus GPS tracker is sharing the location. This phone stands by and takes over if the tracker stops.';
+  } else if (standby) statusText = t('The bus GPS tracker is sharing the location. This phone stands by and takes over if the tracker stops.');
   else if (buffered > 0) statusText = `No network · ${buffered} fix(es) saved, will send when back`;
-  else statusText = transmitting ? 'Sharing live location from this phone' : 'Waiting for phone GPS…';
+  else statusText = transmitting ? t('Sharing live location from this phone') : t('Waiting for phone GPS…');
   // Where the bus is along its route: the next stop ahead and how many are left.
-  const proj = route && shown ? projectOnRoute(route.stops, shown) : null;
-  const nextIndex = proj ? Math.min(route.stops.length - 1, proj.segment + 1) : 0;
-  const nextStop = proj ? route.stops[nextIndex] : null;
-  const stopsLeft = route ? route.stops.length - 1 - nextIndex : 0;
+  const ordered = route ? travelOrder(route.stops, trip?.direction ?? direction) : [];
+  const proj = route && shown ? projectOnRoute(ordered, shown) : null;
+  const nextIndex = proj ? Math.min(ordered.length - 1, proj.segment + 1) : 0;
+  const nextStop = proj ? ordered[nextIndex] : null;
+  const stopsLeft = route ? ordered.length - 1 - nextIndex : 0;
   const mins = trip ? Math.max(0, Math.floor((now - new Date(trip.started_at).getTime()) / 60000)) : 0;
   const elapsed = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
 
@@ -481,56 +536,66 @@ export default function DriverApp() {
           <div className="route-pick static">
             <Icon name="bus" size={20} />
             <span className="pick-text"><b>{user.fleetCode}</b><small>Route {user.routeCode} · {user.routeName}</small></span>
-            <span className={`trip-chip ${trip ? 'on' : ''}`}>{trip ? 'On trip' : 'Ready'}</span>
+            <span className={`trip-chip ${trip ? 'on' : ''}`}>{trip ? t('On trip') : t('Ready')}</span>
           </div>
 
           {trip ? (
             <>
-              <span className="route-card-label">Next stop</span>
+              <span className="route-card-label">{t('Next stop')}</span>
               <div className="next-stop">
                 <b>{nextStop?.name ?? '—'}</b>
-                <small>{nextStop ? `${stopsLeft} stop${stopsLeft === 1 ? '' : 's'} to campus · scheduled ${nextStop.scheduled_time ?? ''}` : useTracker ? 'Waiting for the bus GPS tracker' : 'Waiting for the first GPS fix'}</small>
+                <small>{nextStop ? `${stopsLeft} stop${stopsLeft === 1 ? '' : 's'} ${trip.direction === 'DOWN' ? 'left' : 'to campus'} · scheduled ${nextStop.scheduled_time ?? ''}` : useTracker ? t('Waiting for the bus GPS tracker') : t('Waiting for the first GPS fix')}</small>
               </div>
               <div className="drive-stats">
                 <div><b className="tabular">{Math.round(shown?.speedKmh ?? 0)}</b><span>km/h</span></div>
                 <div><b className="tabular">{elapsed}</b><span>on trip</span></div>
-                {useTracker ? <div><b>{trackerReporting ? 'Live' : 'Off'}</b><span>bus GPS</span></div> : <div><b className="tabular">{counts.accepted}</b><span>fixes sent</span></div>}
+                {useTracker ? <div><b>{trackerReporting ? t('Live') : 'Off'}</b><span>bus GPS</span></div> : <div><b className="tabular">{counts.accepted}</b><span>fixes sent</span></div>}
               </div>
             </>
           ) : (
             <>
-              <span className="route-card-label">Before you start</span>
+              <span className="route-card-label">{t('Before you start')}</span>
               <ul className="runs">
-                <li><span>First stop</span><b className="small-b">{route?.stops[0]?.name ?? '…'}</b></li>
-                <li><span>Departs</span><b className="tabular">{route?.departure_time ?? '—'}</b></li>
+                <li><span>{t('Direction')}</span><b className="small-b">{t(DIRECTION_PATH[direction])}</b></li>
+                <li><span>{t('First stop')}</span><b className="small-b">{ordered[0]?.name ?? '…'}</b></li>
+                {direction === 'UP' && <li><span>{t('Departs')}</span><b className="tabular">{route?.departure_time ?? '—'}</b></li>}
               </ul>
             </>
           )}
 
+          {trip && <span className="route-card-label">{t(DIRECTION_TEXT[trip.direction])}</span>}
           <div className="route-live">
             <span className={`pulse ${trip ? (transmitting || standby ? '' : 'delayed') : 'offline'}`} />
             <span>{statusText}</span>
           </div>
-          {trip?.started_by === 'tracker' && <p className="muted">This trip was started automatically by the bus GPS tracker.</p>}
+          {trip?.started_by === 'tracker' && <p className="muted">{t('This trip was started automatically by the bus GPS tracker.')}</p>}
 
           <div className="tracker-line">
-            <span><Icon name="signal" size={14} /> Bus GPS tracker</span>
-            {!busGps ? <Badge tone="offline">Checking…</Badge> : !tracker ? <Badge tone="danger">Not fitted</Badge> : !tracker.active ? <Badge tone="danger">Disabled</Badge> : trackerReporting ? <Badge tone="live">Reporting</Badge> : tracker.online ? <Badge tone="delayed">Online, no fix</Badge> : <Badge tone="delayed">Offline</Badge>}
-            <small>{tracker ? `${tracker.label ?? tracker.uniqueId} · last heard ${ago(tracker.lastSeenAt)}` : busGps ? 'Ask the transport office to fit and register a tracker. Until then use phone GPS.' : ''}</small>
+            <span><Icon name="signal" size={14} /> {t('Bus GPS tracker')}</span>
+            {!busGps ? <Badge tone="offline">Checking…</Badge> : !tracker ? <Badge tone="danger">{t('Not fitted')}</Badge> : !tracker.active ? <Badge tone="danger">Disabled</Badge> : trackerReporting ? <Badge tone="live">{t('Reporting')}</Badge> : tracker.online ? <Badge tone="delayed">{t('Online, no fix')}</Badge> : <Badge tone="delayed">Offline</Badge>}
+            <small>{tracker ? `${tracker.label ?? tracker.uniqueId} · last heard ${ago(tracker.lastSeenAt)}` : busGps ? t('Ask the transport office to fit and register a tracker. Until then use phone GPS.') : ''}</small>
           </div>
-          {useTracker && trip && !trackerReporting && <button type="button" className="btn light inline" onClick={() => setSource('gps')}><Icon name="phone" size={14} /> Use phone GPS as backup</button>}
+          {useTracker && trip && !trackerReporting && <button type="button" className="btn light inline" onClick={() => setSource('gps')}><Icon name="phone" size={14} /> {t('Use phone GPS as backup')}</button>}
           <div className="drive-settings">
+            {!trip && (
+              <label>
+                <span>{t('This trip')}</span>
+                <select value={direction} onChange={(e) => setPicked(e.target.value)}>
+                  {DIRECTIONS.map((d) => <option key={d} value={d}>{t(DIRECTION_TEXT[d])}</option>)}
+                </select>
+              </label>
+            )}
             <label>
-              <span>Location</span>
+              <span>{t('Location')}</span>
               <select value={source} onChange={(e) => setSource(e.target.value)}>
-                <option value="tracker">Bus GPS tracker</option>
+                <option value="tracker">{t('Bus GPS tracker')}</option>
                 <option value="gps">This phone's GPS (backup)</option>
-                <option value="simulate">Simulate along route</option>
+                {demo && <option value="simulate">Simulate along route</option>}
               </select>
             </label>
             {!useTracker && (
               <label>
-                <span>Send every</span>
+                <span>{t('Send every')}</span>
                 <select value={intervalS} onChange={(e) => setIntervalS(Number(e.target.value))}>
                   {[5, 10, 15].map((s) => <option key={s} value={s}>{s} s</option>)}
                 </select>
@@ -541,15 +606,15 @@ export default function DriverApp() {
           {error && <p className="error">{error}</p>}
 
           {trip ? (
-            <button className="btn end-trip" onClick={endTrip}><Icon name="x" size={18} /> End trip</button>
+            <button className="btn end-trip" onClick={endTrip}><Icon name="x" size={18} /> {t('End trip')}</button>
           ) : (
-            <button className="btn start-trip" onClick={startTrip} disabled={!route}><Icon name="arrow" size={18} /> Start trip</button>
+            <button className="btn start-trip" onClick={startTrip} disabled={!route}><Icon name="arrow" size={18} /> {t('Start trip')}</button>
           )}
         </section>
 
         {trip && (
           <div className="panel">
-            <h3><Icon name="users" size={17} className="panel-icon" />Crowd level after this stop</h3>
+            <h3><Icon name="users" size={17} className="panel-icon" />{t('Crowd level after this stop')}</h3>
             <div className="occupancy-row">
               {Object.entries(OCCUPANCY).map(([k, o]) => (
                 <button key={k} className={`occ ${o.tone} ${occupancy === k ? 'on' : ''}`} onClick={() => tapOccupancy(k)}>{o.label}</button>
@@ -560,16 +625,20 @@ export default function DriverApp() {
 
         {trip && (
           <div className="panel">
-            <h3><Icon name="qr" size={17} className="panel-icon" />Boarding code</h3>
+            <h3><Icon name="qr" size={17} className="panel-icon" />{t('Boarding code')}</h3>
             <BoardingCode token={token} />
           </div>
         )}
+        <PreTripCheck token={token} />
+        <PassScanner token={token} tripRunning={Boolean(trip)} />
         <StudentList token={token} tripId={trip?.id ?? null} />
         {trip && <BoardedList token={token} tripId={trip.id} />}
 
+        <FuelEntry token={token} />
+        <FoundItem token={token} />
         <ProblemTiles token={token} disabled={!trip} />
 
-        {trip && (
+        {demo && trip && (
           <details className="panel">
             <summary><b>Test server validation</b></summary>
             <p className="muted">Sends one invalid fix. The server must reject it and keep the bus position unchanged.</p>
@@ -582,9 +651,10 @@ export default function DriverApp() {
           </details>
         )}
 
+        {demo && (
         <details className="panel">
           <summary><b>Transmission log</b></summary>
-          {log.length === 0 && <p className="muted">Start a trip to begin sending locations.</p>}
+          {log.length === 0 && <p className="muted">{t('Start a trip to begin sending locations.')}</p>}
           <ul className="tx-log">
             {log.map((l, i) => (
               <li key={i} className={l.ok ? 'ok' : 'bad'}>
@@ -596,17 +666,18 @@ export default function DriverApp() {
             ))}
           </ul>
         </details>
+        )}
       </section>
 
       <section className="map-wrap">
         <MapContainer center={[route?.stops[0]?.lat ?? 12.8737, route?.stops[0]?.lng ?? 80.0823]} zoom={13} className="map">
           <BaseTiles />
-          {route && <Polyline positions={route.stops.map((s) => [s.lat, s.lng])} pathOptions={{ color: '#1c315e', weight: 5, opacity: 0.75 }} />}
+          {route && <Polyline positions={route.stops.map((s) => [s.lat, s.lng])} pathOptions={{ color: 'var(--chart-navy)', weight: 5, opacity: 0.75 }} />}
           {route?.stops.map((s) => (
-            <CircleMarker key={s.seq} center={[s.lat, s.lng]} radius={5} pathOptions={{ color: '#1c315e', weight: 2, fillColor: '#f7bc31', fillOpacity: 1 }} />
+            <CircleMarker key={s.seq} center={[s.lat, s.lng]} radius={5} pathOptions={{ color: 'var(--chart-navy)', weight: 2, fillColor: '#f7bc31', fillOpacity: 1 }} />
           ))}
           {shown && (
-            <CircleMarker center={[shown.lat, shown.lng]} radius={11} pathOptions={{ color: '#fff', weight: 3, fillColor: '#237a36', fillOpacity: 1 }} />
+            <CircleMarker center={[shown.lat, shown.lng]} radius={11} pathOptions={{ color: '#fff', weight: 3, fillColor: 'var(--chart-green)', fillOpacity: 1 }} />
           )}
           <FitRoute route={route} />
           <Follow position={shown} />

@@ -74,7 +74,7 @@ export default function Payments() {
           ]}
         />
       </Panel>
-      {refunding && <RefundDialog token={token} payment={refunding} onClose={() => setRefunding(null)} onDone={() => { setRefunding(null); list.reload(); a.setMessage('Refunded. The student is back on the free view.'); }} />}
+      {refunding && <RefundDialog token={token} payment={refunding} onClose={() => setRefunding(null)} onDone={() => { setRefunding(null); list.reload(); a.setMessage('Refunded. The student is back on the basic view.'); }} />}
     </Page>
   );
 }

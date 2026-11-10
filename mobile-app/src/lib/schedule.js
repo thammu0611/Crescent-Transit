@@ -33,11 +33,12 @@ export function nowMinutes() {
  * The two daily runs for a student: morning from their stop to campus, and
  * the evening run from campus. `next` marks whichever is still ahead today.
  */
-export function dailyRuns(route, stopSeq) {
+export function dailyRuns(route, stopSeq, day = null) {
   if (!route) return [];
   const stop = route.stops.find((s) => s.seq === stopSeq) ?? route.stops[0];
-  const morning = parseTime(stop?.scheduled_time);
-  const evening = parseTime(route.evening_departure);
+  const moved = (t, shift) => (t == null ? null : t + (shift ?? 0));
+  const morning = moved(parseTime(stop?.scheduled_time), day?.morning_shift);
+  const evening = moved(parseTime(route.evening_departure), day?.evening_shift);
   const now = nowMinutes();
   const runs = [
     { key: 'am', label: `${stop?.name ?? route.start_point} → Campus`, minutes: morning },

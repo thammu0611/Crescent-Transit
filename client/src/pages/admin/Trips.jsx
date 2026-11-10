@@ -6,8 +6,9 @@ import { STATUS_TEXT, date, dateTime, daysAgo, thisMonth, time } from '../../lib
 import { useSession } from '../../lib/session.jsx';
 import { useAction, useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
-import { Avatar, Chips, DetailView, Figure, duration, isoDay } from '../../components/adminkit.jsx';
-import { Badge, Empty, ErrorText, Field, Modal, Notice, Page, Panel, RowActions, SearchBox, Segmented, Stat, Table } from '../../components/ui.jsx';
+import { DIRECTION_TEXT } from '../../../../shared/direction.js';
+import { Avatar, DetailView, Figure, duration, isoDay } from '../../components/adminkit.jsx';
+import { Badge, Dropdown, Empty, ErrorText, Field, ListCard, Modal, Notice, Page, Panel, RowActions, SearchBox, Segmented, Stat, Table } from '../../components/ui.jsx';
 
 const TRIP_TONE = { active: 'live', scheduled: 'delayed', completed: 'offline', cancelled: 'danger' };
 const TRIP_TEXT = { active: 'Running', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
@@ -43,8 +44,8 @@ function Replay({ path }) {
         <MapContainer center={[p.lat, p.lng]} zoom={13} className="map">
           <BaseTiles />
           <FitPath path={path} />
-          <Polyline positions={path.map((x) => [x.lat, x.lng])} pathOptions={{ color: '#142548', weight: 3, opacity: 0.3 }} />
-          <Polyline positions={path.slice(0, i + 1).map((x) => [x.lat, x.lng])} pathOptions={{ color: '#237a36', weight: 4 }} />
+          <Polyline positions={path.map((x) => [x.lat, x.lng])} pathOptions={{ color: 'var(--chart-navy)', weight: 3, opacity: 0.3 }} />
+          <Polyline positions={path.slice(0, i + 1).map((x) => [x.lat, x.lng])} pathOptions={{ color: 'var(--chart-green)', weight: 4 }} />
           <CircleMarker center={[p.lat, p.lng]} radius={9} pathOptions={{ color: '#fff', weight: 3, fillColor: '#8f2430', fillOpacity: 1 }} />
         </MapContainer>
       </div>
@@ -63,7 +64,7 @@ function TripDetail({ token, trip, onClose }) {
   const reg = useAsync(() => api(`/api/trips/${trip.id}/attendance`, { token }), [trip.id]);
   const path = useAsync(() => (tab === 'replay' ? api(`/api/trips/${trip.id}/path`, { token }) : Promise.resolve(null)), [tab, trip.id]);
   return (
-    <Modal title={`Trip #${trip.id} · route ${trip.route_code} · ${trip.fleet_code}`} onClose={onClose} width={760}>
+    <Modal title={`Trip #${trip.id} · route ${trip.route_code} · ${trip.fleet_code} · ${DIRECTION_TEXT[trip.direction]}`} onClose={onClose} width={760}>
       <Segmented value={tab} onChange={setTab} options={[{ value: 'register', label: 'Register' }, { value: 'replay', label: 'Replay' }]} />
       {tab === 'register' ? (
         <>
@@ -94,7 +95,7 @@ function TripRow({ t, onOpen, showDriver }) {
       <span className="route-code">{t.route_code}</span>
       <span className="kit-row-main">
         <b>{t.route_name}</b>
-        <small>{t.fleet_code}{showDriver ? ` · ${t.driver_name ?? 'No driver'}` : ''}{t.started_by === 'tracker' ? ' · GPS tracker' : ''}</small>
+        <small>{DIRECTION_TEXT[t.direction]} · {t.fleet_code}{showDriver ? ` · ${t.driver_name ?? 'No driver'}` : ''}{t.started_by === 'tracker' ? ' · GPS tracker' : ''}</small>
         <span className="kit-meta tabular"><Icon name="clock" size={12} />
           {t.status === 'scheduled' ? `Planned ${time(tripWhen(t))}` : `${time(t.started_at)} – ${t.ended_at ? time(t.ended_at) : 'now'}`}
           {!['scheduled', 'cancelled'].includes(t.status) ? ` · ${duration(t.started_at, t.ended_at ?? new Date())}` : ''}
@@ -147,9 +148,10 @@ function DriverTrips({ token, driver, onClose }) {
   const trips = useAsync(() => api(`/api/admin/trips?driver=${driver.id}`, { token }), [driver.id, token]);
   const [status, setStatus] = useState('');
   const [period, setPeriod] = useState('all');
+  const [run, setRun] = useState('');
   const [open, setOpen] = useState(null);
   const all = trips.data ?? [];
-  const inRange = all.filter((t) => inPeriod(t, period));
+  const inRange = all.filter((t) => inPeriod(t, period) && (!run || t.direction === run));
   const shown = inRange.filter((t) => !status || t.status === status);
   const done = inRange.filter((t) => t.status === 'completed' && t.ended_at);
   const avg = done.length ? done.reduce((n, t) => n + (new Date(t.ended_at) - new Date(t.started_at)), 0) / done.length : null;
@@ -181,18 +183,29 @@ function DriverTrips({ token, driver, onClose }) {
           <Figure value={avg == null ? '—' : duration(0, avg)} label="Avg trip time" />
         </div>
       </section>
-      <Chips value={period} onChange={setPeriod} options={PERIODS} />
-      <Chips
-        value={status}
-        onChange={setStatus}
-        options={[
-          { value: '', label: 'All', count: inRange.length },
-          { value: 'completed', label: 'Completed', count: count('completed') },
-          { value: 'active', label: 'Running', count: count('active') },
-          { value: 'scheduled', label: 'Scheduled', count: count('scheduled') },
-          { value: 'cancelled', label: 'Cancelled', count: count('cancelled') },
-        ]}
-      />
+      <div className="att-filters">
+        <Dropdown label="Period" icon="clock" value={period} onChange={setPeriod} options={PERIODS} />
+        <Dropdown
+          label="Direction"
+          icon="bus"
+          value={run}
+          onChange={setRun}
+          options={[{ value: '', label: 'Both directions' }, { value: 'UP', label: DIRECTION_TEXT.UP }, { value: 'DOWN', label: DIRECTION_TEXT.DOWN }]}
+        />
+        <Dropdown
+          label="Status"
+          icon="check"
+          value={status}
+          onChange={setStatus}
+          options={[
+            { value: '', label: 'All trips', count: inRange.length },
+            { value: 'completed', label: 'Completed', count: count('completed') },
+            { value: 'active', label: 'Running', count: count('active') },
+            { value: 'scheduled', label: 'Scheduled', count: count('scheduled') },
+            { value: 'cancelled', label: 'Cancelled', count: count('cancelled') },
+          ]}
+        />
+      </div>
       <ErrorText>{trips.error?.message}</ErrorText>
       {trips.data == null ? <div className="skeleton-block" /> : <TripsByDate trips={shown} onOpen={setOpen} />}
       {open && <TripDetail token={token} trip={open} onClose={() => setOpen(null)} />}
@@ -221,16 +234,16 @@ function DriversTab({ drivers, onOpen }) {
         {shown == null ? <div className="skeleton-block" /> : shown.length === 0 ? <Empty>No drivers match.</Empty> : (
           <div className="kit-list cols-2">
             {shown.map((d) => (
-              <button type="button" key={d.id} className={`kit-row${d.on_trip ? ' is-live' : ''}`} onClick={() => onOpen(d)}>
-                <span className={d.on_trip ? 'kit-live-dot' : ''}><Avatar name={d.full_name} size={46} /></span>
-                <span className="kit-row-main">
-                  <b>{d.full_name}</b>
-                  <small>{d.fleet_code ? `${d.fleet_code}${d.route_code ? ` · Route ${d.route_code} · ${d.route_name}` : ''}` : 'No bus assigned'}</small>
-                  <small>{d.last_trip ? `Last trip ${dateTime(d.last_trip)}` : 'No trips yet'}</small>
-                </span>
-                <span className="kit-count"><b className="tabular">{d.trips_total ?? 0}</b><small>TRIPS</small></span>
-                <Icon name="arrow" size={16} className="kit-chevron" />
-              </button>
+              <ListCard
+                key={d.id}
+                onClick={() => onOpen(d)}
+                tone={d.on_trip ? 'live' : ''}
+                lead={<span className={d.on_trip ? 'kit-live-dot' : ''}><Avatar name={d.full_name} size={46} /></span>}
+                title={d.full_name}
+                lines={[d.fleet_code ? `${d.fleet_code}${d.route_code ? ` · Route ${d.route_code} · ${d.route_name}` : ''}` : 'No bus assigned', d.last_trip ? `Last trip ${dateTime(d.last_trip)}` : 'No trips yet']}
+                count={d.trips_total ?? 0}
+                countLabel="TRIPS"
+              />
             ))}
           </div>
         )}
@@ -283,7 +296,7 @@ export default function Trips() {
               empty="No trips match these filters."
               columns={[
                 { key: 'id', label: 'Trip', render: (t) => <b>#{t.id}</b> },
-                { key: 'route_code', label: 'Route', wrap: true, render: (t) => <><span className="route-code sm">{t.route_code}</span> {t.route_name}</> },
+                { key: 'route_code', label: 'Route', wrap: true, render: (t) => <><span className="route-code sm">{t.route_code}</span> {t.route_name}<small>{DIRECTION_TEXT[t.direction]}</small></> },
                 { key: 'fleet_code', label: 'Bus / driver', render: (t) => <>{t.fleet_code}<small>{t.driver_name ?? 'No driver'}{t.started_by === 'tracker' ? ' · started by GPS tracker' : ''}</small></> },
                 { key: 'when', label: 'When', render: (t) => <>{dateTime(tripWhen(t))}<small>{t.ended_at ? `ended ${time(t.ended_at)} · ${duration(t.started_at, t.ended_at)}` : t.status === 'active' ? 'running' : ''}</small></> },
                 { key: 'status', label: 'Status', render: (t) => <><Badge tone={TRIP_TONE[t.status]}>{TRIP_TEXT[t.status] ?? t.status}</Badge>{t.flagged && <> <Badge tone="danger">{t.flag_reason}</Badge></>}</> },
@@ -307,7 +320,7 @@ export default function Trips() {
         {tab === 'schedule' && (
           <Panel title="Schedule a trip" icon="clock">
             <p className="muted">The trip appears in the driver's app; their Start Trip runs it.</p>
-            <form className="form-row" onSubmit={(e) => { e.preventDefault(); a.run(() => api('/api/admin/trips', { token, body: { fleetCode: schedule.fleetCode, scheduledFor: new Date(schedule.when).toISOString() } }), "Trip scheduled. The driver's Start Trip will run it.").then(trips.reload); }}>
+            <form className="form-row" onSubmit={(e) => { e.preventDefault(); a.run(() => api('/api/admin/trips', { token, body: { fleetCode: schedule.fleetCode, scheduledFor: new Date(schedule.when).toISOString(), direction: schedule.direction || undefined } }), "Trip scheduled. The driver's Start Trip will run it.").then(trips.reload); }}>
               <Field label="Bus">
                 <select value={schedule.fleetCode} onChange={(e) => setSchedule((s) => ({ ...s, fleetCode: e.target.value }))} required>
                   <option value="">Choose a bus</option>
@@ -315,6 +328,13 @@ export default function Trips() {
                 </select>
               </Field>
               <Field label="When"><input type="datetime-local" value={schedule.when} onChange={(e) => setSchedule((s) => ({ ...s, when: e.target.value }))} required /></Field>
+              <Field label="Direction">
+                <select value={schedule.direction ?? ''} onChange={(e) => setSchedule((s) => ({ ...s, direction: e.target.value }))}>
+                  <option value="">By the time chosen</option>
+                  <option value="UP">{DIRECTION_TEXT.UP}</option>
+                  <option value="DOWN">{DIRECTION_TEXT.DOWN}</option>
+                </select>
+              </Field>
               <button className="btn primary inline" disabled={a.busy}><Icon name="plus" size={14} />Schedule trip</button>
             </form>
           </Panel>

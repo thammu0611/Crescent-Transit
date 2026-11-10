@@ -5,6 +5,7 @@ import Constants from 'expo-constants';
 import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { C, F, FRESH_COLOR } from '../theme.js';
+import Icon from './Icon.js';
 import { Text } from './ui.js';
 
 export const CAMPUS = { lat: 12.8737, lng: 80.0823 };
@@ -13,6 +14,8 @@ const ll = (p) => ({ latitude: p.lat, longitude: p.lng });
 
 // Google Maps on Android (Expo Go has a key built in); on iOS only when a key is
 // configured (see app.config.js), otherwise Apple Maps.
+// The status disc stays deep in both themes, behind its white arrow.
+const PIN_COLOR = { live: '#2f9e4a', delayed: '#b9832a', offline: '#6e7686' };
 const GOOGLE = Platform.OS === 'android' || Boolean(Constants.expoConfig?.extra?.googleMapsIos);
 
 /** Google map style in the app's palette: ivory land, quiet roads, slate water, no clutter. */
@@ -35,11 +38,31 @@ const MAP_STYLE = [
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#5a6b85' }] },
 ];
 
+/** The same map for dark mode. */
+const MAP_STYLE_DARK = [
+  { elementType: 'geometry', stylers: [{ color: '#18233a' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#a7b0c3' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1524' }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#33446b' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#c6d3f2' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ visibility: 'on' }, { color: '#1a2e2a' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2b3950' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1e2a3f' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3a4a68' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1e2a3f' }] },
+  { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f2036' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#7c8ba6' }] },
+];
+
 /**
  * A map that frames `fitPoints` whenever `fitKey` changes.
  * Exposes focus(point) and fit(points) through its ref.
  */
-export const MapBox = forwardRef(function MapBox({ fitPoints = [], fitKey, still, style, children, onLongPress, padding = 50 }, ref) {
+export const MapBox = forwardRef(function MapBox({ fitPoints = [], fitKey, still, style, children, onLongPress, padding = 50, showsUserLocation = false }, ref) {
   const map = useRef(null);
   const [ready, setReady] = useState(false);
   const fit = (points) => {
@@ -60,7 +83,7 @@ export const MapBox = forwardRef(function MapBox({ fitPoints = [], fitKey, still
     <MapView
       ref={map}
       provider={GOOGLE ? PROVIDER_GOOGLE : undefined}
-      customMapStyle={GOOGLE ? MAP_STYLE : undefined}
+      customMapStyle={GOOGLE ? (C.dark ? MAP_STYLE_DARK : MAP_STYLE) : undefined}
       style={[styles.map, style]}
       initialRegion={CHENNAI}
       onMapReady={() => setReady(true)}
@@ -71,6 +94,8 @@ export const MapBox = forwardRef(function MapBox({ fitPoints = [], fitKey, still
       pitchEnabled={false}
       toolbarEnabled={false}
       showsPointsOfInterest={false}
+      showsUserLocation={showsUserLocation}
+      showsMyLocationButton={false}
       pointerEvents={still ? 'none' : 'auto'}
     >
       {children}
@@ -124,14 +149,14 @@ function StopDot({ stop, highlighted, color, small }) {
           borderWidth: 2,
           borderColor: highlighted ? C.navy : approx ? color : '#fff',
           borderStyle: approx ? 'dashed' : 'solid',
-          backgroundColor: highlighted ? C.gold : approx ? '#fff' : color,
+          backgroundColor: highlighted ? C.gold : approx ? C.paper : color,
         }}
       />
     </Marker>
   );
 }
 
-/** A bus: route code in a disc coloured by freshness, with a heading arrow. */
+/** A bus: a pill with the route number, whose tip marks its position. The disc shows its status and heading. */
 export function BusPin({ bus, selected, onPress, compact }) {
   const color = FRESH_COLOR[bus.freshness] ?? C.live;
   const showArrow = bus.heading != null && bus.freshness !== 'offline' && !compact;
@@ -139,29 +164,29 @@ export function BusPin({ bus, selected, onPress, compact }) {
   return (
     <Marker
       coordinate={ll(bus)}
-      anchor={{ x: 0.5, y: 0.5 }}
+      anchor={{ x: 0.5, y: compact ? 0.5 : 1 }}
       tracksViewChanges={tracks}
       onPress={onPress ? () => onPress(bus.busId) : undefined}
       zIndex={selected ? 1000 : 100}
       title={compact ? undefined : bus.fleetCode}
     >
-      <View style={{ width: compact ? 22 : 46, height: compact ? 22 : 46, alignItems: 'center', justifyContent: 'center' }}>
-        {showArrow && (
-          <View style={[StyleSheet.absoluteFill, { transform: [{ rotate: `${bus.heading}deg` }], alignItems: 'center' }]}>
-            <View style={[styles.arrow, { borderBottomColor: color }]} />
-          </View>
-        )}
-        <View
-          style={[
-            styles.bus,
-            compact && { width: 18, height: 18, borderRadius: 9, borderWidth: 3 },
-            { backgroundColor: color },
-            selected && { borderColor: C.gold, transform: [{ scale: 1.12 }] },
-          ]}
-        >
-          {!compact && <Text style={styles.busText}>{bus.routeCode}</Text>}
+      {compact ? (
+        <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={[styles.busDot, { backgroundColor: color }]} />
         </View>
-      </View>
+      ) : (
+        <View style={styles.busPin}>
+          <View style={[styles.busBody, selected && { borderColor: C.gold }]}>
+            <View style={[styles.busDisc, { backgroundColor: PIN_COLOR[bus.freshness] ?? PIN_COLOR.live }]}>
+              {showArrow
+                ? <View style={[styles.arrow, { transform: [{ rotate: `${bus.heading}deg` }] }]} />
+                : <Icon name="bus" size={13} color="#fff" />}
+            </View>
+            <Text style={styles.busText}>{bus.routeCode}</Text>
+          </View>
+          <View style={[styles.busTail, selected && { borderTopColor: C.gold }]} />
+        </View>
+      )}
     </Marker>
   );
 }
@@ -169,8 +194,11 @@ export function BusPin({ bus, selected, onPress, compact }) {
 export function CampusPin() {
   const tracks = useTracks([]);
   return (
-    <Marker coordinate={ll(CAMPUS)} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracks} title="B.S. Abdur Rahman Crescent Institute of Science & Technology">
-      <View style={styles.campus}><Text style={styles.campusText}>BSACIST</Text></View>
+    <Marker coordinate={ll(CAMPUS)} anchor={{ x: 0.5, y: 0.14 }} tracksViewChanges={tracks} title="B.S. Abdur Rahman Crescent Institute of Science & Technology">
+      <View style={styles.campusPin}>
+        <View style={styles.campusDot} />
+        <View style={styles.campus}><Text style={styles.campusText}>BSACIST</Text></View>
+      </View>
     </Marker>
   );
 }
@@ -205,9 +233,15 @@ export function MiniMap({ stops = [], buses = [], highlightSeq, height = 190, la
 
 const styles = StyleSheet.create({
   map: { flex: 1 },
-  bus: { width: 34, height: 34, borderRadius: 17, borderWidth: 3, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  busText: { color: '#fff', ...F[800], fontSize: 11 },
-  arrow: { width: 0, height: 0, borderLeftWidth: 7, borderRightWidth: 7, borderBottomWidth: 10, borderLeftColor: 'transparent', borderRightColor: 'transparent' },
-  campus: { backgroundColor: C.navy, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 2, borderColor: C.gold },
-  campusText: { color: '#fff', ...F[800], fontSize: 11 },
+  busDot: { width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: '#fff' },
+  busPin: { width: 84, height: 40, alignItems: 'center' },
+  busBody: { height: 32, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 4, paddingRight: 11, borderRadius: 16, backgroundColor: '#142548', borderWidth: 1.5, borderColor: '#fff' },
+  busDisc: { width: 23, height: 23, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  busText: { color: '#fff', ...F[800], fontSize: 13 },
+  busTail: { width: 0, height: 0, marginTop: -1, borderLeftWidth: 6, borderRightWidth: 6, borderTopWidth: 8, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#142548' },
+  arrow: { width: 0, height: 0, borderLeftWidth: 5, borderRightWidth: 5, borderBottomWidth: 10, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: '#fff' },
+  campusPin: { width: 84, height: 40, alignItems: 'center', gap: 3 },
+  campusDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: C.gold, borderWidth: 2.5, borderColor: '#142548' },
+  campus: { backgroundColor: '#142548', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 3 },
+  campusText: { color: '#fff', ...F[800], fontSize: 10.5, letterSpacing: 0.7 },
 });

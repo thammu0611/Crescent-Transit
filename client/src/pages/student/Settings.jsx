@@ -5,7 +5,9 @@ import { api } from '../../lib/api.js';
 import { refreshPlan } from '../../lib/sampler.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
-import { Badge, ErrorText, Field, FoldPanel, Notice, Page, Panel, Segmented } from '../../components/ui.jsx';
+import { Badge, ErrorText, Field, Notice, Page, Segmented } from '../../components/ui.jsx';
+import { ViewCard } from '../../components/adminkit.jsx';
+import YourData from '../../components/YourData.jsx';
 
 /**
  * The plain-language privacy notice (doc 9.11): what is collected, when, why,
@@ -36,6 +38,23 @@ const presetOf = (w) => (WINDOW_PRESETS.some((p) => p.value === (w ?? '')) ? w ?
 const initials = (name = '') => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
 /** An on/off switch that saves at once. */
+// Bus fees are paid on the university's DigiiCampus portal. Fee status and
+// sign-in checks need API access from Digii; until then the app links there.
+const DIGIICAMPUS_URL = 'https://crescent.digiicampus.com/';
+
+/** The bus fee: paid on DigiiCampus, where the student also sees its status. */
+function BusFee() {
+  return (
+    <ViewCard icon="wallet" title="Bus fee" className="settings-section" summary="Pay and check status on DigiiCampus">
+      <p className="muted">Pay your bus fee and check whether it is paid on DigiiCampus, the university's student portal. Sign in there with your DigiiCampus account.</p>
+      <a className="btn red bus-fee-pay" href={DIGIICAMPUS_URL} target="_blank" rel="noopener noreferrer">
+        Pay bus fee <Icon name="arrow" size={16} />
+      </a>
+      <small className="fine-print">Opens crescent.digiicampus.com in a new tab</small>
+    </ViewCard>
+  );
+}
+
 function Switch({ on, onChange, label, disabled }) {
   return (
     <button type="button" role="switch" aria-checked={on} aria-label={label} disabled={disabled} className={`switch${on ? ' on' : ''}`} onClick={() => onChange(!on)}>
@@ -143,8 +162,14 @@ export default function Settings() {
       <ErrorText>{error}</ErrorText>
 
       <div className="settings-grid">
-        <Panel title="1 · Travel" icon="route" className="settings-section">
-          <p className="section-lead">Your route and boarding stop drive the home screen, arrival times and the boarding check.</p>
+        {/* Each settings group shows its current state, and opens in its own view. */}
+        <ViewCard
+          icon="route"
+          title="Travel"
+          className="settings-section"
+          summary={route.data ? `Route ${route.data.code}${stop ? ` · ${stop.name}` : ' · choose your stop'}` : 'Choose your route and stop'}
+        >
+          <p className="section-lead">Sets your home screen, arrival times and the boarding check.</p>
           <form onSubmit={saveTravel}>
             <div className="grid2">
               <Field label="Route">
@@ -177,21 +202,32 @@ export default function Settings() {
             <Field label="Language">
               <select value={form.language} onChange={set('language')}>
                 <option value="en">English</option>
-                <option value="ta">தமிழ் (Tamil) - saved; translation not yet available</option>
+                <option value="ta">தமிழ் (Tamil)</option>
               </select>
             </Field>
             <button className="btn primary" disabled={busy}>Save travel details</button>
           </form>
-        </Panel>
+        </ViewCard>
 
-        <Panel title="2 · Reminders and notifications" icon="bell" className="settings-section">
-          <p className="section-lead">What the app tells you, and how.</p>
+        <ViewCard
+          icon="bell"
+          title="Reminders and notifications"
+          className="settings-section"
+          summary={`Boarding check ${user.boardingReminders ? 'on' : 'off'} · notifications ${notify === 'granted' ? 'on' : 'off'}`}
+        >
           <SettingRow
             icon="bus"
             title="Boarding check"
             control={<Switch on={user.boardingReminders} disabled={busy} label="Boarding check" onChange={(v) => save({ boardingReminders: v }, v ? 'Boarding check is on.' : 'Boarding check is off.')} />}
           >
-            <small>When your bus's GPS shows it leaving {stop?.name ?? 'your stop'}, a popup asks "Did you board?". It repeats <b>every 10 minutes until you answer</b>. "Yes" marks your attendance for that trip.</small>
+            <small>Asks "Did you board?" when your bus leaves {stop?.name ?? 'your stop'}, every 10 minutes until you answer.</small>
+          </SettingRow>
+          <SettingRow
+            icon="clock"
+            title="Bus is almost here"
+            control={<Switch on={user.arrivalAlerts} disabled={busy} label="Bus is almost here" onChange={(v) => save({ arrivalAlerts: v }, v ? 'You will be told when the bus is near.' : 'Bus alerts are off.')} />}
+          >
+            <small>A message about 5 minutes before the bus reaches {stop?.name ?? 'your stop'}.</small>
           </SettingRow>
           <SettingRow
             icon="bell"
@@ -201,17 +237,21 @@ export default function Settings() {
                 : notify === 'unsupported' ? <Badge>Not supported</Badge> : <button className="btn ghost" onClick={askNotifications}>Allow</button>}
           >
             <small>
-              Lets the boarding question and reminders reach you while this tab is in the background.
-              {notify === 'denied' && ' Allow notifications for this site in your browser\'s settings to turn them on.'}
+              Reminders reach you while this tab is in the background.
+              {notify === 'denied' && ' Allow them in your browser\'s site settings.'}
             </small>
           </SettingRow>
           <SettingRow icon="alert" title="Route alerts">
-            <small>Delays, breakdowns and route changes for Route {user.homeRouteCode ?? '—'}, and announcements from the transport office. Always on; see them under Alerts.</small>
+            <small>Delays and changes for Route {user.homeRouteCode ?? '—'}. Always on.</small>
           </SettingRow>
-        </Panel>
+        </ViewCard>
 
-        <Panel title="3 · Attendance and privacy" icon="shield" className="settings-section">
-          <p className="section-lead">How your trips are recorded. Pick what you are comfortable with.</p>
+        <ViewCard
+          icon="shield"
+          title="Attendance and privacy"
+          className="settings-section"
+          summary={`Phone GPS ${user.locationConsent ? (p?.shouldSample ? 'active' : 'allowed') : 'off'} · bus QR always`}
+        >
           <ul className="method-list">
             <li><Icon name="bus" size={16} /><span className="method-text"><b>Boarding check</b> - from the bus GPS only; your location is never used.</span><Badge tone={user.boardingReminders ? 'live' : 'offline'}>{user.boardingReminders ? 'On' : 'Off'}</Badge></li>
             <li><Icon name="signal" size={16} /><span className="method-text"><b>Phone GPS</b> - your phone notices it is moving with the bus.</span><Badge tone={p?.shouldSample ? 'live' : 'offline'}>{p?.shouldSample ? 'Active now' : user.locationConsent ? 'Paused' : 'Off'}</Badge></li>
@@ -234,13 +274,14 @@ export default function Settings() {
             <summary>Read the privacy notice</summary>
             <PrivacyNotice />
           </details>
-        </Panel>
+        </ViewCard>
 
+        <BusFee />
       </div>
 
       <h2 className="kit-section-title settings-more-title">More</h2>
       <div className="settings-more">
-        <FoldPanel icon="lock" title="Account and security" summary={`@${user.username}${user.registerNo ? ` · ${user.registerNo}` : ''}`}>
+        <ViewCard icon="lock" title="Account and security" summary={`@${user.username}${user.registerNo ? ` · ${user.registerNo}` : ''}`}>
           <dl className="settings-kv">
             <dt>Username</dt><dd>@{user.username}</dd>
             <dt>Register no.</dt><dd>{user.registerNo ?? '—'}</dd>
@@ -253,9 +294,11 @@ export default function Settings() {
             <button className="btn ghost danger-text" onClick={() => { signOut(); window.location.hash = '#/'; }}><Icon name="logout" size={15} /> Sign out</button>
           </div>
           <p className="fine-print">Changing your password signs you out on every other device.</p>
-        </FoldPanel>
+        </ViewCard>
 
-        <FoldPanel icon="phone" title="Help and support" summary="Contacts and common questions">
+        <YourData />
+
+        <ViewCard icon="phone" title="Help and support" summary="Contacts and common questions">
           <ul className="contact-list">
             {(contacts.data ?? []).map((c) => (
               <li key={c.label}><span>{c.label}</span><a href={`tel:${c.phone.replace(/\s+/g, '')}`}>{c.phone}</a></li>
@@ -269,15 +312,15 @@ export default function Settings() {
             <summary>My attendance looks wrong</summary>
             <p className="muted">Open Attendance and tap "Dispute" on the trip within 7 days. The transport office reviews it.</p>
           </details>
-        </FoldPanel>
+        </ViewCard>
 
-        <FoldPanel icon="sparkle" title="About" summary="Crescent Transit · Bus Route 2026-2027">
+        <ViewCard icon="sparkle" title="About" summary="Crescent Transit · Bus Route 2026-2027">
           <dl className="settings-kv">
             <dt>App</dt><dd>Crescent Transit · Bus Tracker</dd>
             <dt>Timetable</dt><dd>BSACIST Bus Route 2026-2027</dd>
-            <dt>Access</dt><dd>{entitlement?.required ? <a href="#/pay">Monthly subscription</a> : 'Live tracking, alerts and attendance are free for students'}</dd>
+            <dt>Access</dt><dd>{entitlement?.required ? <a href="#/pay">Monthly subscription</a> : 'Included for every student'}</dd>
           </dl>
-        </FoldPanel>
+        </ViewCard>
       </div>
       {changingPassword && <ChangePassword onClose={() => setChangingPassword(false)} />}
     </Page>

@@ -164,7 +164,7 @@ test('the driver sees the bus GPS tracker status and the students on the bus', a
   assert.equal(gps.body.reporting, false);
 
   const reg = await call('/api/auth/register', {
-    body: { username: 'rider118', email: 'rider118@example.com', fullName: 'Rider One', password: 'password-118', routeCode: '118', stopSeq: 2, registerNo: 'REG118', department: 'CSE' },
+    body: { username: 'rider118', email: 'rider118@example.com', fullName: 'Rider One', password: 'route-pass-118', routeCode: '118', stopSeq: 2, registerNo: 'REG118', department: 'CSE' },
   });
   assert.equal(reg.status, 201);
   const { body } = await call('/api/driver/students', { token });

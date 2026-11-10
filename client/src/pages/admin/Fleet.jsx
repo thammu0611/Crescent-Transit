@@ -1,3 +1,4 @@
+import Roster from './Roster.jsx';
 import { useState } from 'react';
 import { api } from '../../lib/api.js';
 import { dateTime } from '../../lib/format.js';
@@ -74,7 +75,7 @@ function DriverForm({ token, driver, buses, onClose, onSaved }) {
               {buses.map((b) => <option key={b.id} value={b.fleet_code}>{b.fleet_code}{b.driver_username && b.driver_username !== driver?.username ? ` (${b.driver_username})` : ''}</option>)}
             </select>
           </Field>
-          <Field label={driver ? 'New password (optional)' : 'Password'}><input type="password" value={f.password} onChange={set('password')} minLength={8} required={!driver} autoComplete="new-password" /></Field>
+          <Field label={driver ? 'Reset to a temporary password (optional)' : 'Temporary password'} hint="The driver chooses their own at first sign-in"><input type="password" value={f.password} onChange={set('password')} minLength={8} required={!driver} autoComplete="new-password" /></Field>
           {driver && (
             <Field label="Status">
               <select value={f.status} onChange={set('status')}><option value="active">Active</option><option value="suspended">Suspended</option></select>
@@ -104,6 +105,7 @@ export default function Fleet() {
   };
 
   const [tab, setTab] = useState('buses');
+  const roster = tab === 'students';
   const [q, setQ] = useState('');
   const match = (...fields) => !q || fields.some((f) => String(f ?? '').toLowerCase().includes(q.toLowerCase()));
   const busRows = buses.data?.filter((b) => match(b.fleet_code, b.route_code, b.route_name, b.driver_name, b.registration_number));
@@ -131,11 +133,12 @@ export default function Fleet() {
               { value: 'buses', label: `Buses (${buses.data?.length ?? '…'})` },
               { value: 'drivers', label: `Drivers (${drivers.data?.length ?? '…'})` },
               { value: 'trackers', label: 'GPS trackers' },
+              { value: 'students', label: 'Students and year' },
             ]}
           />
-          {tab !== 'trackers' && <SearchBox value={q} onChange={setQ} placeholder={tab === 'buses' ? 'Search bus, route or driver' : 'Search driver or bus'} />}
+          {tab !== 'trackers' && !roster && <SearchBox value={q} onChange={setQ} placeholder={tab === 'buses' ? 'Search bus, route or driver' : 'Search driver or bus'} />}
         </div>
-        {tab === 'trackers' ? (
+        {roster ? <Roster /> : tab === 'trackers' ? (
           <TrackersTab token={token} buses={buses.data ?? []} onChanged={() => buses.reload()} />
         ) : tab === 'buses' ? (
           <Table

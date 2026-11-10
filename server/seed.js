@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import bcrypt from 'bcryptjs';
 
@@ -7,13 +8,21 @@ export const driverUsername = (routeCode) => `drv${routeCode.toLowerCase()}`;
 /**
  * Load the BSACIST 2026-27 timetable into an empty database: one bus and one
  * driver account per route, plus an administrator. Does nothing if routes exist.
+ *
+ * In demo mode every account gets the demo password. Otherwise the
+ * administrator gets ADMIN_PASSWORD and the driver accounts no usable password
+ * until the administrator gives each driver a temporary one (Fleet).
  */
 export async function seedIfEmpty(db, config) {
   const { rows } = await db.query('SELECT count(*)::int AS n FROM routes');
   if (rows[0].n > 0) return false;
+  if (!config.demoMode && (!config.adminPassword || config.adminPassword.length < 10)) {
+    throw new Error('Set ADMIN_PASSWORD (10+ characters) for the first administrator account, then start again.');
+  }
 
   const dataset = JSON.parse(fs.readFileSync(config.datasetPath, 'utf8'));
-  const passwordHash = await bcrypt.hash(config.demoPassword, 10);
+  const passwordHash = await bcrypt.hash(config.demoMode ? config.demoPassword : config.adminPassword, 10);
+  const driverHash = config.demoMode ? passwordHash : await bcrypt.hash(crypto.randomBytes(24).toString('hex'), 10);
 
   await db.transaction(async (tx) => {
     await tx.query(
@@ -45,7 +54,7 @@ export async function seedIfEmpty(db, config) {
 
       await tx.query(
         `INSERT INTO users (username, password_hash, full_name, role, bus_id) VALUES ($1, $2, $3, 'driver', $4)`,
-        [driverUsername(r.code), passwordHash, r.bus.driver_name, bus.rows[0].id],
+        [driverUsername(r.code), driverHash, r.bus.driver_name, bus.rows[0].id],
       );
     }
   });
@@ -58,6 +67,9 @@ const PLANS = [
   ['TERM_300', 'Five months - Rs 300', 30000, 150],
   ['YEAR_600', 'Academic year - Rs 600', 60000, 300],
 ];
+
+const WELCOME_TITLE = 'Welcome to the live bus tracker';
+const WELCOME_TEXT = 'See your bus live on the map, when it reaches your stop, and alerts for delays. Your attendance is marked automatically when you ride. Pay the bus fee on DigiiCampus from Settings.';
 
 // Demo students ride the routes the simulator drives (npm run simulate).
 const DEMO_ROUTES = ['118', '119', '117', '127'];
@@ -79,19 +91,25 @@ export async function seedModules(db, config) {
       [code, name, paise, days],
     );
   }
-  const passwordHash = await bcrypt.hash(config.demoPassword, 10);
-  await db.query(
-    `INSERT INTO users (username, password_hash, full_name, role) VALUES ('finance', $1, 'Finance Officer', 'finance')
-     ON CONFLICT (username) DO NOTHING`,
-    [passwordHash],
-  );
+  // The finance office (in-app subscription revenue) exists only in demo mode;
+  // bus fees are paid on DigiiCampus.
+  const passwordHash = config.demoMode ? await bcrypt.hash(config.demoPassword, 10) : null;
+  if (config.demoMode) {
+    await db.query(
+      `INSERT INTO users (username, password_hash, full_name, role) VALUES ('finance', $1, 'Finance Officer', 'finance')
+       ON CONFLICT (username) DO NOTHING`,
+      [passwordHash],
+    );
+  }
   const { rows: notices } = await db.query('SELECT count(*)::int AS n FROM notifications');
   if (notices[0].n === 0) {
     await db.query(
-      `INSERT INTO notifications (kind, title, message) VALUES
-       ('ANNOUNCEMENT', 'Welcome to the live bus tracker', 'Route list, stops and timetable are free for everyone. Live tracking, arrival estimates, alerts and automatic attendance need the Rs 60 monthly subscription.'),
-       ('ANNOUNCEMENT', 'Evening departure', 'All buses leave the campus at 4.30 PM.')`,
+      `INSERT INTO notifications (kind, title, message) VALUES ('ANNOUNCEMENT', $1, $2), ('ANNOUNCEMENT', 'Evening departure', 'All buses leave the campus at 4.30 PM.')`,
+      [WELCOME_TITLE, WELCOME_TEXT],
     );
+  } else {
+    // The first release's welcome notice promised a paid plan that no longer exists.
+    await db.query(`UPDATE notifications SET message = $1 WHERE title = $2 AND message LIKE '%subscription%'`, [WELCOME_TEXT, WELCOME_TITLE]);
   }
 
   const { rows: students } = await db.query(`SELECT count(*)::int AS n FROM users WHERE role = 'student'`);

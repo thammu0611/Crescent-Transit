@@ -7,10 +7,16 @@
 // "Did you board Bus 118 at Velachery?", and reminded every 10 minutes
 // (config.boardingCheck.remindEveryMinutes) until they answer.
 //
+// On the DOWN run everyone boards at the college, so every student of the
+// route is asked once, when the bus leaves the campus. A DOWN record closes at
+// the student's own stop as the bus goes past it.
+//
 // A "Yes" is an attendance record (method STOP). A question the student
 // answers some other way - the phone's own prompt, the bus QR code, the
 // driver's list - closes by itself.
+import { busLabel } from '../shared/institution.js';
 import { inWindows } from '../shared/colocation.js';
+import { DOWN, travelOrder } from '../shared/direction.js';
 import { haversineMeters } from '../shared/geo.js';
 import { HttpError } from './auth.js';
 import { localMinutes } from './clock.js';
@@ -19,15 +25,16 @@ import { localMinutes } from './clock.js';
 const SETTLED_SQL = `(a.answered_at IS NOT NULL OR a.method <> 'GPS')`;
 
 export class BoardingCheckService {
-  constructor(db, config, { tracking, attendance, io = null, push = null }) {
+  constructor(db, config, { tracking, attendance, calendar = null, io = null, push = null }) {
     this.db = db;
     this.config = config;
     this.settings = config.boardingCheck;
     this.tracking = tracking;
     this.attendance = attendance;
+    this.calendar = calendar;
     this.io = io;
     this.push = push;
-    this.trips = new Map(); // tripId -> { done: highest stop seq already asked about, fromCampus }
+    this.trips = new Map(); // tripId -> how many stops of the run have been dealt with
 
     tracking.on('fix', (snap) => this.onBusFix(snap));
     tracking.on('tripEnded', ({ tripId }) => this.trips.delete(tripId));
@@ -41,57 +48,45 @@ export class BoardingCheckService {
   // ---- Detecting departures from the bus GPS ------------------------------------
 
   /**
-   * Where this trip stands. After a restart the first stop the trip reached
-   * tells its direction again: a run that starts at the campus (the evening
-   * run home) has no boarding at the students' own stops.
-   */
-  async tripState(tripId, lastSeq) {
-    let st = this.trips.get(tripId);
-    if (!st) {
-      const { rows } = await this.db.query(
-        'SELECT stop_seq FROM stop_arrivals WHERE trip_id = $1 ORDER BY arrived_at, stop_seq LIMIT 1',
-        [tripId],
-      );
-      st = { done: 0, fromCampus: rows[0]?.stop_seq === lastSeq };
-      this.trips.set(tripId, st);
-    }
-    return st;
-  }
-
-  /**
    * Every accepted bus fix (after the stop arrival is recorded). A stop is
    * left once the bus has reached a later stop, or is departRadiusM past it.
    * Stops the bus skipped without a fix nearby count as left too.
    */
   async onBusFix(snap, now = Date.now()) {
-    if (!this.settings.enabled) return;
-    const reached = this.tracking.lastArrivedSeq.get(snap.tripId);
-    const stops = this.tracking.stopsByRoute.get(snap.routeId) ?? [];
-    if (!reached || stops.length < 2) return;
-    const lastSeq = stops.at(-1).seq;
-    const st = await this.tripState(snap.tripId, lastSeq);
-    if (st.fromCampus) return;
+    if (!this.settings.enabled || (await this.calendar?.isPaused(now))) return;
+    const reachedSeq = this.tracking.lastArrivedSeq.get(snap.tripId);
+    const stops = travelOrder(this.tracking.stopsByRoute.get(snap.routeId) ?? [], snap.direction);
+    const reached = stops.findIndex((s) => s.seq === reachedSeq);
+    if (reached < 0 || stops.length < 2) return;
 
-    const stop = stops.find((s) => s.seq === reached);
-    const left = !stop || haversineMeters(stop, snap) >= this.settings.departRadiusM;
-    const upTo = left ? reached : Math.max(0, ...stops.filter((s) => s.seq < reached).map((s) => s.seq));
-    if (upTo <= st.done) return;
-    const from = st.done;
-    st.done = upTo;
-    await this.askStudents(snap, from, upTo, lastSeq, now);
+    const left = haversineMeters(stops[reached], snap) >= this.settings.departRadiusM ? reached + 1 : reached;
+    const done = this.trips.get(snap.tripId) ?? 0;
+    if (left <= done) return;
+    this.trips.set(snap.tripId, left);
+    const passed = stops.slice(done, left);
+    if (snap.direction === DOWN) {
+      if (done === 0) await this.askStudents(snap, stops.slice(1), stops[0], now);
+      await this.attendance.alightPassed(snap.tripId, passed.map((s) => s.seq), new Date(now));
+    } else {
+      // Nobody boards at the campus, the run's last stop.
+      await this.askStudents(snap, passed.filter((s) => s !== stops.at(-1)), null, now);
+    }
   }
 
-  /** Ask every student whose saved stop the bus has just left (seq in (from, upTo]). */
-  async askStudents(snap, from, upTo, lastSeq, now = Date.now()) {
+  /**
+   * Ask every student whose saved stop is one of `homeStops`. `boardedAt` is the
+   * stop they boarded at when that is not their own: the campus, on the DOWN run.
+   */
+  async askStudents(snap, homeStops, boardedAt, now = Date.now()) {
+    if (!homeStops.length) return 0;
     // Students already recorded on this trip (phone prompt, QR, driver) are not asked.
-    // Nobody boards at the campus, the route's last stop.
     const { rows } = await this.db.query(
       `SELECT u.id, u.travel_windows, s.id AS stop_id
          FROM users u JOIN stops s ON s.route_id = u.home_route_id AND s.seq = u.home_stop_seq
         WHERE u.role = 'student' AND u.status = 'active' AND u.boarding_reminders
-          AND u.home_route_id = $1 AND u.home_stop_seq > $2 AND u.home_stop_seq <= $3 AND u.home_stop_seq < $4
-          AND NOT EXISTS (SELECT 1 FROM attendance a WHERE a.user_id = u.id AND a.trip_id = $5)`,
-      [snap.routeId, from, upTo, lastSeq, snap.tripId],
+          AND u.home_route_id = $1 AND u.home_stop_seq = ANY($2::int[])
+          AND NOT EXISTS (SELECT 1 FROM attendance a WHERE a.user_id = u.id AND a.trip_id = $3)`,
+      [snap.routeId, homeStops.map((s) => s.seq), snap.tripId],
     );
     const minutes = localMinutes(new Date(now), this.config.timeZone);
     let asked = 0;
@@ -102,7 +97,7 @@ export class BoardingCheckService {
         `INSERT INTO boarding_checks (user_id, trip_id, bus_id, stop_id, departed_at, last_sent_at)
          VALUES ($1, $2, $3, $4, $5, $5)
          ON CONFLICT (user_id, trip_id) DO NOTHING RETURNING check_id`,
-        [u.id, snap.tripId, snap.busId, u.stop_id, new Date(now)],
+        [u.id, snap.tripId, snap.busId, boardedAt?.id ?? u.stop_id, new Date(now)],
       );
       if (!created[0]) continue;
       await this.send(created[0].check_id, { reminder: false });
@@ -115,7 +110,7 @@ export class BoardingCheckService {
 
   async load(checkId) {
     const { rows } = await this.db.query(
-      `SELECT c.*, b.fleet_code, r.code AS route_code, r.name AS route_name, s.name AS stop_name, t.status AS trip_status
+      `SELECT c.*, b.fleet_code, r.code AS route_code, r.name AS route_name, s.name AS stop_name, t.status AS trip_status, t.direction
          FROM boarding_checks c
          JOIN buses b ON b.id = c.bus_id
          JOIN trips t ON t.id = c.trip_id
@@ -132,6 +127,7 @@ export class BoardingCheckService {
     return {
       checkId: c.check_id,
       tripId: c.trip_id,
+      direction: c.direction,
       busId: c.bus_id,
       fleetCode: c.fleet_code,
       routeCode: c.route_code,
@@ -152,7 +148,7 @@ export class BoardingCheckService {
     if (!c) return;
     const p = this.payload(c);
     this.io?.to(`user:${c.user_id}`).emit('boarding:check', { ...p, reminder });
-    const bus = p.fleetCode.replace('BSACIST-', 'Bus ');
+    const bus = busLabel(p.fleetCode);
     this.push?.toUser(c.user_id, {
       title: reminder ? `Reminder: did you board ${bus}?` : `Did you board ${bus}?`,
       body: `${p.stopName ? `${p.stopName} · ` : ''}Route ${p.routeCode} · tap to answer`,
@@ -169,8 +165,11 @@ export class BoardingCheckService {
   async answer(auth, checkId, answer, now = Date.now()) {
     if (answer !== 'YES' && answer !== 'NO') throw new HttpError(400, "answer must be 'YES' or 'NO'");
     const c = (await this.db.query(
-      `SELECT c.*, t.status AS trip_status, t.ended_at AS trip_ended_at
-         FROM boarding_checks c JOIN trips t ON t.id = c.trip_id
+      `SELECT c.*, t.status AS trip_status, t.ended_at AS trip_ended_at, t.direction, home.id AS home_stop_id
+         FROM boarding_checks c
+         JOIN trips t ON t.id = c.trip_id
+         JOIN users u ON u.id = c.user_id
+         LEFT JOIN stops home ON home.route_id = t.route_id AND home.seq = u.home_stop_seq
         WHERE c.check_id = $1 AND c.user_id = $2`,
       [checkId, auth.userId],
     )).rows[0];
@@ -197,10 +196,10 @@ export class BoardingCheckService {
     if (answer === 'YES' && !existing) {
       const ended = c.trip_status !== 'active';
       const { rows } = await this.db.query(
-        `INSERT INTO attendance (user_id, trip_id, bus_id, status, method, boarded_at, boarding_stop_id, prompted_at, answered_at, alighted_at)
-         VALUES ($1, $2, $3, $4, 'STOP', $5, $6, $7, $8, $9)
+        `INSERT INTO attendance (user_id, trip_id, bus_id, status, method, boarded_at, boarding_stop_id, prompted_at, answered_at, alighted_at, alighting_stop_id)
+         VALUES ($1, $2, $3, $4, 'STOP', $5, $6, $7, $8, $9, $10)
          ON CONFLICT (user_id, trip_id) DO NOTHING RETURNING *`,
-        [auth.userId, c.trip_id, c.bus_id, ended ? 'COMPLETED' : 'CONFIRMED', c.departed_at, c.stop_id, c.created_at, new Date(now), ended ? c.trip_ended_at : null],
+        [auth.userId, c.trip_id, c.bus_id, ended ? 'COMPLETED' : 'CONFIRMED', c.departed_at, c.stop_id, c.created_at, new Date(now), ended ? c.trip_ended_at : null, ended && c.direction === DOWN ? c.home_stop_id : null],
       );
       if (rows[0]) {
         existing = rows[0];

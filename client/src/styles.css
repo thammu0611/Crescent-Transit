@@ -409,20 +409,26 @@ details.panel summary { cursor: pointer; color: var(--navy); font-weight: 600; }
 .stops li.mine { color: var(--navy); font-weight: 700; background: var(--red-50); border-radius: 6px; }
 
 /* Map markers */
-.bus-marker {
-  position: relative; width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center;
-  color: #fff; font-weight: 700; font-size: 12px; font-family: var(--display);
-  border: 3px solid #fff; box-shadow: 0 4px 12px rgba(20, 37, 72, 0.35);
+.bus-pin { position: relative; width: 84px; height: 44px; display: flex; justify-content: center; align-items: flex-start; }
+.bus-pin-body {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px 0 4px; border-radius: 999px;
+  background: #142548; color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.92); box-shadow: 0 6px 14px rgba(20, 37, 72, 0.38);
+  font-family: var(--display); font-size: 13px; font-weight: 700; line-height: 1; white-space: nowrap; transition: transform 0.16s ease;
 }
-.bus-marker.live { background: var(--live); }
-.bus-marker.delayed { background: var(--delayed); }
-.bus-marker.offline { background: var(--offline); opacity: 0.85; }
-.bus-marker.selected { outline: 3px solid var(--gold); outline-offset: 2px; }
-.bus-marker.live::after { content: ''; position: absolute; inset: -3px; border-radius: 16px; border: 3px solid var(--live); animation: pulse 1.8s ease-out infinite; }
-.bus-arrow { position: absolute; inset: -13px; pointer-events: none; }
-.bus-arrow::before { content: ''; position: absolute; left: 50%; top: 0; transform: translateX(-50%); border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 10px solid var(--navy); }
+.bus-pin-body::after { content: ''; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 10px; margin-left: -5px; background: #142548; border-right: 1.5px solid rgba(255, 255, 255, 0.92); border-bottom: 1.5px solid rgba(255, 255, 255, 0.92); border-bottom-right-radius: 3px; transform: rotate(45deg); }
+.bus-pin-disc { width: 23px; height: 23px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #2f9e4a; }
+.bus-pin.delayed .bus-pin-disc { background: #b9832a; }
+.bus-pin.offline .bus-pin-disc { background: #6e7686; }
+.bus-pin.offline { opacity: 0.88; }
+.bus-pin-arrow { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 10px solid #fff; }
+.bus-pin:hover .bus-pin-body { transform: translateY(-1px) scale(1.04); }
+.bus-pin.selected .bus-pin-body { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(247, 188, 49, 0.55), 0 8px 18px rgba(20, 37, 72, 0.42); }
+.bus-pin.selected .bus-pin-body::after { border-color: var(--gold); }
+.bus-pin.live::after { content: ''; position: absolute; left: 50%; bottom: -3px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: rgba(47, 158, 74, 0.55); animation: pulse 1.8s ease-out infinite; }
+.campus-pin { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.campus-pin i { width: 12px; height: 12px; border-radius: 50%; background: var(--gold); border: 2.5px solid #142548; box-shadow: 0 0 0 1.5px #fff; }
+.campus-pin b { padding: 3px 8px; border-radius: 7px; background: #142548; color: #fff; font-size: 10.5px; font-weight: 700; letter-spacing: 0.7px; line-height: 1.2; box-shadow: 0 3px 8px rgba(20, 37, 72, 0.3); }
 @keyframes pulse { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.6); opacity: 0; } }
-.campus-marker { background: var(--navy); color: var(--gold); font-weight: 700; font-size: 12px; letter-spacing: 0.6px; border-radius: 8px; padding: 4px 8px; text-align: center; border: 2px solid var(--gold); box-shadow: 0 3px 8px rgba(0,0,0,0.3); font-family: var(--display); }
 .stop-pin { width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: var(--gold); font-size: 11px; font-weight: 700; display: grid; place-items: center; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
 .map.adding { cursor: crosshair; }
 

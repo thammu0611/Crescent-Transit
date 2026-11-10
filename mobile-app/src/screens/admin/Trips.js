@@ -1,23 +1,25 @@
 import Slider from '@react-native-community/slider';
 import { useEffect, useMemo, useState } from 'react';
-import { Linking, Modal, Pressable, View } from 'react-native';
+import { Linking, Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Block, Chips, DetailModal, Figure, duration } from '../../components/adminkit.js';
+import { DetailModal, Figure, duration } from '../../components/adminkit.js';
 import Icon from '../../components/Icon.js';
 import { Dot, MapBox, Polyline, ll } from '../../components/maps';
 import {
-  Avatar, Badge, Button, confirm, DataList, DateField, Empty, ErrorText, ItemCard, KV, LinkButton, Notice, PageHead, Panel,
-  RouteCode, Row, Screen, SearchBox, SectionTitle, Segmented, Select, Stat, StatGrid, Text, TextField, Txt,
+  Avatar, Badge, Button, confirm, DangerDialog, DataList, DateField, Empty, ErrorText, ItemCard, KV, ListCard, Notice, Panel,
+  RouteCode, Row, Screen, SearchBox, Segmented, Select, Sheet, Skeleton, Stat, StatGrid, Text, Txt, useTabBarSpace,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
 import { STATUS_TEXT, date, dateTime, daysAgo, isoDay, thisMonth, time } from '../../lib/format.js';
 import { useAction, useAsync, useRefresh } from '../../lib/hooks.js';
+import { DIRECTION_TEXT } from '../../lib/rules.js';
 import { useSession } from '../../lib/session.js';
-import { C, F, G, shadow } from '../../theme.js';
+import { C, F, R, shadow } from '../../theme.js';
 
 const TRIP_TONE = { active: 'live', scheduled: 'delayed', completed: 'offline', cancelled: 'danger' };
 const TRIP_TEXT = { active: 'Running', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
 const tripWhen = (t) => (t.status === 'scheduled' ? t.scheduled_for : t.started_at);
+const RUN = { UP: 'Inbound', DOWN: 'Outbound' };
 
 /** Trip replay with a time scrubber, play/pause and 1x/4x/16x (doc B.8). */
 function Replay({ path }) {
@@ -54,7 +56,7 @@ function Replay({ path }) {
   );
 }
 
-function TripDetail({ token, trip, onClose }) {
+function TripDetail({ token, trip, onClose, onAct }) {
   const [tab, setTab] = useState('register');
   const reg = useAsync(() => api(`/api/trips/${trip.id}/attendance`, { token }), [trip.id]);
   const path = useAsync(() => (tab === 'replay' ? api(`/api/trips/${trip.id}/path`, { token }) : Promise.resolve(null)), [tab, trip.id]);
@@ -63,9 +65,16 @@ function TripDetail({ token, trip, onClose }) {
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
         <Screen>
           <Row>
-            <Txt bold style={{ flex: 1, fontSize: 18 }}>Trip #{trip.id} · route {trip.route_code} · {trip.fleet_code}</Txt>
+            <Txt bold style={{ flex: 1, fontSize: 18 }}>Trip #{trip.id} · route {trip.route_code} · {trip.fleet_code} · {DIRECTION_TEXT[trip.direction]}</Txt>
             <Button small variant="ghost" title="Close" onPress={onClose} />
           </Row>
+          {onAct && ['scheduled', 'active'].includes(trip.status) ? (
+            <Row gap={10}>
+              {trip.status === 'scheduled' ? <Button small title="Start" icon="play" onPress={() => onAct('start')} style={{ flex: 1 }} /> : null}
+              {trip.status === 'active' ? <Button small title="End trip" variant="ghost" icon="stop" onPress={() => onAct('end')} style={{ flex: 1 }} /> : null}
+              <Button small title="Cancel trip" variant="danger" onPress={() => onAct('cancel')} style={{ flex: 1 }} />
+            </Row>
+          ) : null}
           <Segmented value={tab} onChange={setTab} options={[{ value: 'register', label: 'Register' }, { value: 'replay', label: 'Replay' }]} />
           {tab === 'register' ? (
             <>
@@ -92,6 +101,50 @@ function TripDetail({ token, trip, onClose }) {
   );
 }
 
+/** The trip's status as a chip: running, completed with a tick, cancelled, scheduled, or flagged. */
+function TripChip({ t }) {
+  if (t.status === 'completed') {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, minHeight: 26, borderRadius: 13, backgroundColor: C.live50 }}>
+        <Icon name="tick" size={12} color={C.live} strokeWidth={2.6} />
+        <Text style={{ color: C.live, fontSize: 12.5, ...F[600] }}>Completed</Text>
+      </View>
+    );
+  }
+  return <Badge style={{ alignSelf: 'center' }} tone={TRIP_TONE[t.status] === 'danger' ? 'offline' : TRIP_TONE[t.status]}>{TRIP_TEXT[t.status] ?? t.status}</Badge>;
+}
+
+/** One trip in the list: a checkbox, the route tile, what and when, and its status. */
+function TripCard({ t, selected, onToggle, onPress }) {
+  const when = tripWhen(t);
+  const sub = t.status === 'scheduled'
+    ? `${RUN[t.direction] ?? 'By time'} · planned ${time(when)} · ${t.fleet_code}`
+    : `${RUN[t.direction] ?? ''} · ${time(t.started_at)} · ${t.status === 'cancelled' && !t.ended_at ? 'not started' : duration(t.started_at, t.ended_at ?? new Date())} · ${t.attendance} rider${t.attendance === 1 ? '' : 's'}`;
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`Route ${t.route_code} ${t.route_name}, ${TRIP_TEXT[t.status]}`}
+      style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 14, backgroundColor: selected ? C.navy50 : C.card, borderRadius: R.lg, borderWidth: 1, borderColor: selected ? C.navy : C.line2 }, pressed && { opacity: 0.85 }]}>
+      <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected }} accessibilityLabel={`Select trip ${t.id}`} onPress={onToggle} hitSlop={10}
+        style={{ width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: selected ? C.navyFill : C.faint, backgroundColor: selected ? C.navyFill : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+        {selected ? <Icon name="check" size={14} color="#fff" strokeWidth={3} /> : null}
+      </Pressable>
+      <View style={{ minWidth: 44, height: 32, paddingHorizontal: 7, borderRadius: 10, backgroundColor: C.navyFill, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: '#fff', fontSize: 14, ...F.displayBold }}>{t.route_code}</Text>
+      </View>
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        <Text style={{ fontSize: 15.5, lineHeight: 20, ...F[700], color: C.ink }} numberOfLines={1}>{t.route_name}</Text>
+        <Txt small muted numberOfLines={2}>{sub}</Txt>
+        {t.flagged ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Icon name="alert" size={12} color={C.danger} />
+            <Text style={{ fontSize: 12, ...F[600], color: C.danger }} numberOfLines={1}>{String(t.flag_reason ?? 'Flagged').replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase())}</Text>
+          </View>
+        ) : null}
+      </View>
+      <TripChip t={t} />
+    </Pressable>
+  );
+}
+
 /** One trip as a row: route, bus, start-end, duration, status and riders. */
 function TripRow({ t, onPress, showDriver }) {
   const when = tripWhen(t);
@@ -100,7 +153,7 @@ function TripRow({ t, onPress, showDriver }) {
       <RouteCode code={t.route_code} />
       <View style={{ flex: 1, gap: 2 }}>
         <Txt bold numberOfLines={1}>{t.route_name}</Txt>
-        <Txt small muted numberOfLines={1}>{t.fleet_code}{showDriver ? ` · ${t.driver_name ?? 'No driver'}` : ''}{t.started_by === 'tracker' ? ' · GPS tracker' : ''}</Txt>
+        <Txt small muted numberOfLines={1}>{DIRECTION_TEXT[t.direction]} · {t.fleet_code}{showDriver ? ` · ${t.driver_name ?? 'No driver'}` : ''}{t.started_by === 'tracker' ? ' · GPS tracker' : ''}</Txt>
         <Row gap={6}>
           <Icon name="clock" size={12} color={C.faint} />
           <Txt small muted style={{ fontVariant: ['tabular-nums'] }}>
@@ -159,9 +212,10 @@ function DriverTrips({ token, driver, onClose }) {
   const trips = useAsync(() => api(`/api/admin/trips?driver=${driver.id}`, { token }), [driver.id, token]);
   const [status, setStatus] = useState('');
   const [period, setPeriod] = useState('all');
+  const [run, setRun] = useState('');
   const [open, setOpen] = useState(null);
   const all = trips.data ?? [];
-  const inRange = all.filter((t) => inPeriod(t, period));
+  const inRange = all.filter((t) => inPeriod(t, period) && (!run || t.direction === run));
   const shown = inRange.filter((t) => !status || t.status === status);
   const done = inRange.filter((t) => t.status === 'completed' && t.ended_at);
   const avg = done.length ? done.reduce((n, t) => n + (new Date(t.ended_at) - new Date(t.started_at)), 0) / done.length : null;
@@ -195,20 +249,23 @@ function DriverTrips({ token, driver, onClose }) {
         </Row>
       </View>
 
-      <View style={{ gap: 10 }}>
-        <Chips value={period} onChange={setPeriod} options={PERIODS} />
-        <Chips
+      <Row gap={8}>
+        <Select style={{ flex: 1 }} label="Period" value={period} onChange={setPeriod} options={PERIODS} />
+        <Select style={{ flex: 1 }} label="Direction" value={run} onChange={setRun} options={[{ value: '', label: 'Both' }, { value: 'UP', label: 'Inbound' }, { value: 'DOWN', label: 'Outbound' }]} />
+        <Select
+          style={{ flex: 1 }}
+          label="Status"
           value={status}
           onChange={setStatus}
           options={[
-            { value: '', label: 'All', count: inRange.length },
-            { value: 'completed', label: 'Completed', count: count('completed') },
-            { value: 'active', label: 'Running', count: count('active') },
-            { value: 'scheduled', label: 'Scheduled', count: count('scheduled') },
-            { value: 'cancelled', label: 'Cancelled', count: count('cancelled') },
+            { value: '', label: `All (${inRange.length})` },
+            { value: 'completed', label: `Completed (${count('completed')})` },
+            { value: 'active', label: `Running (${count('active')})` },
+            { value: 'scheduled', label: `Scheduled (${count('scheduled')})` },
+            { value: 'cancelled', label: `Cancelled (${count('cancelled')})` },
           ]}
         />
-      </View>
+      </Row>
       <ErrorText>{trips.error?.message}</ErrorText>
       {trips.data == null ? <DataList rows={null} render={() => null} /> : <TripsByDate trips={shown} onOpen={setOpen} />}
       {open && <TripDetail token={token} trip={open} onClose={() => setOpen(null)} />}
@@ -238,25 +295,20 @@ function DriversTab({ token, drivers, onOpen }) {
           rows={shown}
           empty="No drivers match."
           render={(d) => (
-            <Pressable onPress={() => onOpen(d)} accessibilityRole="button" style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassEdge, borderLeftWidth: d.on_trip ? 4 : 1, borderLeftColor: d.on_trip ? C.live : C.glassEdge }, pressed && { opacity: 0.8 }]}>
-              <View>
-                <Avatar name={d.full_name} size={46} />
-                {d.on_trip ? <View style={{ position: 'absolute', right: 0, bottom: 0, width: 13, height: 13, borderRadius: 7, backgroundColor: C.live, borderWidth: 2, borderColor: '#fff' }} /> : null}
-              </View>
-              <View style={{ flex: 1, gap: 3 }}>
-                <Txt bold numberOfLines={1}>{d.full_name}</Txt>
-                <Row gap={6}>
-                  <Icon name="bus" size={13} color={d.fleet_code ? C.navy : C.faint} />
-                  <Txt small muted numberOfLines={1} style={{ flex: 1 }}>{d.fleet_code ? `${d.fleet_code}${d.route_code ? ` · Route ${d.route_code}` : ''}` : 'No bus assigned'}</Txt>
-                </Row>
-                <Txt small muted>{d.last_trip ? `Last trip ${dateTime(d.last_trip)}` : 'No trips yet'}</Txt>
-              </View>
-              <View style={{ alignItems: 'center', minWidth: 52, paddingVertical: 6, paddingHorizontal: 8, borderRadius: 12, backgroundColor: C.navy50 }}>
-                <Text style={{ fontSize: 20, ...F.display, color: C.navy, fontVariant: ['tabular-nums'] }}>{d.trips_total ?? 0}</Text>
-                <Text style={{ fontSize: 10, ...F[600], color: C.muted, letterSpacing: 0.5 }}>TRIPS</Text>
-              </View>
-              <Icon name="arrow" size={16} color={C.faint} />
-            </Pressable>
+            <ListCard
+              onPress={() => onOpen(d)}
+              tone={d.on_trip ? 'live' : undefined}
+              lead={(
+                <View>
+                  <Avatar name={d.full_name} size={46} />
+                  {d.on_trip ? <View style={{ position: 'absolute', right: 0, bottom: 0, width: 13, height: 13, borderRadius: 7, backgroundColor: C.live, borderWidth: 2, borderColor: '#fff' }} /> : null}
+                </View>
+              )}
+              title={d.full_name}
+              lines={[d.fleet_code ? `${d.fleet_code}${d.route_code ? ` · Route ${d.route_code}` : ''}` : 'No bus assigned', d.last_trip ? `Last trip ${dateTime(d.last_trip)}` : 'No trips yet']}
+              count={d.trips_total ?? 0}
+              countLabel="TRIPS"
+            />
           )}
         />
       </Panel>
@@ -264,93 +316,179 @@ function DriversTab({ token, drivers, onOpen }) {
   );
 }
 
+const STATUS_CHIPS = [['active', 'Running'], ['completed', 'Completed'], ['cancelled', 'Cancelled']];
+const isToday = (iso) => iso && new Date(iso).toDateString() === new Date().toDateString();
+
 export default function Trips() {
   const { token } = useSession();
-  const [tab, setTab] = useState('drivers');
-  const [filter, setFilter] = useState({ status: '', route: '', date: '' });
-  const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v)).toString();
-  const trips = useAsync(() => (tab === 'trips' ? api(`/api/admin/trips${q ? `?${q}` : ''}`, { token }) : Promise.resolve(null)), [tab, q, token]);
+  const tabSpace = useTabBarSpace();
+  const [tab, setTab] = useState('trips');
+  const [status, setStatus] = useState('');
+  const [today, setToday] = useState(false);
+  const [query, setQuery] = useState('');
+  const [picked, setPicked] = useState([]);
+  const [ask, setAsk] = useState(null); // 'end' | 'cancel' for the selected trips
+  const trips = useAsync(() => (tab !== 'drivers' ? api('/api/admin/trips', { token }) : Promise.resolve(null)), [tab, token]);
   const drivers = useAsync(() => api('/api/admin/drivers', { token }), [token]);
   const buses = useAsync(() => api('/api/admin/buses', { token }), [token]);
   const [schedule, setSchedule] = useState({ fleetCode: '', when: '' });
+  const [scheduling, setScheduling] = useState(false);
   const [detail, setDetail] = useState(null);
   const [driver, setDriver] = useState(null);
   const a = useAction();
   const { refreshing, onRefresh } = useRefresh(trips, buses, drivers);
 
+  const all = trips.data ?? [];
+  const q = query.trim().toLowerCase();
+  const base = tab === 'scheduled' ? all.filter((t) => t.status === 'scheduled') : all;
+  const shown = base
+    .filter((t) => (tab === 'scheduled' || !status || t.status === status) && (!today || isToday(tripWhen(t))))
+    .filter((t) => !q || [t.route_code, t.route_name, t.fleet_code, t.driver_name].some((v) => v && String(v).toLowerCase().includes(q)))
+    .sort((x, y) => (isToday(tripWhen(y)) - isToday(tripWhen(x))) || (new Date(tripWhen(y)) - new Date(tripWhen(x))));
+  const running = all.filter((t) => t.status === 'active').length;
+  const chosen = all.filter((t) => picked.includes(t.id));
+  const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  useEffect(() => { setPicked([]); }, [tab]);
+
   const act = async (trip, what) => {
     if (what !== 'start' && !(await confirm(`${what === 'end' ? 'End' : 'Cancel'} trip #${trip.id}?`, '', what === 'end' ? 'End trip' : 'Cancel trip', true))) return;
     a.run(() => api(`/api/admin/trips/${trip.id}/${what}`, { token, method: 'POST', body: {} }), `Trip #${trip.id}: ${what}`).then(() => { trips.reload(); drivers.reload(); });
   };
-
+  const bulk = async (what) => {
+    const list = chosen.filter((t) => (what === 'end' ? t.status === 'active' : ['active', 'scheduled'].includes(t.status)));
+    const ok = await a.run(async () => {
+      for (const t of list) await api(`/api/admin/trips/${t.id}/${what}`, { token, method: 'POST', body: {} });
+      return true;
+    }, `${list.length} trip${list.length === 1 ? '' : 's'} ${what === 'end' ? 'ended' : 'cancelled'}.`);
+    setAsk(null);
+    if (ok) setPicked([]);
+    trips.reload();
+    drivers.reload();
+  };
   const scheduleTrip = () => {
     if (!schedule.fleetCode || !schedule.when) return a.setError('Choose a bus and a time.');
-    a.run(() => api('/api/admin/trips', { token, body: { fleetCode: schedule.fleetCode, scheduledFor: new Date(schedule.when).toISOString() } }), "Trip scheduled. The driver's Start Trip will run it.").then(trips.reload);
+    a.run(() => api('/api/admin/trips', { token, body: { fleetCode: schedule.fleetCode, scheduledFor: new Date(schedule.when).toISOString(), direction: schedule.direction || undefined } }), "Trip scheduled. The driver's Start Trip will run it.")
+      .then((r) => { if (r) setScheduling(false); trips.reload(); });
+  };
+
+  const endable = chosen.filter((t) => t.status === 'active').length;
+  const cancellable = chosen.filter((t) => ['active', 'scheduled'].includes(t.status));
+  const routesText = (list) => {
+    const codes = [...new Set(list.map((t) => t.route_code))];
+    return codes.length <= 2 ? `Routes ${codes.join(' and ')}` : `${codes.length} routes`;
   };
 
   return (
-    <Screen safeTop refreshing={refreshing} onRefresh={onRefresh}>
-      <PageHead icon="clock" colors={G.navy} eyebrow="Transport office" title="Trips" subtitle="Drivers and their trip history, every trip on the network, and scheduling." />
-      <Segmented value={tab} onChange={setTab} options={[{ value: 'drivers', label: 'Drivers' }, { value: 'trips', label: 'All trips' }, { value: 'schedule', label: 'Schedule' }]} />
-      <Notice>{a.message}</Notice>
-      <ErrorText>{a.error}</ErrorText>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <Screen safeTop refreshing={refreshing} onRefresh={onRefresh} contentStyle={picked.length ? { paddingBottom: 100 } : null}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <Text accessibilityRole="header" style={{ fontSize: 28, lineHeight: 34, ...F.displayBold, color: C.ink }}>Trips</Text>
+          <Button title="Schedule trip" icon="plus" onPress={() => { a.setError(null); setScheduling(true); }} style={{ minHeight: 44, paddingHorizontal: 16 }} />
+        </View>
+        <Segmented value={tab} onChange={setTab} options={[{ value: 'drivers', label: 'Drivers' }, { value: 'trips', label: 'All trips' }, { value: 'scheduled', label: 'Scheduled' }]} />
+        <Notice>{a.message}</Notice>
+        <ErrorText>{a.error}</ErrorText>
 
-      {tab === 'drivers' && <DriversTab token={token} drivers={drivers} onOpen={setDriver} />}
+        {tab === 'drivers' && <DriversTab token={token} drivers={drivers} onOpen={setDriver} />}
 
-      {tab === 'trips' && (
-        <>
-          <Block title="Filters">
-            <Select
-              label="Status"
-              value={filter.status}
-              onChange={(v) => setFilter((f) => ({ ...f, status: v }))}
-              options={[{ value: '', label: 'All statuses' }, { value: 'active', label: 'Running' }, { value: 'scheduled', label: 'Scheduled' }, { value: 'completed', label: 'Completed' }, { value: 'cancelled', label: 'Cancelled' }]}
-            />
-            <Row gap={10} style={{ alignItems: 'flex-start' }}>
-              <TextField label="Route code" value={filter.route} onChangeText={(v) => setFilter((f) => ({ ...f, route: v }))} placeholder="e.g. 118" style={{ flex: 1 }} autoCapitalize="characters" />
-              <View style={{ flex: 1 }}><DateField label="Date" value={filter.date} onChange={(v) => setFilter((f) => ({ ...f, date: v }))} clearable /></View>
-            </Row>
-          </Block>
-          <SectionTitle title={`Trips (${trips.data?.length ?? '…'})`} />
-          <ErrorText>{trips.error?.message}</ErrorText>
-          <DataList
-            rows={trips.data}
-            empty="No trips match these filters."
-            render={(t) => (
-              <View style={{ gap: 6 }}>
-                <TripRow t={t} showDriver onPress={() => setDetail(t)} />
-                {['scheduled', 'active'].includes(t.status) ? (
-                  <Row gap={12} style={{ paddingHorizontal: 6 }}>
-                    <Txt small muted style={{ flex: 1 }}>{`#${t.id} · ${dateTime(tripWhen(t))}`}</Txt>
-                    {t.status === 'scheduled' && <LinkButton title="Start" onPress={() => act(t, 'start')} />}
-                    {t.status === 'active' && <LinkButton title="End" onPress={() => act(t, 'end')} />}
-                    <LinkButton danger title="Cancel" onPress={() => act(t, 'cancel')} />
-                  </Row>
-                ) : null}
+        {tab !== 'drivers' && (
+          <>
+            <SearchBox value={query} onChange={setQuery} placeholder="Route, bus or driver" />
+            {tab === 'trips' ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 16 }} style={{ marginRight: -16 }}>
+                {STATUS_CHIPS.map(([k, label]) => {
+                  const on = status === k;
+                  return (
+                    <Pressable key={k} accessibilityRole="button" accessibilityState={{ selected: on }} onPress={() => setStatus(on ? '' : k)}
+                      style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: on ? C.navy : C.line, backgroundColor: on ? C.navy50 : 'transparent', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 14, ...F[600], color: on ? C.navy : C.ink }}>{label}{k === 'active' ? ` ${running}` : ''}</Text>
+                    </Pressable>
+                  );
+                })}
+                <Pressable accessibilityRole="button" accessibilityState={{ selected: today }} onPress={() => setToday((x) => !x)}
+                  style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: today ? C.navy : C.line, backgroundColor: today ? C.navy50 : 'transparent', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 14, ...F[600], color: today ? C.navy : C.ink }}>Today</Text>
+                </Pressable>
+              </ScrollView>
+            ) : null}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Txt muted>{trips.data ? `${shown.length} trip${shown.length === 1 ? '' : 's'} · today first` : 'Loading trips…'}</Txt>
+              {shown.length ? (
+                <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setPicked(picked.length ? [] : shown.filter((t) => ['active', 'scheduled'].includes(t.status)).map((t) => t.id))} style={{ minHeight: 36, justifyContent: 'center' }}>
+                  <Text style={{ color: C.link, fontSize: 15, ...F[600] }}>{picked.length ? 'Clear' : 'Select'}</Text>
+                </Pressable>
+              ) : null}
+            </View>
+            {trips.error ? (
+              <View style={{ alignItems: 'center', gap: 10, paddingVertical: 24 }}>
+                <ErrorText>{trips.error.message}</ErrorText>
+                <Button title="Try again" variant="ghost" icon="refresh" onPress={trips.reload} />
+              </View>
+            ) : trips.data == null ? (
+              <View style={{ gap: 10 }}><Skeleton height={76} /><Skeleton height={76} /><Skeleton height={76} /></View>
+            ) : shown.length === 0 ? (
+              <Empty icon="clock">{tab === 'scheduled' ? 'No trips are scheduled.' : 'No trips match these filters.'}</Empty>
+            ) : (
+              <View style={{ gap: 10 }}>
+                {shown.slice(0, 200).map((t) => (
+                  <TripCard key={t.id} t={t} selected={picked.includes(t.id)} onToggle={() => toggle(t.id)} onPress={() => setDetail(t)} />
+                ))}
               </View>
             )}
-          />
-        </>
-      )}
+          </>
+        )}
+      </Screen>
 
-      {tab === 'schedule' && (
-        <Panel title="Schedule a trip" icon="clock">
-          <Txt muted small>The trip appears in the driver's app; their Start Trip runs it.</Txt>
-          <Select
-            label="Bus"
-            value={schedule.fleetCode}
-            onChange={(v) => setSchedule((x) => ({ ...x, fleetCode: v }))}
-            placeholder="Choose a bus"
-            searchable
-            options={(buses.data ?? []).filter((b) => b.route_code && b.driver_name).map((b) => ({ value: b.fleet_code, label: `${b.fleet_code} · route ${b.route_code} · ${b.driver_name}` }))}
-          />
-          <DateField label="When" mode="datetime" value={schedule.when} onChange={(v) => setSchedule((x) => ({ ...x, when: v }))} />
-          <Button title="Schedule trip" icon="plus" busy={a.busy} onPress={scheduleTrip} />
-        </Panel>
-      )}
+      {/* Bulk actions for the selected trips. */}
+      {picked.length ? (
+        <View style={{ position: 'absolute', left: 14, right: 14, bottom: tabSpace + 4, flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, paddingLeft: 16, borderRadius: 22, backgroundColor: C.surface, borderWidth: 1, borderColor: C.line2, ...shadow }}>
+          <Text style={{ flex: 1, fontSize: 15, ...F[700], color: C.ink }}>{picked.length} selected</Text>
+          <Button small title="End trips" variant="ghost" disabled={!endable} onPress={() => setAsk('end')} />
+          <Pressable accessibilityRole="button" disabled={!cancellable.length} onPress={() => setAsk('cancel')}
+            style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: C.dark ? 'rgba(248,113,113,0.45)' : 'rgba(220,38,38,0.35)', backgroundColor: C.raised, justifyContent: 'center', opacity: cancellable.length ? 1 : 0.45 }}>
+            <Text style={{ color: C.danger, fontSize: 14, ...F[600] }}>Cancel trips</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
-      {detail && <TripDetail token={token} trip={detail} onClose={() => setDetail(null)} />}
+      {ask === 'cancel' ? (
+        <DangerDialog
+          title={`Cancel ${cancellable.length} ${cancellable.every((t) => t.status === 'active') ? 'running ' : ''}trip${cancellable.length === 1 ? '' : 's'}?`}
+          message={`${routesText(cancellable)} stop sharing location and students get a cancellation alert. Attendance already recorded stays saved. You can't undo this.`}
+          keepLabel="Keep trips" okLabel={`Cancel ${cancellable.length} trip${cancellable.length === 1 ? '' : 's'}`} busy={a.busy}
+          onKeep={() => setAsk(null)} onOk={() => bulk('cancel')} />
+      ) : null}
+      {ask === 'end' ? (
+        <DangerDialog
+          title={`End ${endable} running trip${endable === 1 ? '' : 's'}?`}
+          message={`${routesText(chosen.filter((t) => t.status === 'active'))} stop sharing location now. Attendance already recorded stays saved.`}
+          keepLabel="Keep running" okLabel={`End ${endable} trip${endable === 1 ? '' : 's'}`} busy={a.busy}
+          onKeep={() => setAsk(null)} onOk={() => bulk('end')} />
+      ) : null}
+
+      {scheduling ? (
+        <Sheet title="Schedule a trip" onClose={() => setScheduling(false)}>
+          <View style={{ gap: 12 }}>
+            <Txt muted small>The trip appears in the driver's app; their Start Trip runs it.</Txt>
+            <Select
+              label="Bus"
+              value={schedule.fleetCode}
+              onChange={(v) => setSchedule((x) => ({ ...x, fleetCode: v }))}
+              placeholder="Choose a bus"
+              searchable
+              options={(buses.data ?? []).filter((b) => b.route_code && b.driver_name).map((b) => ({ value: b.fleet_code, label: `${b.fleet_code} · route ${b.route_code} · ${b.driver_name}` }))}
+            />
+            <DateField label="When" mode="datetime" value={schedule.when} onChange={(v) => setSchedule((x) => ({ ...x, when: v }))} />
+            <Txt bold>Direction</Txt>
+            <Segmented value={schedule.direction ?? ''} onChange={(v) => setSchedule((x) => ({ ...x, direction: v }))} options={[{ value: '', label: 'By time' }, { value: 'UP', label: 'Inbound' }, { value: 'DOWN', label: 'Outbound' }]} />
+            <ErrorText>{a.error}</ErrorText>
+            <Button title="Schedule trip" icon="plus" busy={a.busy} onPress={scheduleTrip} />
+          </View>
+        </Sheet>
+      ) : null}
+
+      {detail && <TripDetail token={token} trip={detail} onClose={() => setDetail(null)} onAct={(w) => { act(detail, w); setDetail(null); }} />}
       {driver && <DriverTrips token={token} driver={driver} onClose={() => setDriver(null)} />}
-    </Screen>
+    </View>
   );
 }

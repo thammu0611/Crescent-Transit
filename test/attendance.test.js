@@ -295,10 +295,58 @@ test('moving the account to another phone needs a one-time code', async () => {
   assert.equal(ok.body.moved, true);
 });
 
+test('asking again keeps the same code, so it still works while being typed', async () => {
+  const s = await t.rider('118');
+  const bind = (extra = {}) => t.call('/api/devices/bind', { token: s.token, body: { deviceId: 'second-phone-1', platform: 'ANDROID', ...extra } });
+  const first = await bind();
+  assert.ok(first.body.devOtp);
+  for (let i = 0; i < 3; i += 1) {
+    const again = await bind();
+    assert.equal(again.status, 409);
+    assert.equal(again.body.code, 'OTP_REQUIRED');
+    assert.equal(again.body.devOtp, undefined, 'no new code');
+  }
+  assert.equal((await bind({ resend: true })).status, 429, 'a new code has to wait');
+  await t.db.query(`UPDATE device_otps SET sent_at = now() - interval '2 minutes' WHERE device_uid = 'second-phone-1'`);
+  const fresh = await bind({ resend: true });
+  assert.ok(fresh.body.devOtp);
+
+  assert.equal((await bind({ otp: fresh.body.devOtp })).body.moved, true);
+});
+
+test('the code goes to the student by email, and never into a live log', async () => {
+  const s = await t.rider('118');
+  const sent = [];
+  const logged = [];
+  const realLog = console.log;
+  console.log = (...a) => logged.push(a.join(' '));
+  t.attendance.mailer = { configured: true, send: async (m) => { sent.push(m); return true; } };
+  t.config.otp.showInResponse = false;
+  try {
+    const bind = () => t.call('/api/devices/bind', { token: s.token, body: { deviceId: 'emailed-phone-1', platform: 'ANDROID' } });
+    const first = await bind();
+    await bind();
+    await bind();
+    assert.equal(sent.length, 1, 'one email, however often the app asks');
+    assert.equal(sent[0].to, `${s.username}@test.edu`);
+    assert.match(first.body.emailedTo, /@test\.edu$/);
+    assert.ok(!first.body.emailedTo.startsWith(s.username), 'the address is masked');
+    assert.equal(first.body.devOtp, undefined);
+    const code = /code is (\d{6})/.exec(sent[0].text)[1];
+    assert.ok(!logged.some((l) => l.includes(code)), 'not in the log');
+    const ok = await t.call('/api/devices/bind', { token: s.token, body: { deviceId: 'emailed-phone-1', platform: 'ANDROID', otp: code } });
+    assert.equal(ok.body.moved, true);
+  } finally {
+    console.log = realLog;
+    t.attendance.mailer = null;
+    t.config.otp.showInResponse = true;
+  }
+});
+
 test('registers, exports and precision/recall against a manual register', async () => {
   const admin = await t.login('admin');
   const csv = await t.call('/api/reports/attendance?format=csv', { token: admin });
-  assert.match(csv.body.toString(), /^date,trip_id,route,bus,username/);
+  assert.match(csv.body.toString(), /^date,trip_id,direction,route,bus,username/);
   const byStudent = (await t.call('/api/reports/attendance?group=student', { token: admin })).body;
   assert.ok(byStudent.length >= 3);
 

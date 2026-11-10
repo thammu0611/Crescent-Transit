@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from './Icon.jsx';
+import { DIRECTION_TEXT } from '../../../shared/direction.js';
+import { useT } from '../lib/i18n.js';
 
 export function Page({ title, subtitle, actions, children, wide, eyebrow }) {
+  const t = useT();
   return (
     <main className={`page${wide ? ' wide' : ''}`}>
       <header className="page-head">
         <div>
-          {eyebrow && <span className="eyebrow">{eyebrow}</span>}
-          <h1>{title}</h1>
+          {eyebrow && <span className="eyebrow">{t(eyebrow)}</span>}
+          <h1>{t(title)}</h1>
           {subtitle && <p className="page-sub">{subtitle}</p>}
         </div>
         {actions && <div className="btn-row">{actions}</div>}
@@ -17,13 +21,19 @@ export function Page({ title, subtitle, actions, children, wide, eyebrow }) {
   );
 }
 
-export function Panel({ title, actions, children, className = '', icon }) {
+export function Panel({ title, actions, children, className = '', icon, summary, badge }) {
+  const t = useT();
   return (
     <section className={`panel ${className}`}>
       {(title || actions) && (
         <div className="panel-row panel-head">
-          {title && <h3>{icon && <Icon name={icon} size={17} className="panel-icon" />}{title}</h3>}
-          {actions && <div className="btn-row">{actions}</div>}
+          {title && (
+            <h3>
+              {icon && <Icon name={icon} size={17} className="panel-icon" />}
+              <span className="panel-title-text">{t(title)}{summary && <small>{summary}</small>}</span>
+            </h3>
+          )}
+          {(badge || actions) && <div className="btn-row">{badge}{actions}</div>}
         </div>
       )}
       {children}
@@ -31,17 +41,45 @@ export function Panel({ title, actions, children, className = '', icon }) {
   );
 }
 
+/**
+ * One record in a list of cards: a lead (avatar, route code or icon), title and lines,
+ * an optional count pill, and an arrow when it opens something.
+ */
+export function ListCard({ lead, title, lines = [], count, countLabel, side, tone, onClick, href }) {
+  const Tag = href ? 'a' : onClick ? 'button' : 'div';
+  const props = href ? { href } : onClick ? { type: 'button', onClick } : {};
+  return (
+    <Tag {...props} className={`kit-row${tone ? ` is-${tone}` : ''}`}>
+      {lead}
+      <span className="kit-row-main">
+        <b>{title}</b>
+        {lines.filter(Boolean).map((l, i) => <small key={i}>{l}</small>)}
+      </span>
+      {side && <span className="kit-row-side">{side}</span>}
+      {count != null && <span className="kit-count"><b className="tabular">{count}</b><small>{countLabel}</small></span>}
+      {(href || onClick) && <Icon name="arrow" size={16} className="kit-chevron" />}
+    </Tag>
+  );
+}
+
 export function Stat({ label, value, tone, hint, icon }) {
+  const t = useT();
   return (
     <div className={`stat ${tone ?? ''}${icon ? ' with-icon' : ''}`} title={hint}>
       {icon && <span className="stat-icon"><Icon name={icon} size={18} /></span>}
       <b>{value ?? '—'}</b>
-      <span>{label}</span>
+      <span>{t(label)}</span>
     </div>
   );
 }
 
 export const Badge = ({ tone = 'offline', children }) => <span className={`badge ${tone}`}>{children}</span>;
+
+/** Which run of the route: UP (to college) or DOWN (from college). */
+export function DirectionBadge({ direction }) {
+  const t = useT();
+  return direction ? <Badge tone={direction === 'DOWN' ? 'offline' : 'info'}>{t(DIRECTION_TEXT[direction])}</Badge> : null;
+}
 
 export const ErrorText = ({ children }) => (children ? <p className="error" role="alert">{children}</p> : null);
 export const Notice = ({ children }) => (children ? <p className="notice" role="status">{children}</p> : null);
@@ -65,6 +103,7 @@ function SkeletonRows({ columns, count = 4 }) {
  * Cells do not wrap unless the column says `wrap`; a column keyed 'x' holds row actions.
  */
 export function Table({ columns, rows, empty = 'Nothing to show.', rowKey = (r, i) => r.id ?? i }) {
+  const t = useT();
   const loading = rows == null;
   if (!loading && !rows.length) return <Empty>{empty}</Empty>;
   const cls = (c) => [c.wrap ? 'wrap' : '', c.key === 'x' ? 'actions' : '', c.align === 'right' ? 'num' : ''].filter(Boolean).join(' ') || undefined;
@@ -72,7 +111,7 @@ export function Table({ columns, rows, empty = 'Nothing to show.', rowKey = (r, 
     <div className="table-wrap">
       <table className="table" aria-busy={loading || undefined}>
         <thead>
-          <tr>{columns.map((c) => <th key={c.key} className={cls(c)}>{c.label}</th>)}</tr>
+          <tr>{columns.map((c) => <th key={c.key} className={cls(c)}>{t(c.label)}</th>)}</tr>
         </thead>
         <tbody>
           {loading ? <SkeletonRows columns={columns} /> : rows.map((r, i) => (
@@ -116,53 +155,84 @@ export function Modal({ title, onClose, children, width = 440 }) {
     ref.current?.focus();
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-  return (
+  // Drawn on <body>: inside a glass card (backdrop-filter) a fixed overlay would be
+  // trapped in that card instead of covering the screen.
+  return createPortal(
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
       <div className="modal" role="dialog" aria-modal="true" aria-label={title} style={{ width: `min(${width}px, calc(100vw - 32px))` }} tabIndex={-1} ref={ref}>
         {title && <h2>{title}</h2>}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
 export function Field({ label, children, hint, icon }) {
+  const t = useT();
   return (
     <label className="field">
-      <span>{label}</span>
+      <span>{t(label)}</span>
       {icon ? <span className="control-wrap"><Icon name={icon} size={17} />{children}</span> : children}
       {hint && <small className="hint">{hint}</small>}
     </label>
   );
 }
 
-export function Segmented({ value, onChange, options }) {
+/**
+ * A filter: shows its label and current choice, and opens a list of options
+ * ({ value, label, count }). `resting` is the unfiltered choice; any other
+ * marks the control as set.
+ */
+export function Dropdown({ label, icon, value, onChange, options, resting = options[0].value }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const root = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const outside = (e) => { if (!root.current?.contains(e.target)) setOpen(false); };
+    const escape = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+  const current = options.find((o) => o.value === value) ?? options[0];
   return (
-    <div className="segmented" role="tablist">
-      {options.map((o) => (
-        <button type="button" key={o.value} role="tab" aria-selected={value === o.value} className={value === o.value ? 'on' : ''} onClick={() => onChange(o.value)}>
-          {o.label}
-        </button>
-      ))}
+    <div ref={root} className={`dropdown${open ? ' is-open' : ''}${current.value !== resting ? ' is-set' : ''}`}>
+      <button type="button" className="dropdown-btn" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        {icon && <span className="dropdown-icon"><Icon name={icon} size={16} /></span>}
+        <span className="dropdown-text"><small>{t(label)}</small><b>{t(current.label)}</b></span>
+        <Icon name="down" size={15} className="dropdown-chevron" />
+      </button>
+      {open && (
+        <ul className="dropdown-menu" role="listbox" aria-label={label}>
+          {options.map((o) => (
+            <li key={o.value}>
+              <button type="button" role="option" aria-selected={o.value === value} onClick={() => { onChange(o.value); setOpen(false); }}>
+                <span>{t(o.label)}</span>
+                {o.count != null && <span className="dropdown-count">{o.count}</span>}
+                {o.value === value && <Icon name="check" size={14} />}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-/**
- * A panel that folds away: icon, title and a one-line summary always show;
- * the body opens on click. Keeps secondary sections compact.
- */
-export function FoldPanel({ title, icon, summary, badge, children, initiallyOpen = false }) {
-  const [open, setOpen] = useState(initiallyOpen);
+export function Segmented({ value, onChange, options }) {
+  const t = useT();
   return (
-    <section className={`panel fold kit-fold${open ? ' open' : ''}`}>
-      <button type="button" className="fold-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        {icon && <span className="kit-fold-icon"><Icon name={icon} size={17} /></span>}
-        <span className="kit-fold-text"><b>{title}</b>{summary && <small>{summary}</small>}</span>
-        {badge}
-        <Icon name="down" size={18} className="fold-chevron" />
-      </button>
-      {open && <div className="fold-body">{children}</div>}
-    </section>
+    <div className="segmented" role="tablist">
+      {options.map((o) => (
+        <button type="button" key={o.value} role="tab" aria-selected={value === o.value} className={value === o.value ? 'on' : ''} onClick={() => onChange(o.value)}>
+          {t(o.label)}
+        </button>
+      ))}
+    </div>
   );
 }

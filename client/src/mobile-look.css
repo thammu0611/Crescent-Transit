@@ -312,7 +312,6 @@ a { color: var(--link); }
 
 /* ---- Map chrome ---------------------------------------------------------------------------------- */
 .map-chip { background: rgba(20, 37, 72, 0.82); color: var(--gold); letter-spacing: 0.4px; border: 1px solid var(--hair-gold); }
-.campus-marker { box-shadow: 0 0 0 1.5px var(--gold), 0 6px 16px rgba(20, 37, 72, 0.25); }
 .leaflet-container { background: #f2f2f2; font-family: var(--font); }
 .leaflet-bar a { color: var(--navy); }
 
@@ -375,15 +374,3 @@ a { color: var(--link); }
   .auth-main { justify-content: flex-start; padding-top: 20px; }
 }
 
-/* ---- Collapsible panels (notice board, routes on the home page) -------------------------- */
-.panel.fold { padding: 0; gap: 0; }
-.fold-head {
-  width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px 18px;
-  background: none; border: 0; cursor: pointer; text-align: left; border-radius: inherit;
-}
-.fold-head:hover { background: var(--surface); }
-.fold-head h3 { flex: 1; margin: 0; }
-.fold-count { min-width: 28px; padding: 2px 9px; border-radius: 99px; background: var(--red-50); color: var(--red-600); font: 700 12px var(--display); text-align: center; }
-.fold-chevron { color: var(--muted); transition: transform 0.2s var(--ease); }
-.fold.open .fold-chevron { transform: rotate(180deg); }
-.fold-body { padding: 0 18px 18px; animation: rise-in 0.3s var(--ease) both; }

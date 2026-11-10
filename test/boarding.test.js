@@ -24,10 +24,10 @@ function towards(a, b, meters) {
 }
 
 /** One bus on its route; positions are sent oldest first, a minute apart. */
-async function busOn(routeCode) {
+async function busOn(routeCode, direction) {
   const route = (await t.call(`/api/routes/${routeCode}`)).body;
   const token = await t.login(`drv${routeCode.toLowerCase()}`);
-  const trip = (await t.call('/api/driver/trips', { token, method: 'POST' })).body.trip;
+  const trip = (await t.call('/api/driver/trips', { token, method: 'POST', body: direction ? { direction } : undefined })).body.trip;
   let secs = 540;
   return {
     route,
@@ -201,9 +201,9 @@ test('an unanswered question expires (after 12 hours, or at the nightly run)', a
   assert.deepEqual(await pending(s), []);
 });
 
-test('a run that starts at the campus (the evening run home) asks nobody', async () => {
+test('an UP run that sets off from the campus asks nobody until it reaches a stop', async () => {
   const s = await student('118', 3);
-  const bus = await busOn('118');
+  const bus = await busOn('118', 'UP');
   const last = bus.route.stops.at(-1);
   const before = bus.route.stops.at(-2);
   await bus.fix(last);
@@ -211,6 +211,98 @@ test('a run that starts at the campus (the evening run home) asks nobody', async
   await bus.fix(towards(last, before, 900));
   assert.deepEqual(await pending(s), []);
   await bus.end();
+});
+
+test('the DOWN run: asked once on leaving the campus, and the record closes at their own stop', async () => {
+  const route = (await t.call('/api/routes/127')).body;
+  const [campus, near, next] = route.stops.slice(-3).reverse();
+  const a = await student('127', near.seq);
+  const far = await student('127', next.seq);
+  const bus = await busOn('127', 'DOWN');
+  assert.equal(bus.trip.direction, 'DOWN');
+
+  await bus.fix(campus);
+  assert.deepEqual(await pending(a), [], 'the bus is still at the campus');
+  await bus.fix(towards(campus, near, 250));
+  const [q] = await pending(a);
+  assert.equal(q.direction, 'DOWN');
+  assert.equal(q.stopName, campus.name, 'everyone boards at the college');
+  assert.equal((await pending(far)).length, 1, 'every student of the route, wherever they get off');
+
+  const live = { ...t.tracking.latest.get(q.busId), freshness: 'live' };
+  const eta = t.tracking.estimate(live.routeId, live, near.seq);
+  assert.ok(eta && !eta.passed, 'the stops ahead run backwards on this trip');
+  assert.equal(t.tracking.estimate(live.routeId, live, campus.seq).passed, true, 'the campus is behind the bus');
+
+  const yes = await t.call(`/api/boarding-checks/${q.checkId}/answer`, { token: a.token, body: { answer: 'YES' } });
+  assert.equal(yes.status, 200, JSON.stringify(yes.body));
+  await bus.fix(near);
+  await bus.fix(towards(near, next, 250));
+  const [record] = (await t.call('/api/attendance/me', { token: a.token })).body.records;
+  assert.equal(record.direction, 'DOWN');
+  assert.equal(record.boarding_stop, campus.name);
+  assert.equal(record.alighting_stop, near.name, 'got off at their own stop as the bus passed it');
+  assert.ok(record.alighted_at);
+  assert.equal(record.present, true);
+  await bus.end();
+  const later = await t.call(`/api/boarding-checks/${(await pending(far))[0].checkId}/answer`, { token: far.token, body: { answer: 'YES' } });
+  assert.equal(later.status, 200);
+  const [farRecord] = (await t.call('/api/attendance/me', { token: far.token })).body.records;
+  assert.equal(farRecord.alighting_stop, next.name, 'answered after the trip ended: still their own stop');
+});
+
+test('a student has one record for each run, and the day shows each run on its own', async () => {
+  const route = (await t.call('/api/routes/101')).body;
+  const seq = route.stops[1].seq;
+  const both = await student('101', seq);
+  const oneWay = await student('101', seq);
+  const admin = await t.login('admin');
+  const driver = await t.login('drv101');
+  const run = async (direction, ...riders) => {
+    const r = await t.call('/api/driver/trips', { token: driver, method: 'POST', body: { direction } });
+    assert.equal(r.body.trip.direction, direction);
+    for (const u of riders) {
+      assert.equal((await t.call('/api/attendance/manual', { token: driver, body: { tripId: r.body.trip.id, username: u.username } })).status, 201);
+    }
+    assert.equal((await t.call(`/api/driver/trips/${r.body.trip.id}/end`, { token: driver, method: 'POST' })).status, 200);
+  };
+  await run('UP', both, oneWay);
+  await run('DOWN', both);
+
+  const mine = (await t.call('/api/attendance/me', { token: both.token })).body;
+  assert.equal(mine.upPresent, 1);
+  assert.equal(mine.downPresent, 1);
+  assert.equal(mine.records.length, 2);
+
+  const history = async (u) => {
+    const list = (await t.call('/api/admin/students?route=101', { token: admin })).body;
+    return (await t.call(`/api/admin/students/${list.find((x) => x.username === u.username).id}/attendance`, { token: admin })).body;
+  };
+  const full = await history(both);
+  assert.equal(full.days[0].status, 'PRESENT');
+  assert.equal(full.days[0].up.status, 'PRESENT');
+  assert.equal(full.days[0].down.status, 'PRESENT');
+  assert.equal(full.summary.attendancePct, 100);
+
+  const half = await history(oneWay);
+  assert.equal(half.days[0].status, 'PARTIAL');
+  assert.equal(half.days[0].up.status, 'PRESENT');
+  assert.equal(half.days[0].down.status, 'ABSENT');
+  assert.deepEqual(half.summary.down, { present: 0, absent: 1, pending: 0 });
+  assert.equal(half.summary.attendancePct, 50, 'the percentage counts runs, not days');
+
+  const today = full.days[0].date;
+  const up = (await t.call(`/api/reports/attendance?from=${today}&to=${today}&route=101&direction=UP`, { token: admin })).body;
+  assert.ok(up.length >= 2 && up.every((r) => r.direction === 'UP'));
+});
+
+test('a trip takes its direction from the driver, or the time of day; a bad value is refused', async () => {
+  const token = await t.login('drv118');
+  assert.equal((await t.call('/api/driver/trips', { token, method: 'POST', body: { direction: 'SIDEWAYS' } })).status, 400);
+  assert.equal((await t.call('/api/driver/trip', { token })).body.suggestedDirection, 'UP');
+  t.config.eveningRunFrom = '00:00';
+  assert.equal(t.tracking.defaultDirection(), 'DOWN');
+  t.config.eveningRunFrom = '24:00';
 });
 
 test("a phone that also matched the bus: answering either question settles both", async () => {

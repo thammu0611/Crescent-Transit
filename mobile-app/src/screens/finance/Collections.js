@@ -46,10 +46,11 @@ export default function Collections({ navigation }) {
 
   return (
     <Screen
-      header={<GreetHeader title="Finance office" name={user?.name} right={<HeaderIconButton icon="card" label="Payments" onPress={() => navigation.navigate('Payments')} />} />}
+      safeTop
       refreshing={refreshing}
       onRefresh={onRefresh}
     >
+      <GreetHeader title="Finance office" name={user?.name} right={<HeaderIconButton dark icon="card" label="Payments" onPress={() => navigation.navigate('Payments')} />} />
       <ErrorText>{coll.error?.message ?? error}</ErrorText>
 
       <GradientCard colors={G.emerald}>

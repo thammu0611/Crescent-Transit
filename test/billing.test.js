@@ -229,7 +229,7 @@ test('a suspended account cannot sign in or use its old token', async () => {
   const finance = await t.login('finance');
   assert.equal((await t.call(`/api/finance/users/${s.user.id}/suspend`, { token: finance, body: { reason: 'Unpaid dues' } })).status, 200);
   assert.equal((await t.call('/api/me', { token: s.token })).status, 403);
-  assert.equal((await t.call('/api/auth/login', { body: { username: s.username, password: 'password123' } })).status, 403);
+  assert.equal((await t.call('/api/auth/login', { body: { username: s.username, password: 'Route-pass-123' } })).status, 403);
   await t.call(`/api/finance/users/${s.user.id}/unsuspend`, { token: finance, body: { reason: 'Cleared' } });
   assert.equal((await t.call('/api/me', { token: s.token })).status, 200);
 });

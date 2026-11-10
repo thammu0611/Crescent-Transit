@@ -54,5 +54,5 @@ Revision 2* is implemented, and which test proves it.
   `/api/driver/locations` contract as the phone, and `attendance.method` already
   accepts `BEACON`.
 - Native Android/iOS apps and FCM/APNs push, iOS Live Activities (A.1.7).
-- Snap-to-road, Redis cache and geofenced automatic trip start (A.1.4, A.1.5, B.11).
-- Bilingual interface text (the preference is stored).
+- Snap-to-road and Redis cache (A.1.4, A.1.5, B.11). Trips end at a geofence around the last stop; a GPS tracker starts them when the bus moves off, and a driver using only a phone still presses Start.
+- Tamil for every screen: navigation and the screens students and parents use daily are translated (shared/i18n.js); the staff screens stay in English.

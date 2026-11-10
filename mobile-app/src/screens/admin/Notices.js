@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Linking } from 'react-native';
 import {
-  Badge, Button, DataList, ErrorText, FoldCard, ItemCard, LinkButton, Notice, PageHead, Panel, Row, Screen, Segmented,
+  Badge, Button, DataList, ErrorText, ItemCard, LinkButton, Notice, PageHead, Panel, Row, Screen, Segmented,
   Select, TextField, Txt, usePrompt,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
@@ -11,7 +11,7 @@ import { useSession } from '../../lib/session.js';
 import { G } from '../../theme.js';
 
 const URGENT = ['SOS', 'EMERGENCY', 'BREAKDOWN', 'CAPACITY_BREACH'];
-const LATEST = 5;
+const LATEST = 3;
 const updatedAt = (i) => i.resolved_at ?? i.created_at;
 
 /** Announcements to all or one route, and the incident log (doc 4.1). */
@@ -63,14 +63,13 @@ export default function Notices() {
         <TextField label="Title" value={f.title} onChangeText={set('title')} maxLength={150} />
         <TextField label="Message" value={f.message} onChangeText={set('message')} multiline />
         <Button title="Send" busy={a.busy} onPress={send} />
-        <Txt muted small>Network-wide notices are on the free notice board. Route alerts go to that route's subscribers.</Txt>
+        <Txt muted small>Network-wide notices go on the public notice board. Route alerts go to that route's subscribers.</Txt>
         <Notice>{a.message}</Notice>
         <ErrorText>{a.error}</ErrorText>
       </Panel>
-      <FoldCard
+      <Panel
         icon="alert"
         title="Incidents"
-        initiallyOpen
         summary={sorted == null ? 'Loading…' : sorted.length === 0 ? 'Nothing here' : showAll || sorted.length <= LATEST ? `${sorted.length} incident${sorted.length === 1 ? '' : 's'}` : `${LATEST} most recently updated of ${sorted.length}`}
         badge={sorted?.length ? <Badge tone={status === 'OPEN' ? 'danger' : 'offline'}>{sorted.length}</Badge> : null}
       >
@@ -97,7 +96,7 @@ export default function Notices() {
         {sorted && sorted.length > LATEST ? (
           <Button small variant="ghost" title={showAll ? `Show the ${LATEST} most recent` : `Show all ${sorted.length}`} onPress={() => setShowAll((x) => !x)} />
         ) : null}
-      </FoldCard>
+      </Panel>
     </Screen>
   );
 }

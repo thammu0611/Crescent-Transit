@@ -1,17 +1,19 @@
 // Building blocks shared by the transport office pages (dashboard, trips,
 // attendance, reports): simple charts, filter chips, key figures and a
 // large detail view. Same pieces as the mobile app's components/adminkit.js.
-import { useEffect, useRef } from 'react';
+import { useT } from '../lib/i18n.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from './Icon.jsx';
 import { Empty } from './ui.jsx';
 
 /** Series colours: navy, gold, emerald, crimson, slate, sky. */
-export const SERIES = ['#1c315e', '#f7bc31', '#237a36', '#a02022', '#3e4c57', '#6ec1e4'];
+export const SERIES = ['var(--chart-navy)', '#f7bc31', 'var(--chart-green)', 'var(--chart-red)', 'var(--chart-slate)', '#6ec1e4'];
 
 const compact = (n) => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 
 /** Vertical bars with the value on top and the label underneath. */
-export function ColumnChart({ data, height = 160, color = '#1c315e', highlightLast = true }) {
+export function ColumnChart({ data, height = 160, color = 'var(--chart-navy)', highlightLast = true }) {
   if (data == null) return <div className="skeleton-block" />;
   if (!data.length) return <Empty>No data in this period.</Empty>;
   const max = Math.max(1, ...data.map((d) => d.value));
@@ -23,7 +25,7 @@ export function ColumnChart({ data, height = 160, color = '#1c315e', highlightLa
           <div key={`${d.label}-${i}`} className={`kit-column${on ? ' on' : ''}`}>
             <b className="tabular" style={on ? { color } : undefined}>{compact(d.value)}</b>
             <span className="kit-column-track" style={{ height }}>
-              <i style={{ height: `${Math.max(2, (d.value / max) * 100)}%`, background: on ? color : `${color}55` }} />
+              <i style={{ height: `${Math.max(2, (d.value / max) * 100)}%`, background: on ? color : `color-mix(in srgb, ${color} 33%, transparent)` }} />
             </span>
             <small>{d.label}</small>
           </div>
@@ -43,7 +45,7 @@ export function Donut({ segments, size = 136, thickness = 16, center, caption })
     <div className="kit-donut">
       <div className="kit-donut-ring" style={{ width: size, height: size }}>
         <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
-          <circle cx={size / 2} cy={size / 2} r={r} stroke="#ebebeb" strokeWidth={thickness} fill="none" />
+          <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--line)" strokeWidth={thickness} fill="none" />
           {total > 0 && segments.filter((s) => s.value > 0).map((s) => {
             const len = (s.value / total) * circ;
             const el = <circle key={s.label} cx={size / 2} cy={size / 2} r={r} stroke={s.color} strokeWidth={thickness} fill="none" strokeDasharray={`${len} ${circ - len}`} strokeDashoffset={-offset} />;
@@ -68,7 +70,7 @@ export function Donut({ segments, size = 136, thickness = 16, center, caption })
 }
 
 /** Horizontal bars: label and value on one line, the bar underneath. */
-export function HBars({ rows, label, value, unit = '', color = '#1c315e', max }) {
+export function HBars({ rows, label, value, unit = '', color = 'var(--chart-navy)', max }) {
   if (rows == null) return <div className="skeleton-block" />;
   if (!rows.length) return <Empty>No data in this period.</Empty>;
   const top = max ?? Math.max(1, ...rows.map(value));
@@ -86,11 +88,12 @@ export function HBars({ rows, label, value, unit = '', color = '#1c315e', max })
 
 /** Small pill filters. */
 export function Chips({ value, onChange, options }) {
+  const t = useT();
   return (
     <div className="kit-chips" role="tablist">
       {options.map((o) => (
         <button type="button" key={String(o.value)} role="tab" aria-selected={o.value === value} className={o.value === value ? 'on' : ''} onClick={() => onChange(o.value)}>
-          {o.label}
+          {t(o.label)}
           {o.count != null && <span className="kit-chip-count">{o.count}</span>}
         </button>
       ))}
@@ -100,11 +103,12 @@ export function Chips({ value, onChange, options }) {
 
 /** A white card with a heading, caption and optional actions. */
 export function Block({ title, caption, actions, children, className = '' }) {
+  const t = useT();
   return (
     <section className={`kit-block ${className}`}>
       {(title || actions) && (
         <header className="kit-block-head">
-          <div>{title && <h3>{title}</h3>}{caption && <p>{caption}</p>}</div>
+          <div>{title && <h3>{t(title)}</h3>}{caption && <p>{caption}</p>}</div>
           {actions && <div className="btn-row">{actions}</div>}
         </header>
       )}
@@ -115,7 +119,8 @@ export function Block({ title, caption, actions, children, className = '' }) {
 
 /** A key figure: value over label. */
 export function Figure({ value, label }) {
-  return <div className="kit-figure"><b className="tabular">{value ?? '—'}</b><span>{label}</span></div>;
+  const t = useT();
+  return <div className="kit-figure"><b className="tabular">{value ?? '—'}</b><span>{t(label)}</span></div>;
 }
 
 /** Initials in a circle. */
@@ -125,7 +130,7 @@ export function Avatar({ name = '', size = 44 }) {
 }
 
 /** A large panel over the page, for drill-downs (driver history, a bus, a student). */
-export function DetailView({ title, subtitle, onClose, children }) {
+export function DetailView({ title, subtitle, onClose, children, actions }) {
   const ref = useRef(null);
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose?.();
@@ -133,16 +138,46 @@ export function DetailView({ title, subtitle, onClose, children }) {
     ref.current?.focus();
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-  return (
+  // On <body>, so no glass card around it can trap the full-screen view.
+  return createPortal(
     <div className="modal-backdrop kit-detail-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
       <div className="kit-detail" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
         <header className="kit-detail-head">
           <button type="button" className="kit-back" onClick={onClose} aria-label="Back"><Icon name="back" size={18} /></button>
-          <div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>
+          <div className="kit-detail-title"><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>
+          {actions}
         </header>
         <div className="kit-detail-body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * A compact card for one section of a page: icon, title and a one-line summary.
+ * Its contents open in their own full view, like a driver or a student does.
+ * `actions` go in that view's header, for instance a search box.
+ */
+export function ViewCard({ title: name, icon, summary, badge, actions, children, className = '' }) {
+  const t = useT();
+  const title = t(name);
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  return (
+    <>
+      <button type="button" className="panel kit-view-card" onClick={() => setOpen(true)}>
+        {icon && <span className="kit-fold-icon"><Icon name={icon} size={17} /></span>}
+        <span className="kit-view-text"><b>{title}</b>{summary && <small>{summary}</small>}</span>
+        {badge}
+        <Icon name="arrow" size={16} className="kit-chevron" />
+      </button>
+      {open && (
+        <DetailView title={title} subtitle={summary} onClose={close} actions={actions}>
+          <section className={`panel ${className}`}>{children}</section>
+        </DetailView>
+      )}
+    </>
   );
 }
 

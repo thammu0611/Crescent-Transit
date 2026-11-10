@@ -46,7 +46,7 @@ export default function RouteMiniMap({ route, buses = [], highlightSeq, labels =
       >
         <BaseTiles className="soft-tiles" />
         <Fit points={points} />
-        {stops.length > 0 && <Polyline positions={stops.map((s) => [s.lat, s.lng])} pathOptions={{ color: '#454e70', weight: 4, opacity: 0.85 }} />}
+        {stops.length > 0 && <Polyline positions={stops.map((s) => [s.lat, s.lng])} pathOptions={{ color: 'var(--chart-navy)', weight: 4, opacity: 0.85 }} />}
         {stops.map((s) => (
           <CircleMarker
             key={s.seq}

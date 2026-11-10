@@ -5,6 +5,7 @@
 // minutes at first, replaced per segment by the learned average from recorded
 // stop arrivals once enough trips exist. The result is always a band
 // ("7-11 min"), never a single minute (Appendix A.1.3).
+import { DOWN, UP, travelOrder } from './direction.js';
 import { haversineMeters } from './geo.js';
 
 /** Project a point onto the stop polyline: which segment it is on and how far along. */
@@ -60,6 +61,11 @@ export function timetableSegmentMinutes(stops) {
  *          { minutes, low, high, remainingM, stopsRemaining, method, confidence, arrivalAt }
  */
 export function estimateArrival(stops, bus, targetSeq, segmentMinutes = null, options = {}) {
+  // The evening run travels the stops backwards, and so its segments.
+  if ((options.direction ?? bus?.direction) === DOWN) {
+    const minutes = segmentMinutes ? [...segmentMinutes].slice(0, stops.length - 1).reverse() : null;
+    return estimateArrival(travelOrder(stops, DOWN), bus, targetSeq, minutes, { ...options, direction: UP });
+  }
   const { defaultSpeedKmh = 20, now = Date.now() } = options;
   const targetIndex = stops.findIndex((s) => s.seq === targetSeq);
   if (targetIndex < 0 || !bus || bus.freshness === 'offline') return null;

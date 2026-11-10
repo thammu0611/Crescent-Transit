@@ -7,8 +7,8 @@ import { useAsync } from '../../lib/useAsync.js';
 import { useLive } from '../../lib/useLive.js';
 import Icon from '../../components/Icon.jsx';
 import RouteMiniMap from '../../components/RouteMiniMap.jsx';
-import { Block, ColumnChart, Donut, Figure, HBars, SERIES, dayLabel } from '../../components/adminkit.jsx';
-import { Badge, FoldPanel, Segmented, Stat } from '../../components/ui.jsx';
+import { Block, ColumnChart, Donut, Figure, HBars, SERIES, ViewCard, dayLabel } from '../../components/adminkit.jsx';
+import { Badge, Empty, ListCard, SearchBox, Segmented, Stat } from '../../components/ui.jsx';
 
 // The four shortcuts, each in its own colour from the site's palette.
 const SHORTCUTS = [
@@ -18,30 +18,31 @@ const SHORTCUTS = [
   ['#/notices', 'bell', 'Announce', 'Post an alert to riders', 'red'],
 ];
 
-const URGENT = ['SOS', 'EMERGENCY', 'BREAKDOWN', 'CAPACITY_BREACH'];
 const titleCase = (k) => k.replaceAll('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
 const ACTIVITY = {
-  trip_started: { icon: 'arrow', color: '#237a36', text: (a) => `Trip started · route ${a.route_code}`, sub: (a) => `${a.fleet_code}${a.who ? ` · ${a.who}` : ''}` },
-  trip_ended: { icon: 'check', color: '#1c315e', text: (a) => `Trip completed · route ${a.route_code}`, sub: (a) => `${a.fleet_code}${a.who ? ` · ${a.who}` : ''}` },
-  incident: { icon: 'alert', color: '#a02022', text: (a) => titleCase(a.who ?? 'Incident'), sub: (a) => [a.fleet_code ?? (a.route_code && `route ${a.route_code}`), a.detail].filter(Boolean).join(' · ') || 'No details given' },
+  trip_started: { icon: 'arrow', color: 'var(--chart-green)', text: (a) => `Trip started · route ${a.route_code}`, sub: (a) => `${a.fleet_code}${a.who ? ` · ${a.who}` : ''}` },
+  trip_ended: { icon: 'check', color: 'var(--chart-navy)', text: (a) => `Trip completed · route ${a.route_code}`, sub: (a) => `${a.fleet_code}${a.who ? ` · ${a.who}` : ''}` },
+  incident: { icon: 'alert', color: 'var(--chart-red)', text: (a) => titleCase(a.who ?? 'Incident'), sub: (a) => [a.fleet_code ?? (a.route_code && `route ${a.route_code}`), a.detail].filter(Boolean).join(' · ') || 'No details given' },
 };
 
-/** The transport office's home: fleet now, today's figures, trends and what needs attention. */
+/** The transport office's home: fleet now, today's figures, trends, trips running and recent activity. */
 export default function Dashboard() {
   const { token } = useSession();
   const kpis = useAsync(() => api('/api/admin/kpis', { token }), [token]);
   const overview = useAsync(() => api('/api/admin/overview?days=7', { token }), [token]);
-  const incidents = useAsync(() => api('/api/admin/incidents?status=OPEN', { token }), [token]);
   const trips = useAsync(() => api('/api/admin/trips?status=active', { token }), [token]);
+  const quality = useAsync(() => api('/api/admin/service-quality', { token }), [token]);
   const { buses, ready } = useLive(token, null, true);
   const [trend, setTrend] = useState('present');
+  const [tripQuery, setTripQuery] = useState('');
+  const [activityQuery, setActivityQuery] = useState('');
 
   useEffect(() => {
     const id = setInterval(() => { kpis.reload(); trips.reload(); }, 15000);
     const slow = setInterval(() => overview.reload(), 60000);
     const socket = getSocket(token);
-    const onIncident = () => { incidents.reload(); kpis.reload(); overview.reload(); };
+    const onIncident = () => { kpis.reload(); overview.reload(); };
     socket.on('incident', onIncident);
     return () => { clearInterval(id); clearInterval(slow); socket.off('incident', onIncident); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,9 +53,13 @@ export default function Dashboard() {
   const tot = o?.totals ?? {};
   const counts = buses.reduce((c, b) => ({ ...c, [b.freshness]: (c[b.freshness] ?? 0) + 1 }), {});
   const idle = Math.max(0, (tot.buses_active ?? 0) - buses.length);
-  const open = incidents.data ?? null;
   const series = o?.series?.map((d) => ({ label: dayLabel(d.date), value: d[trend] }));
   const weekTotal = o?.series?.reduce((n, d) => n + d[trend], 0);
+  const has = (needle, values) => !needle || values.some((v) => v && String(v).toLowerCase().includes(needle));
+  const tripNeedle = tripQuery.trim().toLowerCase();
+  const shownTrips = trips.data?.filter((t) => has(tripNeedle, [t.route_code, t.route_name, t.fleet_code, t.driver_name]));
+  const activityNeedle = activityQuery.trim().toLowerCase();
+  const shownActivity = o?.activity.filter((a) => has(activityNeedle, [ACTIVITY[a.kind].text(a), ACTIVITY[a.kind].sub(a)]));
 
   return (
     <main className="page app-page wide-app">
@@ -96,10 +101,12 @@ export default function Dashboard() {
 
           <div className="kit-stack">
             <div className="kit-stats two">
-              <Stat icon="users" label="Students present" value={k.presentToday} tone="live" />
+              <Stat icon="users" label="Present today · Inbound / Outbound" value={`${k.presentUpToday} / ${k.presentDownToday}`} tone="live" />
               <Stat icon="card" label="Active passes" value={tot.subscribers} />
               <Stat icon="alert" label="Open incidents" value={k.openIncidents} tone={k.openIncidents ? 'danger' : ''} />
               <Stat icon="check" label="Awaiting review" value={k.awaitingReview} tone={k.awaitingReview ? 'delayed' : ''} />
+              <Stat icon="sparkle" label="Trip rating, 30 days" value={quality.data ? (quality.data.rating == null ? '—' : `${quality.data.rating} / 5`) : null} tone="live" />
+              <Stat icon="alert" label="Open complaints" value={quality.data?.open_complaints} tone={quality.data?.open_complaints ? 'danger' : ''} />
             </div>
           </div>
         </div>
@@ -120,7 +127,7 @@ export default function Dashboard() {
             caption={weekTotal == null ? ' ' : `${weekTotal} ${trend === 'present' ? 'students boarded' : 'trips run'} this week`}
             actions={<Segmented value={trend} onChange={setTrend} options={[{ value: 'present', label: 'Riders' }, { value: 'trips', label: 'Trips' }]} />}
           >
-            <ColumnChart data={series} color={trend === 'present' ? '#1c315e' : '#237a36'} />
+            <ColumnChart data={series} color={trend === 'present' ? 'var(--chart-navy)' : 'var(--chart-green)'} />
           </Block>
           <Block title="Fleet status" caption="Buses on trip by signal, and active buses waiting" actions={<a className="btn ghost inline" href="#/map"><Icon name="map" size={14} />Fleet map</a>}>
             {ready && o ? (
@@ -128,7 +135,7 @@ export default function Dashboard() {
                 caption="buses"
                 center={tot.buses_active ?? buses.length}
                 segments={[
-                  { label: 'Live', value: counts.live ?? 0, color: '#237a36' },
+                  { label: 'Live', value: counts.live ?? 0, color: 'var(--chart-green)' },
                   { label: 'Delayed signal', value: counts.delayed ?? 0, color: '#b9832a' },
                   { label: 'Offline', value: counts.offline ?? 0, color: '#8b909b' },
                   { label: 'Not on trip', value: idle, color: '#d9dee8' },
@@ -168,78 +175,54 @@ export default function Dashboard() {
         </div>
 
         <div className="kit-grid-2 top">
-          <section className="soft-card">
-            <div className="soft-card-head">
-              <h3><Icon name="bus" size={17} /> Trips running now</h3>
-              <a href="#/trips">All trips</a>
-            </div>
-            {trips.data == null ? <div className="skeleton-block short" /> : trips.data.length === 0 ? <p className="muted">No trips running.</p> : (
-              <ul className="trip-list">
-                {trips.data.map((t) => (
-                  <li key={t.id}>
-                    <span className="route-code">{t.route_code}</span>
-                    <span className="trip-main"><b>{t.route_name}</b><small>{t.fleet_code} · {t.driver_name ?? 'No driver'} · since {time(t.started_at)}</small></span>
-                    {t.flagged && <Badge tone="danger">{t.flag_reason}</Badge>}
-                    <span className="trip-riders"><b className="tabular">{t.attendance}</b><small>riders</small></span>
-                  </li>
+          <ViewCard
+            icon="bus"
+            title="Trips running now"
+            summary={trips.data == null ? 'Loading…' : trips.data.length === 0 ? 'No trips running' : `${trips.data.length} trip${trips.data.length === 1 ? '' : 's'} · ${trips.data.reduce((n, t) => n + (Number(t.attendance) || 0), 0)} riders on board`}
+            badge={trips.data?.some((t) => t.flagged) ? <Badge tone="danger">Flagged</Badge> : null}
+            actions={<SearchBox value={tripQuery} onChange={setTripQuery} placeholder="Search route, bus or driver" />}
+          >
+            {shownTrips == null ? <div className="skeleton-block short" /> : shownTrips.length === 0 ? <Empty>{tripNeedle ? 'No trips match.' : 'No trips running.'}</Empty> : (
+              <div className="kit-list cols-2">
+                {shownTrips.map((t) => (
+                  <ListCard
+                    key={t.id}
+                    href="#/trips"
+                    tone={t.flagged ? 'alert' : 'live'}
+                    lead={<span className="route-code">{t.route_code}</span>}
+                    title={t.route_name}
+                    lines={[`${t.fleet_code} · ${t.driver_name ?? 'No driver'}`, t.flagged ? t.flag_reason : `Since ${time(t.started_at)}`]}
+                    count={t.attendance}
+                    countLabel="RIDERS"
+                  />
                 ))}
-              </ul>
+              </div>
             )}
-          </section>
+          </ViewCard>
 
-          <div className="kit-stack">
-            <FoldPanel
-              icon="alert"
-              title="Needs attention"
-              summary={open == null ? 'Loading…' : open.length === 0 && !k.awaitingReview ? 'All quiet on the fleet' : [k.awaitingReview ? `${k.awaitingReview} to review` : null, open.length ? `${open.length} open incident${open.length === 1 ? '' : 's'}` : null].filter(Boolean).join(' · ')}
-              badge={open && (open.length + (k.awaitingReview ? 1 : 0)) > 0 ? <Badge tone="danger">{open.length + (k.awaitingReview ?? 0)}</Badge> : null}
-            >
-              {open == null ? <div className="skeleton-block short" /> : open.length === 0 && !k.awaitingReview ? (
-                <p className="muted">Nothing needs attention. All quiet on the fleet.</p>
-              ) : (
-                <ul className="feed">
-                  {k.awaitingReview > 0 && (
-                    <li className="hot">
-                      <span className="feed-icon"><Icon name="check" size={15} /></span>
-                      <span><b>{k.awaitingReview} attendance record{k.awaitingReview === 1 ? '' : 's'} to review</b><small>Provisional records and disputes need a decision.</small><a className="feed-link" href="#/attendance">Review now →</a></span>
-                    </li>
-                  )}
-                  {open.slice(0, 5).map((i) => (
-                    <li key={i.id} className={URGENT.includes(i.kind) ? 'urgent' : 'warn'}>
-                      <span className="feed-icon"><Icon name={i.kind === 'SOS' ? 'phone' : 'alert'} size={15} /></span>
-                      <span>
-                        <b>{titleCase(i.kind)}{i.fleet_code ? ` · ${i.fleet_code}` : i.route_code ? ` · route ${i.route_code}` : ''}</b>
-                        <small>{i.message ?? 'No details given.'}</small>
-                        <time>{i.source}{i.username ? ` ${i.username}` : ''} · {dateTime(i.created_at)}</time>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <a className="link" href="#/notices">See all alerts and incidents →</a>
-            </FoldPanel>
-
-            <FoldPanel
-              icon="list"
-              title="Recent activity"
-              summary={o == null ? 'Loading…' : o.activity.length ? `${ACTIVITY[o.activity[0].kind].text(o.activity[0])} · ${dateTime(o.activity[0].at)}` : 'No activity yet'}
-            >
-              {o == null ? <div className="skeleton-block short" /> : o.activity.length === 0 ? <p className="muted">No activity yet.</p> : (
-                <ul className="kit-timeline">
-                  {o.activity.map((a, idx) => {
-                    const kind = ACTIVITY[a.kind];
-                    return (
-                      <li key={`${a.kind}-${a.at}-${idx}`}>
-                        <span className="kit-timeline-icon" style={{ background: `${kind.color}1f`, color: kind.color }}><Icon name={kind.icon} size={14} /></span>
-                        <span><b>{kind.text(a)}</b><small>{kind.sub(a)}</small></span>
-                        <time>{dateTime(a.at)}</time>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </FoldPanel>
-          </div>
+          <ViewCard
+            icon="list"
+            title="Recent activity"
+            summary={o == null ? 'Loading…' : o.activity.length ? `${ACTIVITY[o.activity[0].kind].text(o.activity[0])} · ${dateTime(o.activity[0].at)}` : 'No activity yet'}
+            actions={<SearchBox value={activityQuery} onChange={setActivityQuery} placeholder="Search route, bus or person" />}
+          >
+            {shownActivity == null ? <div className="skeleton-block short" /> : shownActivity.length === 0 ? <Empty>{activityNeedle ? 'No activity matches.' : 'No activity yet.'}</Empty> : (
+              <div className="kit-list cols-2">
+                {shownActivity.map((a, idx) => {
+                  const kind = ACTIVITY[a.kind];
+                  return (
+                    <ListCard
+                      key={`${a.kind}-${a.at}-${idx}`}
+                      href={a.kind === 'incident' ? '#/notices' : '#/trips'}
+                      lead={<span className="kit-row-icon" style={{ background: `color-mix(in srgb, ${kind.color} 12%, transparent)`, color: kind.color }}><Icon name={kind.icon} size={18} /></span>}
+                      title={kind.text(a)}
+                      lines={[kind.sub(a), dateTime(a.at)]}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </ViewCard>
         </div>
       </div>
     </main>

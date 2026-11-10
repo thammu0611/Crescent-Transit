@@ -1,17 +1,37 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Switch, View } from 'react-native';
+import { Linking, Pressable, Switch, View } from 'react-native';
+import { ViewCard } from '../../components/adminkit.js';
 import { ChangePasswordSheet } from '../../components/ChangePassword.js';
 import Icon from '../../components/Icon.js';
 import {
-  Avatar, Badge, Button, Collapsible, confirm, ErrorText, FoldCard, IconBubble, KV, Notice, PageHead, Panel, Screen, SectionTitle, Select, Text, TextField, Txt,
+  Avatar, Badge, Button, Collapsible, confirm, ErrorText, IconBubble, KV, Notice, PageHead, Screen, SectionTitle, Select, Text, TextField, Txt,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
 import { useAsync } from '../../lib/hooks.js';
 import { notificationsAvailable, pushRegistered, registerForPush } from '../../lib/notify.js';
 import { refreshPlan } from '../../lib/sampler.js';
+import Appearance from '../../components/Appearance.js';
+import YourData from '../../components/YourData.js';
 import { useSession } from '../../lib/session.js';
 import { C, F, G, R, shadow } from '../../theme.js';
 import { call } from '../PublicHome.js';
+
+// Bus fees are paid on the university's DigiiCampus portal. Fee status and
+// sign-in checks need API access from Digii; until then the app links there.
+const DIGIICAMPUS_URL = 'https://crescent.digiicampus.com/';
+
+/** The bus fee: paid on DigiiCampus, where the student also sees its status. */
+function BusFee() {
+  return (
+    <ViewCard icon="wallet" title="Bus fee" summary="Pay and check status on DigiiCampus">
+      <View style={{ gap: 10 }}>
+        <Txt muted small>Pay your bus fee and check whether it is paid on DigiiCampus, the university's student portal. Sign in there with your DigiiCampus account.</Txt>
+        <Button title="Pay bus fee" variant="red" icon="arrow" onPress={() => Linking.openURL(DIGIICAMPUS_URL).catch(() => {})} />
+        <Txt muted small style={{ textAlign: 'center' }}>Opens crescent.digiicampus.com</Txt>
+      </View>
+    </ViewCard>
+  );
+}
 
 /**
  * The plain-language privacy notice (doc 9.11): what is collected, when, why,
@@ -152,7 +172,7 @@ export default function Settings() {
     <Screen safeTop>
       <PageHead icon="settings" colors={G.navy} eyebrow="Student" title="Settings" subtitle="Your account, your bus, reminders and privacy." />
 
-      <View style={{ backgroundColor: C.navy, borderRadius: R.lg, padding: 16, gap: 12, ...shadow }}>
+      <View style={{ backgroundColor: C.navyFill, borderRadius: R.lg, padding: 16, gap: 12, ...shadow }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <Avatar name={user.name} size={58} light />
           <View style={{ flex: 1, gap: 2 }}>
@@ -172,8 +192,13 @@ export default function Settings() {
       <Notice>{message}</Notice>
       <ErrorText>{error}</ErrorText>
 
-      <Panel title="1 · Travel" icon="route">
-        <Txt muted small>Your route and boarding stop drive the home screen, arrival times and the boarding check.</Txt>
+      {/* The three settings groups fold; each shows its current state while closed. */}
+      <ViewCard
+        icon="route"
+        title="Travel"
+        summary={route.data ? `Route ${route.data.code}${stop ? ` · ${stop.name}` : ' · choose your stop'}` : 'Choose your route and stop'}
+      >
+        <Txt muted small>Sets your home screen, arrival times and the boarding check.</Txt>
         <Select
           label="Route"
           value={form.homeRouteCode}
@@ -221,12 +246,18 @@ export default function Settings() {
           label="Language"
           value={form.language}
           onChange={set('language')}
-          options={[{ value: 'en', label: 'English' }, { value: 'ta', label: 'தமிழ் (Tamil) - saved; translation not yet available' }]}
+          options={[{ value: 'en', label: 'English' }, { value: 'ta', label: 'தமிழ் (Tamil)' }]}
         />
         <Button title="Save travel details" busy={busy} onPress={saveTravel} />
-      </Panel>
+      </ViewCard>
 
-      <Panel title="2 · Reminders and notifications" icon="bell">
+      <Appearance />
+
+      <ViewCard
+        icon="bell"
+        title="Reminders and notifications"
+        summary={`Boarding check ${user.boardingReminders ? 'on' : 'off'} · notifications ${pushOn ? 'on' : 'off'}`}
+      >
         <SettingRow
           first
           icon="bus"
@@ -234,22 +265,33 @@ export default function Settings() {
           title="Boarding check"
           control={<Toggle value={user.boardingReminders} disabled={busy} label="Boarding check" onChange={(v) => save({ boardingReminders: v }, v ? 'Boarding check is on.' : 'Boarding check is off.')} />}
         >
-          <Txt muted small>When your bus's GPS shows it leaving {stop?.name ?? 'your stop'}, a popup asks "Did you board?". It repeats <Txt small bold>every 10 minutes until you answer</Txt>. "Yes" marks your attendance.</Txt>
+          <Txt muted small>Asks "Did you board?" when your bus leaves {stop?.name ?? 'your stop'}, every 10 minutes until you answer.</Txt>
+        </SettingRow>
+        <SettingRow
+          icon="clock"
+          accent={user.arrivalAlerts ? 'emerald' : 'navy'}
+          title="Bus is almost here"
+          control={<Toggle value={user.arrivalAlerts} disabled={busy} label="Bus is almost here" onChange={(v) => save({ arrivalAlerts: v }, v ? 'You will be told when the bus is near.' : 'Bus alerts are off.')} />}
+        >
+          <Txt muted small>A message about 5 minutes before the bus reaches {stop?.name ?? 'your stop'}.</Txt>
         </SettingRow>
         <SettingRow
           icon="bell"
           title="Phone notifications"
           control={pushOn ? <Badge tone="live">On</Badge> : notificationsAvailable ? <Button small variant="ghost" title="Turn on" onPress={turnOnPush} /> : <Badge>Unavailable</Badge>}
         >
-          <Txt muted small>{notificationsAvailable ? 'Boarding questions, reminders and route alerts arrive even when the app is closed.' : 'This build cannot receive notifications. The questions still pop up while the app is open.'}</Txt>
+          <Txt muted small>{notificationsAvailable ? 'Reminders and alerts arrive even when the app is closed.' : 'Not available in this build; questions show while the app is open.'}</Txt>
         </SettingRow>
         <SettingRow icon="alert" accent="red" title="Route alerts">
-          <Txt muted small>Delays, breakdowns and route changes for Route {user.homeRouteCode ?? '—'}, and announcements from the transport office. Always on.</Txt>
+          <Txt muted small>Delays and changes for Route {user.homeRouteCode ?? '—'}. Always on.</Txt>
         </SettingRow>
-      </Panel>
+      </ViewCard>
 
-      <Panel title="3 · Attendance and privacy" icon="shield">
-        <Txt muted small>How your trips are recorded. Pick what you are comfortable with.</Txt>
+      <ViewCard
+        icon="shield"
+        title="Attendance and privacy"
+        summary={`Phone GPS ${user.locationConsent ? (p?.shouldSample ? 'active' : 'allowed') : 'off'} · bus QR always`}
+      >
         <View style={{ gap: 8 }}>
           <Method icon="bus" title="Boarding check" hint="From the bus GPS only; your location is never used." tone={user.boardingReminders ? 'live' : 'offline'} state={user.boardingReminders ? 'On' : 'Off'} />
           <Method icon="signal" title="Phone GPS" hint="Your phone notices it is moving with the bus." tone={p?.shouldSample ? 'live' : 'offline'} state={p?.shouldSample ? 'Active now' : user.locationConsent ? 'Paused' : 'Off'} />
@@ -266,10 +308,12 @@ export default function Settings() {
           <Txt muted small>Optional. Readings are compared with the bus and thrown away.</Txt>
         </SettingRow>
         <Collapsible title="Read the privacy notice"><PrivacyNotice /></Collapsible>
-      </Panel>
+      </ViewCard>
+
+      <BusFee />
 
       <SectionTitle title="More" />
-      <FoldCard icon="lock" title="Account and security" summary={`@${user.username}${user.registerNo ? ` · ${user.registerNo}` : ''}`}>
+      <ViewCard icon="lock" title="Account and security" summary={`@${user.username}${user.registerNo ? ` · ${user.registerNo}` : ''}`}>
         <View style={{ gap: 6 }}>
           <KV k="Username" v={`@${user.username}`} />
           <KV k="Register no." v={user.registerNo} />
@@ -278,9 +322,11 @@ export default function Settings() {
         </View>
         <Txt muted small>To correct your name, register number or department, contact the transport office. Changing your password signs you out on every other device.</Txt>
         <Button title="Change password" variant="ghost" icon="lock" onPress={() => setChangingPassword(true)} />
-      </FoldCard>
+      </ViewCard>
 
-      <FoldCard icon="phone" title="Help and support" summary="Contacts and common questions">
+      <YourData />
+
+      <ViewCard icon="phone" title="Help and support" summary="Contacts and common questions">
         <View style={{ gap: 2 }}>
           {(contacts.data ?? []).map((c, i) => (
             <Pressable accessibilityRole="button" key={c.label} onPress={() => call(c.phone)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: C.line2, opacity: pressed ? 0.6 : 1 })}>
@@ -296,15 +342,15 @@ export default function Settings() {
         <Collapsible title="My attendance looks wrong">
           <Txt muted small>Open Attendance and tap "Dispute" on the trip within 7 days. The transport office reviews it.</Txt>
         </Collapsible>
-      </FoldCard>
+      </ViewCard>
 
-      <FoldCard icon="sparkle" title="About" summary="Crescent Transit · Bus Route 2026-2027">
+      <ViewCard icon="sparkle" title="About" summary="Crescent Transit · Bus Route 2026-2027">
         <View style={{ gap: 6 }}>
           <KV k="App" v="Crescent Transit · Bus Tracker" />
           <KV k="Timetable" v="BSACIST Bus Route 2026-2027" />
-          <KV k="Access" v={entitlement?.required ? 'Monthly subscription' : 'Live tracking, alerts and attendance are free for students'} />
+          <KV k="Access" v={entitlement?.required ? 'Monthly subscription' : 'Included for every student'} />
         </View>
-      </FoldCard>
+      </ViewCard>
 
       <Button
         title="Sign out"

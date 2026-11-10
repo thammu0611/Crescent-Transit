@@ -56,7 +56,10 @@ test('bus and driver management, assignment, and a scheduled trip the driver the
 
   const scheduled = await t.call('/api/admin/trips', { token: admin, body: { fleetCode: 'BSACIST-T1', scheduledFor: new Date(Date.now() + 30 * 60000).toISOString() } });
   assert.equal(scheduled.status, 201);
-  const token = await t.login('drvt1', 'driverpass1');
+  // The admin's password is temporary: the driver chooses their own first.
+  const temporary = await t.login('drvt1', 'driverpass1');
+  assert.equal((await t.call('/api/driver/trips', { token: temporary, method: 'POST' })).body.code, 'PASSWORD_CHANGE_REQUIRED');
+  const { token } = (await t.call('/api/auth/change-password', { token: temporary, body: { currentPassword: 'driverpass1', newPassword: 'driverpass1-own' } })).body;
   const started = await t.call('/api/driver/trips', { token, method: 'POST' });
   assert.equal(started.body.trip.id, scheduled.body.id, 'the scheduled trip is the one that runs');
 

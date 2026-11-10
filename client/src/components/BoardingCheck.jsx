@@ -3,6 +3,7 @@ import { api, getSocket } from '../lib/api.js';
 import { time } from '../lib/format.js';
 import { useSession } from '../lib/session.jsx';
 import Icon from './Icon.jsx';
+import { DIRECTION_TEXT } from '../../../shared/direction.js';
 import { ErrorText, Modal } from './ui.jsx';
 
 const busName = (fleetCode) => fleetCode.replace('BSACIST-', 'Bus ');
@@ -99,8 +100,10 @@ export default function BoardingCheck() {
     <Modal title={null} onClose={later} width={400}>
       <div className="prompt boarding-check">
         {check.reminders > 0 && <span className="badge delayed">Reminder {check.reminders}</span>}
-        <p className="prompt-q">Did you board {busName(check.fleetCode)}?</p>
+        <p className="prompt-q">Did you board {busName(check.fleetCode)}{check.direction === 'DOWN' ? ' at college' : ''}?</p>
         <p className="muted">
+          {DIRECTION_TEXT[check.direction]}
+          <br />
           Route {check.routeCode} · {check.routeName}
           <br />
           The bus left {check.stopName ?? 'your stop'} at {time(check.departedAt)}

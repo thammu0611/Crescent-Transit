@@ -135,7 +135,7 @@ export default function RoutesAdmin() {
           <BaseTiles />
           <Fit stops={list} id={routeId} />
           <ClickToAdd enabled={adding} onAdd={(ll) => { setAdding(false); addAt(ll); }} />
-          <Polyline positions={list.map((s) => [s.lat, s.lng])} pathOptions={{ color: '#142548', weight: 4, opacity: 0.6 }} />
+          <Polyline positions={list.map((s) => [s.lat, s.lng])} pathOptions={{ color: 'var(--chart-navy)', weight: 4, opacity: 0.6 }} />
           {list.map((s) => (
             <Marker
               key={`${s.id}:${s.lat}:${s.lng}`}

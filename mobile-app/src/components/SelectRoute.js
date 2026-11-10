@@ -61,7 +61,7 @@ export default function SelectRoute({ onDone }) {
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
                 onPress={() => { setCode(r.code); setStopSeq(''); }}
-                style={{ flexBasis: '47%', flexGrow: 1, padding: 12, borderRadius: 14, borderWidth: 2, borderColor: on ? C.indigo : C.line2, backgroundColor: on ? C.indigo50 : '#fff', gap: 4 }}
+                style={{ flexBasis: '47%', flexGrow: 1, padding: 12, borderRadius: 14, borderWidth: 2, borderColor: on ? C.indigo : C.line2, backgroundColor: on ? C.indigo50 : C.paper, gap: 4 }}
               >
                 <Icon name="bus" size={18} color={on ? C.indigo : C.navy} />
                 <Text style={{ ...F[800], color: C.ink }}>Route {r.code}</Text>

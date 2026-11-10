@@ -8,15 +8,16 @@ import { useIsFocused } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { createContext, forwardRef, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AccessibilityInfo, ActivityIndicator, Alert, Animated, Easing, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, Platform, Pressable, RefreshControl,
-  ScrollView, StyleSheet, Text as RNText, TextInput, useWindowDimensions, View,
+  AccessibilityInfo, ActivityIndicator, Alert, Animated, Easing, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text as RNText, TextInput, useWindowDimensions, View, Image,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Defs, Ellipse, G as SvgG, LinearGradient as SvgLinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { monthName, shiftMonth, thisMonth } from '../lib/format.js';
 import { tickPress, tickSelect } from '../lib/haptics.js';
+import { useT } from '../lib/offline.js';
+import { DIRECTION_TEXT } from '../lib/rules.js';
 import { ACCENT, C, F, G, HAIRLINE, R, TONE, glass, glow, interFor, shadow, shadowLg } from '../theme.js';
 import Icon from './Icon.js';
 
@@ -60,116 +61,17 @@ function useAndroidKeyboard() {
 }
 
 /**
- * The liquid glass backdrop: a cool base with soft navy, gold and sky glows.
- * Rendered once behind the whole app (App.js) and behind full-screen modals,
- * so every translucent surface has colour to refract.
+ * The page ground behind every screen: one flat colour (redesign: calm, no
+ * decoration). Kept as a component so headers and screens still line up.
  */
-export function GlassBackdrop({ offset = 0 }) {
+export function GlassBackdrop({ offset = 0, top = -offset }) {
   const { height } = useWindowDimensions();
-  // Shifted up behind the header, so it is that much taller to still reach the bottom edge.
   const tall = Math.max(height, 640) + offset;
-  return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: -offset, height: tall }}>
-      <LinearGradient colors={['#f4f4f4', '#eceeef', '#f1f1f1']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
-        <Defs>
-          <RadialGradient id="gNavy" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#1c315e" stopOpacity="0.30" /><Stop offset="1" stopColor="#1c315e" stopOpacity="0" /></RadialGradient>
-          <RadialGradient id="gGold" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#f7bc31" stopOpacity="0.26" /><Stop offset="1" stopColor="#f7bc31" stopOpacity="0" /></RadialGradient>
-          <RadialGradient id="gSky" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#6ec1e4" stopOpacity="0.26" /><Stop offset="1" stopColor="#6ec1e4" stopOpacity="0" /></RadialGradient>
-          <RadialGradient id="gRose" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#a02022" stopOpacity="0.14" /><Stop offset="1" stopColor="#a02022" stopOpacity="0" /></RadialGradient>
-        </Defs>
-        <Ellipse cx="40" cy="90" rx="260" ry="230" fill="url(#gNavy)" />
-        <Ellipse cx="380" cy="300" rx="230" ry="210" fill="url(#gGold)" />
-        <Ellipse cx="60" cy="560" rx="250" ry="230" fill="url(#gSky)" />
-        <Ellipse cx="360" cy="760" rx="240" ry="200" fill="url(#gRose)" />
-        {/* A faint map of bus routes and stops, as on the web app. */}
-        {BACK_ROUTES.map(([d, stroke], i) => (
-          <SvgG key={i}>
-            <Path d={d} fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth={7} strokeLinecap="round" />
-            <Path d={d} fill="none" stroke={stroke} strokeWidth={2.2} strokeLinecap="round" />
-          </SvgG>
-        ))}
-        {BACK_STOPS.map(([x, y]) => (
-          <SvgG key={`${x},${y}`}>
-            <Circle cx={x} cy={y} r={7} fill="rgba(247,188,49,0.14)" />
-            <Circle cx={x} cy={y} r={3.4} fill="#fff" stroke="rgba(28,49,94,0.28)" strokeWidth={1.5} />
-          </SvgG>
-        ))}
-      </Svg>
-      <RouteBus height={tall} />
-    </View>
-  );
-}
-
-const BACK_ROUTES = [
-  ['M-40 150 C 60 110, 120 230, 220 190 S 360 110, 440 170', 'rgba(28,49,94,0.13)'],
-  ['M90 -20 C 120 120, 40 260, 120 380 S 210 600, 150 820', 'rgba(110,193,228,0.38)'],
-  ['M330 -20 C 300 140, 380 280, 320 420 S 250 640, 310 820', 'rgba(28,49,94,0.11)'],
-];
-const BACK_STOPS = [[30, 128], [220, 190], [380, 140], [96, 300], [120, 380], [344, 300], [318, 440]];
-
-// The road the little bus drives: a gentle wave across the screen, as
-// fractions of the backdrop's width and height. The bus follows it point to
-// point on the native driver, so it costs nothing on the JavaScript thread.
-const ROAD = Array.from({ length: 15 }, (_, i) => {
-  const x = -0.12 + i * 0.09;
-  return [x, 0.64 + 0.03 * Math.sin(x * Math.PI * 2.4)];
-});
-
-/** The gold dashed road and a small bus gliding along it, every 40 seconds. */
-function RouteBus({ height }) {
-  const { width } = useWindowDimensions();
-  const [t] = useState(() => new Animated.Value(0));
-  const [still, setStill] = useState(false);
-  useEffect(() => {
-    let loop;
-    AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
-      setStill(reduce);
-      if (reduce) return;
-      loop = Animated.loop(Animated.timing(t, { toValue: 1, duration: 40000, easing: Easing.linear, useNativeDriver: true }));
-      loop.start();
-    }).catch(() => {});
-    return () => loop?.stop();
-  }, [t]);
-
-  const pts = ROAD.map(([fx, fy]) => [fx * width, fy * height]);
-  const input = pts.map((_, i) => i / (pts.length - 1));
-  const angle = pts.map((p, i) => {
-    const a = pts[Math.max(0, i - 1)];
-    const b = pts[Math.min(pts.length - 1, i + 1)];
-    return `${(Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI}deg`;
-  });
-  const d = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
-  return (
-    <>
-      <Svg style={StyleSheet.absoluteFill} width={width} height={height}>
-        <Path d={d} fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth={8} strokeLinecap="round" strokeLinejoin="round" />
-        <Path d={d} fill="none" stroke="rgba(247,188,49,0.6)" strokeWidth={2.4} strokeDasharray="2 10" strokeLinecap="round" strokeLinejoin="round" />
-      </Svg>
-      {still ? null : (
-        <Animated.View
-          style={{
-            position: 'absolute', left: -15, top: -8, width: 30, height: 16, opacity: 0.85,
-            transform: [
-              { translateX: t.interpolate({ inputRange: input, outputRange: pts.map((p) => p[0]) }) },
-              { translateY: t.interpolate({ inputRange: input, outputRange: pts.map((p) => p[1]) }) },
-              { rotate: t.interpolate({ inputRange: input, outputRange: angle }) },
-            ],
-          }}
-        >
-          <Svg width={30} height={16} viewBox="-15 -8 30 16">
-            <Rect x={-15} y={-8} width={30} height={16} rx={5} fill={C.gold} />
-            <Rect x={6} y={-6} width={6} height={12} rx={2} fill={C.navy} />
-            <Rect x={-11} y={-5} width={14} height={10} rx={2} fill="rgba(28,49,94,0.55)" />
-          </Svg>
-        </Animated.View>
-      )}
-    </>
-  );
+  return <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top, height: tall, backgroundColor: C.bg }} />;
 }
 
 /** Real frosted glass behind a surface (header, tab bar, sheets). */
-export function Frost({ tint = 'light', intensity = 50, style }) {
+export function Frost({ tint = C.dark ? 'dark' : 'light', intensity = 50, style }) {
   return (
     <BlurView
       pointerEvents="none"
@@ -181,20 +83,10 @@ export function Frost({ tint = 'light', intensity = 50, style }) {
   );
 }
 
-/** The bright top edge and faint gloss that make a surface read as glass. */
-export function Sheen({ radius = R.lg, dark }) {
-  return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
-      <LinearGradient
-        colors={dark ? ['rgba(255,255,255,0.20)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)'] : ['rgba(255,255,255,0.75)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0)']}
-        locations={[0, 0.35, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.4, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={{ position: 'absolute', top: 0, left: 14, right: 14, height: 1, backgroundColor: dark ? 'rgba(255,255,255,0.35)' : '#fff' }} />
-    </View>
-  );
+/** Kept for older call sites: the redesign's cards have no gloss. */
+// eslint-disable-next-line no-unused-vars
+export function Sheen(props) {
+  return null;
 }
 
 /** A scrolling screen with pull-to-refresh. `header` renders edge to edge above the padded content. */
@@ -220,15 +112,6 @@ export function Screen({ children, refreshing = false, onRefresh, safeTop = fals
     </SafeAreaView>
   );
 }
-
-/** Soft decorative circles for gradient surfaces. */
-const Orbs = ({ size = 180 }) => (
-  <>
-    <View pointerEvents="none" style={[s.orb, { width: size, height: size, borderRadius: size / 2, top: -size * 0.45, right: -size * 0.3 }]} />
-    <View pointerEvents="none" style={[s.orbRing, { width: size * 1.35, height: size * 1.35, borderRadius: size, top: -size * 0.62, right: -size * 0.48 }]} />
-    <View pointerEvents="none" style={[s.orbGold, { width: size * 0.55, height: size * 0.55, borderRadius: size, bottom: -size * 0.25, left: -size * 0.15 }]} />
-  </>
-);
 
 /**
  * The app's background motif: a faint dotted bus route with stops, drawn
@@ -293,12 +176,13 @@ export function LivePulse({ color = '#61ce70', size = 10 }) {
   );
 }
 
-/** A gradient surface with the route motif and decorative orbs (hero cards, banners). */
+/** A deep-blue (dark: elevated) gradient surface for hero cards and banners. */
+// Dark mode: banners and gradient cards take the same mild dark glass as every other card.
+const DARK_CARD = ['#1A2740', '#161D27'];
+
 export function GradientCard({ colors = G.navy, style, children, orbs = true, radius = R.xl, animate = true }) {
   const card = (
-    <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[{ borderRadius: radius, padding: 20, overflow: 'hidden', gap: 10, borderWidth: 1, borderColor: HAIRLINE.light }, shadowLg, style]}>
-      {orbs ? <><RoutePattern opacity={0.14} /><Orbs /></> : null}
-      <Sheen radius={radius} dark />
+    <LinearGradient colors={C.dark ? DARK_CARD : colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[{ borderRadius: radius, padding: 20, overflow: 'hidden', gap: 10, borderWidth: 1, borderColor: C.dark ? C.glassEdge : HAIRLINE.light }, shadowLg, style]}>
       {children}
     </LinearGradient>
   );
@@ -311,57 +195,32 @@ export function GradientCard({ colors = G.navy, style, children, orbs = true, ra
  */
 export function useTabBarSpace() {
   const barHeight = useContext(BottomTabBarHeightContext);
-  const insets = useSafeAreaInsets();
-  return barHeight ? barHeight + insets.bottom + 10 : 0;
+  // The docked bar's measured height already includes the safe area.
+  return barHeight ? barHeight + 12 : 0;
 }
 
 /**
- * The app's mark, drawn as the launcher icon: a gold bus on a navy rounded
- * square with a fine gold edge. The web navbar draws the same shapes
- * (client/src/components/BrandMark.jsx).
+ * The Crescent Transit mark: a gold bus on a crescent, in a double gold frame.
+ * The web app shows the same picture (client/src/assets/logo-mark.png).
  */
-export function BrandMark({ size = 42 }) {
-  // Gradient ids of their own: a copy in a hidden screen must not be the one referenced.
-  const id = useId().replace(/[^a-zA-Z0-9]/g, '');
-  // Inside a View: on the web a bare svg would paint under the pill's frosted layer.
-  return (
-    <View style={{ width: size, height: size }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Svg width={size} height={size} viewBox="0 0 48 48">
-        <Defs>
-          <SvgLinearGradient id={`brandBg${id}`} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor="#2a4787" />
-            <Stop offset="1" stopColor="#162a52" />
-          </SvgLinearGradient>
-          <SvgLinearGradient id={`brandBus${id}`} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor="#fbcd5a" />
-            <Stop offset="1" stopColor="#f2b12a" />
-          </SvgLinearGradient>
-        </Defs>
-        <Rect x={0.75} y={0.75} width={46.5} height={46.5} rx={13} fill={`url(#brandBg${id})`} stroke="rgba(247,188,49,0.65)" strokeWidth={1.5} />
-        <SvgG x={12} y={10}>
-          <Rect x={-1.6} y={6} width={2.4} height={4.4} rx={1} fill="#c4860b" />
-          <Rect x={23.2} y={6} width={2.4} height={4.4} rx={1} fill="#c4860b" />
-          <Rect x={2} y={23} width={4.4} height={3.6} rx={1.2} fill="#c4860b" />
-          <Rect x={17.6} y={23} width={4.4} height={3.6} rx={1.2} fill="#c4860b" />
-          <Rect x={0.6} y={0} width={22.8} height={24.4} rx={5.4} fill={`url(#brandBus${id})`} />
-          <Rect x={5.6} y={2.2} width={12.8} height={2.6} rx={1.3} fill="#1e3360" />
-          <Rect x={3} y={6.8} width={18} height={8.4} rx={2.4} fill="#1e3360" />
-          <Circle cx={6.4} cy={19.2} r={1.9} fill="#13213f" />
-          <Circle cx={17.6} cy={19.2} r={1.9} fill="#13213f" />
-          <Rect x={9.6} y={18.3} width={4.8} height={1.8} rx={0.9} fill="#13213f" />
-        </SvgG>
-      </Svg>
-    </View>
-  );
+export function BrandMark({ size = 46 }) {
+  return <Image source={require('../../assets/logo-mark.png')} style={{ width: size, height: size, borderRadius: size * 0.22 }} accessibilityIgnoresInvertColors />;
 }
 
 /** The app name: "Crescent" in Montserrat, "TRANSIT" in small spaced gold capitals beneath. */
+// In light mode the header is white frosted glass, so what sits on it is navy;
+// in dark mode it is the same dark glass as the cards, with white on it.
+const PILL_LIGHT = !C.dark;
+const ON_PILL = C.ink;
+
+/** The logo's wordmark: "Crescent" over a spaced capital "TRANSIT". */
 export const Wordmark = ({ style, dark }) => (
   <View style={[{ justifyContent: 'center' }, style]} accessibilityRole="header" accessibilityLabel="Crescent Transit">
     <Text style={[s.wordmark, dark && { color: C.navy }]} numberOfLines={1}>Crescent</Text>
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 1 }}>
-      <View style={{ width: 12, height: 1, backgroundColor: C.gold, opacity: 0.8 }} />
-      <Text style={s.wordmarkSub} numberOfLines={1}>TRANSIT</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      {/* A short line in the logo's crescent gold leads into "TRANSIT". */}
+      <View style={{ width: 14, height: 1.5, borderRadius: 1, backgroundColor: '#beaf8e' }} />
+      <Text style={[s.wordmarkSub, dark && { color: C.navy }]} numberOfLines={1}>TRANSIT</Text>
     </View>
   </View>
 );
@@ -370,7 +229,7 @@ export const Wordmark = ({ style, dark }) => (
 export function PillIconButton({ icon, onPress, label }) {
   return (
     <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [s.pillBtn, pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] }]}>
-      <Icon name={icon} size={18} color="#fff" />
+      <Icon name={icon} size={18} color={ON_PILL} />
     </Pressable>
   );
 }
@@ -390,20 +249,50 @@ export function PillButton({ title, icon = 'arrow', onPress }) {
  * button (or the brand mark), the title (or the wordmark), and actions on the
  * right. Solid navy on light screens; `glass` for navy screens.
  */
-export function NavPill({ title, onBack, right, glass, style }) {
+/** The screen's name under a small gold app name; it slides in when the screen changes. */
+function PillTitle({ title }) {
+  const [v] = useState(() => new Animated.Value(reduceMotion ? 1 : 0));
+  useEffect(() => {
+    if (reduceMotion) return;
+    v.setValue(0);
+    Animated.timing(v, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: native }).start();
+  }, [title, v]);
   return (
-    <View style={[s.pill, glass ? s.pillGlass : s.pillSolid, style]}>
-      {!glass ? <Frost tint="dark" intensity={55} style={{ borderRadius: R.pill }} /> : null}
-      {!glass ? <Sheen radius={R.pill} dark /> : null}
-      {!glass ? <View pointerEvents="none" style={s.pillGold} /> : null}
-      {onBack ? <PillIconButton icon="back" label="Back" onPress={onBack} /> : <BrandMark size={42} />}
-      {title ? (
-        // The screen's name under a small gold app name, as the web bar's wordmark.
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Text style={s.pillEyebrow} numberOfLines={1}>CRESCENT TRANSIT</Text>
-          <Text style={s.pillTitle} numberOfLines={1}>{title}</Text>
-        </View>
-      ) : <Wordmark style={{ flex: 1 }} />}
+    <Animated.View
+      style={{ flex: 1, justifyContent: 'center', opacity: v, transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}
+      accessibilityRole="header"
+    >
+      <View style={s.pillEyebrowRow}>
+        <View style={s.pillEyebrowDot} />
+        <Text style={s.pillEyebrow} numberOfLines={1}>CRESCENT TRANSIT</Text>
+      </View>
+      <Text style={s.pillTitle} numberOfLines={1}>{title}</Text>
+    </Animated.View>
+  );
+}
+
+export function NavPill({ title, onBack, right, glass, plain, style }) {
+  // `plain`: no capsule at all, the logo and title sit straight on the page (screen headers).
+  if (plain) {
+    return (
+      <View style={[s.pill, s.pillPlain, style]}>
+        {onBack ? <PillIconButton icon="back" label="Back" onPress={onBack} /> : <BrandMark size={44} />}
+        {title ? <PillTitle title={title} /> : <Wordmark style={{ flex: 1 }} />}
+        {right ? <View style={s.pillRight}>{right}</View> : null}
+      </View>
+    );
+  }
+  return (
+    <View style={[s.pill, PILL_LIGHT ? s.pillWhite : C.dark ? s.pillCard : glass ? s.pillGlass : s.pillSolid, style]}>
+      {PILL_LIGHT ? <Frost tint="light" intensity={70} style={{ borderRadius: R.pill }} /> : null}
+      {PILL_LIGHT ? <Sheen radius={R.pill} /> : null}
+      {(!glass || C.dark) && !PILL_LIGHT ? <Frost tint="dark" intensity={60} style={{ borderRadius: R.pill }} /> : null}
+      {!glass && !PILL_LIGHT && !C.dark ? <LinearGradient pointerEvents="none" colors={['rgba(42,71,135,0.55)', 'rgba(20,37,72,0.15)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: R.pill }]} /> : null}
+      {!glass && !PILL_LIGHT ? <Sheen radius={R.pill} dark /> : null}
+      {/* A gold hairline that fades out at both ends. */}
+      {!glass && !PILL_LIGHT && !C.dark ? <LinearGradient pointerEvents="none" colors={['rgba(247,188,49,0)', 'rgba(247,188,49,0.75)', 'rgba(247,188,49,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.pillGold} /> : null}
+      {onBack ? <PillIconButton icon="back" label="Back" onPress={onBack} /> : <BrandMark size={44} />}
+      {title ? <PillTitle title={title} /> : <Wordmark style={{ flex: 1 }} />}
       {right ? <View style={s.pillRight}>{right}</View> : null}
     </View>
   );
@@ -416,12 +305,20 @@ export function NavPill({ title, onBack, right, glass, style }) {
  */
 export function PillHeader({ navigation, route, options, back }) {
   const insets = useSafeAreaInsets();
-  const title = typeof options.headerTitle === 'string' ? options.headerTitle : options.title ?? route.name;
-  const right = options.headerRight?.({ tintColor: '#fff', canGoBack: Boolean(back) });
+  const right = options.headerRight?.({ tintColor: ON_PILL, canGoBack: Boolean(back) });
+  const t = useT();
+  // Screens that once carried their own banner set an empty headerTitle; the title now lives here.
+  const title = t((typeof options.headerTitle === 'string' && options.headerTitle) || options.title || route.name);
+  // The header's height, so its slice of the backdrop is drawn exactly as the screen's own
+  // (which is shifted up behind the header by this much): the two meet without a seam.
+  const [h, setH] = useState(0);
+  // No header bar: just the screen's title (with a back arrow and the screen's own
+  // buttons when it has them) on a transparent strip, so the background runs to the top.
   return (
-    <View style={{ backgroundColor: C.bg, overflow: 'hidden', paddingTop: insets.top + 6, paddingHorizontal: 12, paddingBottom: 8 }}>
-      <GlassBackdrop />
-      <NavPill title={title} onBack={back ? navigation.goBack : undefined} right={right} />
+    <View onLayout={(e) => setH(e.nativeEvent.layout.height)} style={{ overflow: 'hidden', backgroundColor: C.bg, paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 6, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: insets.top + 56 }}>
+      {back ? <PillIconButton icon="back" label="Back" onPress={navigation.goBack} /> : null}
+      <Text style={s.plainTitle} numberOfLines={1} accessibilityRole="header">{title}</Text>
+      {right ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{right}</View> : null}
     </View>
   );
 }
@@ -434,11 +331,8 @@ export function HeroHeader({ colors = G.navy, children, compact }) {
   const insets = useSafeAreaInsets();
   const focused = useIsFocused();
   return (
-    <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: insets.top + (compact ? 16 : 22), paddingHorizontal: 20, paddingBottom: compact ? 54 : 56, borderBottomLeftRadius: 36, borderBottomRightRadius: 36, overflow: 'hidden' }}>
+    <LinearGradient colors={C.dark ? DARK_CARD : colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: insets.top + (compact ? 16 : 22), paddingHorizontal: 20, paddingBottom: compact ? 54 : 56, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, overflow: 'hidden' }}>
       {focused ? <StatusBar style="light" /> : null}
-      <RoutePattern opacity={0.18} />
-      <Orbs size={240} />
-      <View pointerEvents="none" style={s.heroSheen} />
       {children}
     </LinearGradient>
   );
@@ -467,8 +361,8 @@ export function Avatar({ name = '', size = 44, light }) {
 /** Round glassy icon button for gradient headers (bell, sign out). */
 export function HeaderIconButton({ icon, onPress, badge, label, dark }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} accessibilityLabel={label} hitSlop={6} style={({ pressed }) => [s.headerBtn, dark && { backgroundColor: '#fff', borderColor: C.line2, ...shadow }, pressed && { transform: [{ scale: 0.94 }] }]}>
-      <Icon name={icon} size={20} color={dark ? C.navy : '#fff'} />
+    <Pressable accessibilityRole="button" onPress={onPress} accessibilityLabel={label} hitSlop={6} style={({ pressed }) => [s.headerBtn, dark && { backgroundColor: C.paper, borderColor: C.line2, ...shadow }, pressed && { transform: [{ scale: 0.94 }] }]}>
+      <Icon name={icon} size={20} color={dark ? C.ink : '#fff'} />
       {badge ? <View style={s.headerBadge}><Text style={s.headerBadgeText}>{badge > 99 ? '99+' : badge}</Text></View> : null}
     </Pressable>
   );
@@ -476,47 +370,56 @@ export function HeaderIconButton({ icon, onPress, badge, label, dark }) {
 
 /** A section label with an optional action link. */
 export function SectionTitle({ title, action, onAction }) {
+  const t = useT();
   return (
     <View style={[s.row, { marginTop: 6, marginBottom: -4 }]}>
       <View style={s.sectionRule} />
-      <Text style={s.section}>{title}</Text>
+      <Text style={s.section}>{t(title)}</Text>
       {action ? <Pressable accessibilityRole="button" onPress={onAction} hitSlop={8}><Text style={s.link}>{action}</Text></Pressable> : null}
     </View>
   );
 }
 
-/** The page banner used at the top of inner screens. */
-export function PageHead({ eyebrow, title, subtitle, actions, icon = 'sparkle', colors = G.navy }) {
+/**
+ * The top of an inner screen: just its title on the page background, as on the
+ * tabs with a header. When the navigator already shows the title above, nothing
+ * is repeated here (only the screen's actions, if any).
+ */
+// eslint-disable-next-line no-unused-vars
+export function PageHead({ eyebrow, title: name, subtitle, actions, icon, colors }) {
+  const t = useT();
+  const title = t(name);
+  const headerHeight = useContext(HeaderHeightContext) ?? 0;
+  const showTitle = Boolean(title) && !headerHeight;
+  if (!showTitle && !actions) return null;
   return (
-    <GradientCard colors={colors} style={{ padding: 18 }}>
-      <View style={[s.row, { gap: 12, alignItems: 'flex-start' }]}>
-        <View style={s.bannerIcon}><Icon name={icon} size={21} color={C.gold} strokeWidth={1.8} /></View>
-        <View style={{ flex: 1 }}>
-          {eyebrow ? <Text style={s.eyebrowLight}>{eyebrow.toUpperCase()}</Text> : null}
-          {title ? <Text style={s.bannerTitle}>{title}</Text> : null}
-        </View>
-      </View>
-      {subtitle ? <Text style={s.bannerSub}>{subtitle}</Text> : null}
+    <View style={{ gap: 10, paddingTop: 2 }}>
+      {showTitle ? <Text style={[s.plainTitle, { flex: 0 }]} accessibilityRole="header">{title}</Text> : null}
       {actions ? <View style={[s.row, { flexWrap: 'wrap', gap: 8 }]}>{actions}</View> : null}
-    </GradientCard>
+    </View>
   );
 }
 
-const PANEL_GRADIENT = { navy: G.navy, emerald: G.emerald, indigo: G.indigo, red: G.red, danger: G.danger, violet: G.violet };
+const PANEL_ACCENT = { navy: 'navy', emerald: 'emerald', indigo: 'indigo', red: 'danger', danger: 'danger', violet: 'violet' };
 
-export function Panel({ title, icon, actions, children, style, accent = 'navy' }) {
+export function Panel({ title: name, icon, actions, children, style, accent = 'navy', summary, badge }) {
+  const t = useT();
+  const title = name ? t(name) : name;
   return (
     <FadeIn style={[s.panel, style]}>
       <Sheen />
       {title || actions ? (
         <View style={s.panelHead}>
           {title ? (
-            <View style={[s.row, { flex: 1, gap: 10 }]}>
-              {icon ? <IconBubble name={icon} colors={PANEL_GRADIENT[accent] ?? G.navy} size={36} iconSize={18} /> : null}
-              <Text style={s.h3}>{title}</Text>
+            <View style={[s.row, { flex: 1, minWidth: 0, gap: 10 }]}>
+              {icon ? <IconBubble name={icon} accent={PANEL_ACCENT[accent] ?? 'navy'} size={36} iconSize={18} /> : null}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={s.h3}>{title}</Text>
+                {summary ? <Txt muted small numberOfLines={2}>{summary}</Txt> : null}
+              </View>
             </View>
           ) : <View style={{ flex: 1 }} />}
-          {actions ? <View style={[s.row, { gap: 6 }]}>{actions}</View> : null}
+          {badge || actions ? <View style={[s.row, { gap: 6 }]}>{badge}{actions}</View> : null}
         </View>
       ) : null}
       {children}
@@ -524,9 +427,37 @@ export function Panel({ title, icon, actions, children, style, accent = 'navy' }
   );
 }
 
+/**
+ * One record in a list of cards: a lead (avatar, route code or icon), title and lines,
+ * an optional count pill, and an arrow when it opens something.
+ */
+export function ListCard({ lead, title, lines = [], count, countLabel, tone, right, onPress }) {
+  const Wrap = onPress ? Pressable : View;
+  const bar = tone ? ACCENT_BAR[tone] : null;
+  const look = { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassEdge, borderLeftWidth: bar ? 4 : 1, borderLeftColor: bar ?? C.glassEdge };
+  return (
+    <Wrap onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} style={onPress ? ({ pressed }) => [look, pressed && { opacity: 0.8 }] : look}>
+      {lead}
+      <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+        <Txt bold numberOfLines={1}>{title}</Txt>
+        {lines.filter(Boolean).map((l, i) => <Txt key={i} small muted numberOfLines={2}>{l}</Txt>)}
+      </View>
+      {right}
+      {count != null ? (
+        <View style={{ alignItems: 'center', minWidth: 52, paddingVertical: 6, paddingHorizontal: 8, borderRadius: 12, backgroundColor: C.navy50 }}>
+          <Text style={{ fontSize: 20, ...F.display, color: C.navy, fontVariant: ['tabular-nums'] }}>{count}</Text>
+          <Text style={{ fontSize: 10, ...F[600], color: C.muted, letterSpacing: 0.5 }}>{countLabel}</Text>
+        </View>
+      ) : null}
+      {onPress ? <Icon name="arrow" size={16} color={C.faint} /> : null}
+    </Wrap>
+  );
+}
+
 const STAT_ACCENT = { live: 'emerald', delayed: 'amber', danger: 'danger', offline: 'navy' };
 
-export function Stat({ label, value, tone, icon }) {
+export function Stat({ label: name, value, tone, icon }) {
+  const label = useT()(name);
   const t = TONE[tone];
   return (
     <View style={[s.stat, icon && s.statRow]}>
@@ -543,11 +474,20 @@ export function Stat({ label, value, tone, icon }) {
 
 export const StatGrid = ({ children }) => <View style={s.statGrid}>{children}</View>;
 
-export function Badge({ tone = 'offline', children, dot = true }) {
+/** Which run of the route: UP (to college) or DOWN (from college). */
+export function DirectionBadge({ direction }) {
+  return direction ? <Badge tone={direction === 'DOWN' ? 'offline' : 'info'}>{DIRECTION_TEXT[direction]}</Badge> : null;
+}
+
+const BADGE_ICON = { delayed: 'clock', danger: 'alert' };
+
+/** Status chip: a shape (live dot, clock, alert) plus a word, never colour alone. */
+export function Badge({ tone = 'offline', children, dot = true, style }) {
   const t = TONE[tone] ?? TONE.offline;
+  const icon = BADGE_ICON[tone];
   return (
-    <View style={[s.badge, { backgroundColor: t.bg }]}>
-      {dot ? <View style={[s.badgeDot, { backgroundColor: t.fg }]} /> : null}
+    <View style={[s.badge, { backgroundColor: t.bg }, style]}>
+      {dot ? (icon ? <Icon name={icon} size={12} color={t.fg} strokeWidth={2.4} /> : <View style={[s.badgeDot, { backgroundColor: t.fg }, tone === 'offline' && { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: t.fg }]} />) : null}
       <Text style={[s.badgeText, { color: t.fg }]} numberOfLines={1}>{children}</Text>
     </View>
   );
@@ -556,13 +496,13 @@ export function Badge({ tone = 'offline', children, dot = true }) {
 export const YesNo = ({ value, yes = 'Yes', no = 'No', noTone = 'offline' }) => <Badge tone={value ? 'live' : noTone}>{value ? yes : no}</Badge>;
 
 export const ErrorText = ({ children }) => (children ? (
-  <View style={[s.alert, { backgroundColor: C.danger50, borderColor: '#ecc9cc' }]} accessibilityRole="alert">
+  <View style={[s.alert, { backgroundColor: C.danger50, borderColor: C.dark ? 'rgba(239,68,68,0.35)' : 'rgba(220,38,38,0.25)' }]} accessibilityRole="alert">
     <Icon name="alert" size={16} color={C.danger} />
-    <Text style={[s.alertText, { color: C.red600 }]}>{children}</Text>
+    <Text style={[s.alertText, { color: C.danger }]}>{children}</Text>
   </View>
 ) : null);
 export const Notice = ({ children }) => (children ? (
-  <View style={[s.alert, { backgroundColor: C.emerald50, borderColor: '#c5e9cb' }]}>
+  <View style={[s.alert, { backgroundColor: C.emerald50, borderColor: C.dark ? 'rgba(34,197,94,0.3)' : 'rgba(22,163,74,0.25)' }]}>
     <Icon name="check" size={16} color={C.emerald700} />
     <Text style={[s.alertText, { color: C.emerald700 }]}>{children}</Text>
   </View>
@@ -592,18 +532,19 @@ export function Skeleton({ height = 64 }) {
 }
 
 const BTN = {
-  primary: { colors: G.navy, fg: '#fff', glow: C.navy900 },
-  dark: { colors: G.dark, fg: '#fff', glow: C.ink },
-  indigo: { colors: G.indigo, fg: '#fff', glow: C.indigo },
-  danger: { colors: G.danger, fg: '#fff', glow: C.danger },
-  red: { colors: G.red, fg: '#fff', glow: C.red600 },
-  emerald: { colors: G.emerald, fg: '#fff', glow: C.emerald },
-  ghost: { bg: C.glassStrong, fg: C.navy, border: C.glassEdge },
-  soft: { bg: C.red50, fg: C.red600, border: '#f3d3d3' },
-  light: { bg: C.glassStrong, fg: C.ink, border: C.glassEdge },
+  primary: { bg: C.navyFill, fg: '#fff' },
+  dark: { bg: C.dark ? C.raised : '#1E293B', fg: '#fff' },
+  indigo: { bg: C.navyFill, fg: '#fff' },
+  danger: { bg: C.dangerFill, fg: '#fff' },
+  red: { bg: C.navyFill, fg: '#fff' },
+  emerald: { bg: C.dark ? '#15803D' : '#15803D', fg: '#fff' },
+  ghost: { bg: C.raised, fg: C.ink, border: C.line },
+  soft: { bg: C.navy50, fg: C.dark ? C.navy : C.red600, border: 'transparent' },
+  light: { bg: C.card, fg: C.ink, border: C.line },
 };
 
-export function Button({ title, onPress, variant = 'primary', icon, disabled, busy, small, style, textStyle }) {
+export function Button({ title: name, onPress, variant = 'primary', icon, disabled, busy, small, style, textStyle }) {
+  const title = useT()(name);
   const v = BTN[variant] ?? BTN.primary;
   const off = disabled || busy;
   const content = (
@@ -622,17 +563,12 @@ export function Button({ title, onPress, variant = 'primary', icon, disabled, bu
       onPressIn={tickPress}
       style={({ pressed }) => [
         { borderRadius: small ? R.sm : R.md },
-        v.colors && !off && !small ? glow(v.glow) : null,
         off && { opacity: 0.5 },
         pressed && { transform: [{ scale: 0.97 }], opacity: 0.92 },
         style,
       ]}
     >
-      {v.colors ? (
-        <LinearGradient colors={v.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[box, { flexGrow: 1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }]}>{content}</LinearGradient>
-      ) : (
-        <View style={[box, { flexGrow: 1, backgroundColor: v.bg, borderWidth: 1, borderColor: v.border }]}>{content}</View>
-      )}
+      <View style={[box, { flexGrow: 1, backgroundColor: v.bg, borderWidth: v.border ? 1 : 0, borderColor: v.border }]}>{content}</View>
     </Pressable>
   );
 }
@@ -648,7 +584,8 @@ export function LinkButton({ title, onPress, danger, icon }) {
   );
 }
 
-export function Field({ label, hint, children, style }) {
+export function Field({ label: name, hint, children, style }) {
+  const label = useT()(name);
   return (
     <View style={[s.field, style]}>
       {label ? <Text style={s.label}>{label}</Text> : null}
@@ -709,7 +646,7 @@ export const TextField = ({ label, hint, style, ...props }) => (
 );
 
 /** A dropdown: a field that opens a searchable list (the web's <select>). */
-export function Select({ label, value, onChange, options, placeholder = 'Chooseâ€¦', disabled, hint, searchable, style, compact }) {
+export function Select({ label, value, onChange, options, placeholder = 'Chooseâ€¦', disabled, hint, searchable, style, compact, trigger }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const current = options.find((o) => String(o.value) === String(value));
@@ -718,7 +655,8 @@ export function Select({ label, value, onChange, options, placeholder = 'Chooseâ
     [options, q],
   );
   const search = searchable ?? options.length > 12;
-  const control = (
+  // `trigger(open, current)` draws a custom button (the route pill on the map).
+  const control = trigger ? trigger(() => { setQ(''); setOpen(true); }, current) : (
     <Pressable
       disabled={disabled}
       onPress={() => { setQ(''); setOpen(true); }}
@@ -729,12 +667,12 @@ export function Select({ label, value, onChange, options, placeholder = 'Chooseâ
       <Text style={[compact ? s.selectCompactText : s.input, { paddingVertical: compact ? 0 : 13 }, !current && !compact && { color: C.faint }]} numberOfLines={1}>
         {current?.label ?? placeholder}
       </Text>
-      <Icon name="down" size={16} color={compact ? '#fff' : C.muted} />
+      <Icon name="down" size={16} color={C.muted} />
     </Pressable>
   );
   return (
     <>
-      {compact ? control : <Field label={label} hint={hint} style={style}>{control}</Field>}
+      {compact || trigger ? control : <Field label={label} hint={hint} style={style}>{control}</Field>}
       <Sheet visible={open} title={label ?? placeholder} onClose={() => setOpen(false)} scroll={false}>
         {search && <SearchBox value={q} onChange={setQ} placeholder="Search" />}
         <ScrollView style={{ maxHeight: 460 }} keyboardShouldPersistTaps="handled">
@@ -754,13 +692,15 @@ export function Select({ label, value, onChange, options, placeholder = 'Chooseâ
   );
 }
 
-export function Segmented({ value, onChange, options }) {
+export function Segmented({ value, onChange, options: list, full }) {
+  const t = useT();
+  const options = list.map((o) => ({ ...o, label: t(o.label) }));
   // Up to three options share the full width; more scroll sideways.
-  const fill = options.length <= 3;
+  const fill = full ?? options.length <= 3;
   const items = options.map((o) => {
     const on = value === o.value;
     return (
-      <Pressable key={String(o.value)} onPress={() => { if (!on) tickSelect(); onChange(o.value); }} style={[s.seg, fill && { flex: 1, alignItems: 'center' }, on && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: on }}>
+      <Pressable key={String(o.value)} onPress={() => { if (!on) tickSelect(); onChange(o.value); }} style={[s.seg, fill && { flex: 1, alignItems: 'center', paddingHorizontal: 4 }, on && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: on }}>
         <Text style={[s.segText, on && s.segTextOn]} numberOfLines={1}>{o.label}</Text>
       </Pressable>
     );
@@ -814,6 +754,30 @@ export const confirm = (title, message, okLabel = 'OK', destructive = false) => 
     ], { cancelable: true, onDismiss: () => resolve(false) }),
   );
 };
+
+/**
+ * A centred dialog for destructive actions: a warning icon, a plain title,
+ * what will happen, and two buttons where the safe one comes first.
+ */
+export function DangerDialog({ title, message, keepLabel = 'Keep', okLabel, onKeep, onOk, busy }) {
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={onKeep}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(5,8,12,0.6)', justifyContent: 'center', padding: 20 }}>
+        <View accessibilityRole="alert" style={{ backgroundColor: C.surface, borderRadius: 24, padding: 22, gap: 14, borderWidth: 1, borderColor: C.line2, ...shadowLg }}>
+          <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: C.danger50, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="alert" size={24} color={C.danger} />
+          </View>
+          <Text style={{ fontSize: 21, lineHeight: 27, ...F.displayBold, color: C.ink }}>{title}</Text>
+          {message ? <Text style={{ fontSize: 15, lineHeight: 22, color: C.muted }}>{message}</Text> : null}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+            <Button title={keepLabel} variant="ghost" onPress={onKeep} style={{ flex: 1 }} />
+            <Button title={okLabel} variant="danger" busy={busy} onPress={onOk} style={{ flex: 1 }} />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 // window.prompt(): a text dialog that works on Android and iOS.
 const PromptContext = createContext(null);
@@ -892,9 +856,9 @@ export const KV = ({ k, v }) => (
 );
 
 export const RouteCode = ({ code, small }) => (
-  <LinearGradient colors={G.navy} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[s.routeCode, small && { minWidth: 34, paddingVertical: 2, borderRadius: 7 }]}>
+  <View style={[s.routeCode, small && { minWidth: 34, paddingVertical: 2, borderRadius: 7 }]}>
     <Text style={[s.routeCodeText, small && { fontSize: 12 }]}>{code}</Text>
-  </LinearGradient>
+  </View>
 );
 
 /** â€¹ October 2026 â€º (the web's <input type="month">). */
@@ -972,33 +936,10 @@ export function DateField({ label, value, onChange, mode = 'date', clearable }) 
   );
 }
 
-/** Expandable section (the web's <details>). */
 /** Folding sections ease open and shut instead of jumping. */
 const foldNext = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 
-/**
- * A card that folds away: icon, title and a one-line summary always show;
- * the body opens on tap. Keeps secondary sections compact.
- */
-export function FoldCard({ icon, title, summary, badge, children, initiallyOpen = false }) {
-  const [open, setOpen] = useState(initiallyOpen);
-  return (
-    <View style={[s.panel, { gap: open ? 14 : 0 }]}>
-      <Sheen />
-      <Pressable onPress={() => { foldNext(); setOpen((o) => !o); }} style={[s.row, { gap: 12 }]} accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={title}>
-        {icon ? <IconBubble name={icon} colors={G.navy} size={36} iconSize={18} /> : null}
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={s.h3} numberOfLines={1}>{title}</Text>
-          {summary ? <Txt muted small numberOfLines={1}>{summary}</Txt> : null}
-        </View>
-        {badge}
-        <View style={[s.monthBtn, { width: 30, height: 30, borderRadius: 15 }]}><Icon name={open ? 'up' : 'down'} size={15} color={C.navy} /></View>
-      </Pressable>
-      {open ? <View style={{ gap: 12 }}>{children}</View> : null}
-    </View>
-  );
-}
-
+/** Expandable section (the web's <details>). */
 export function Collapsible({ title, children, initiallyOpen = false }) {
   const [open, setOpen] = useState(initiallyOpen);
   return (
@@ -1022,8 +963,8 @@ export const s = StyleSheet.create({
   muted: { color: C.muted },
   small: { fontSize: 13, lineHeight: 18 },
   bold: { ...F[700], color: C.ink },
-  section: { flex: 1, fontSize: 11.5, ...F[700], letterSpacing: 2, color: C.muted, textTransform: 'uppercase' },
-  sectionRule: { width: 18, height: 1.5, borderRadius: 1, backgroundColor: C.gold, marginRight: 10 },
+  section: { flex: 1, fontSize: 13, ...F[600], color: C.muted },
+  sectionRule: { width: 0, height: 0 },
   eyebrowLight: { fontSize: 10.5, ...F[700], letterSpacing: 2.2, color: C.gold, marginBottom: 4 },
   bannerTitle: { fontSize: 26, ...F.display, color: '#fff', lineHeight: 32 },
   bannerSub: { color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 21 },
@@ -1032,71 +973,77 @@ export const s = StyleSheet.create({
   orbRing: { position: 'absolute', borderWidth: 1, borderColor: 'rgba(249, 210, 122,0.14)' },
   orbGold: { position: 'absolute', backgroundColor: 'rgba(247, 188, 49,0.10)' },
   heroSheen: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 1, backgroundColor: HAIRLINE.gold },
-  headerBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
-  headerBadge: { position: 'absolute', top: -3, right: -3, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: C.gold, borderWidth: 2, borderColor: C.navy900, alignItems: 'center', justifyContent: 'center' },
-  headerBadgeText: { color: C.navy900, fontSize: 10, ...F[700] },
-  h2: { fontSize: 22, ...F.display, color: C.ink },
-  h3: { fontSize: 17, ...F[600], color: C.ink, flexShrink: 1, lineHeight: 23 },
-  panel: { ...glass, borderRadius: R.lg, padding: 18, gap: 14, overflow: 'hidden' },
+  headerBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  headerBadge: { position: 'absolute', top: -3, right: -3, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: '#DC2626', borderWidth: 2, borderColor: C.dark ? C.bg : '#fff', alignItems: 'center', justifyContent: 'center' },
+  headerBadgeText: { color: '#fff', fontSize: 10.5, ...F[700] },
+  h2: { fontSize: 20, lineHeight: 26, ...F.display, color: C.ink },
+  h3: { fontSize: 16, ...F[600], color: C.ink, flexShrink: 1, lineHeight: 22 },
+  panel: { ...glass, borderRadius: R.lg, padding: 16, gap: 14, overflow: 'hidden' },
   panelHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  stat: { ...glass, flexGrow: 1, flexBasis: '46%', borderRadius: R.lg, padding: 14, minHeight: 76, justifyContent: 'center', overflow: 'hidden' },
+  stat: { ...glass, shadowOpacity: 0, flexGrow: 1, flexBasis: '46%', borderRadius: 18, padding: 14, minHeight: 84, justifyContent: 'center', overflow: 'hidden' },
   statRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  statValue: { fontSize: 24, ...F.display, color: C.ink, fontVariant: ['tabular-nums'], lineHeight: 30 },
-  statLabel: { fontSize: 10.5, color: C.muted, marginTop: 1, ...F[600], letterSpacing: 0.6, textTransform: 'uppercase', lineHeight: 14 },
+  statValue: { fontSize: 26, ...F.displayBold, color: C.ink, fontVariant: ['tabular-nums'], lineHeight: 32 },
+  statLabel: { fontSize: 12.5, color: C.muted, marginTop: 2, ...F[500], lineHeight: 16 },
   statBar: { position: 'absolute', left: 0, top: 18, bottom: 18, width: 3, borderTopRightRadius: 3, borderBottomRightRadius: 3 },
   statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: R.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
-  badgeDot: { width: 6, height: 6, borderRadius: 3 },
-  badgeText: { fontSize: 11.5, ...F[600], letterSpacing: 0.3 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: R.pill, paddingHorizontal: 10, minHeight: 26, alignSelf: 'flex-start', borderWidth: 1, borderColor: C.line2 },
+  badgeDot: { width: 8, height: 8, borderRadius: 4 },
+  badgeText: { fontSize: 12, ...F[600] },
   alert: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', padding: 12, borderRadius: R.md, borderWidth: 1 },
   alertText: { flex: 1, fontSize: 14, lineHeight: 20, ...F[600] },
   empty: { color: C.muted, textAlign: 'center', fontSize: 14, maxWidth: 280 },
-  skeleton: { backgroundColor: C.line, borderRadius: R.md },
-  btn: { minHeight: 54, borderRadius: R.md, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  btnSmall: { minHeight: 38, borderRadius: R.sm, paddingHorizontal: 12 },
-  btnText: { fontSize: 14.5, ...F[600], letterSpacing: 0.6 },
-  link: { color: C.red600, ...F[700], fontSize: 13.5, letterSpacing: 0.3 },
+  skeleton: { backgroundColor: C.dark ? '#1E2733' : '#E4E9F0', borderRadius: R.md },
+  btn: { minHeight: 52, borderRadius: R.md, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  btnSmall: { minHeight: 40, borderRadius: R.sm, paddingHorizontal: 12 },
+  btnText: { fontSize: 15.5, ...F[600] },
+  link: { color: C.link, ...F[600], fontSize: 14 },
   linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: R.pill, alignSelf: 'flex-start' },
   field: { gap: 7 },
-  label: { fontSize: 11.5, ...F[700], color: C.muted, letterSpacing: 1.2, textTransform: 'uppercase' },
+  label: { fontSize: 13, ...F[600], color: C.muted },
   hint: { fontSize: 12, color: C.muted, lineHeight: 17 },
-  inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: 'rgba(28,49,94,0.16)', borderRadius: R.md, backgroundColor: 'rgba(255,255,255,0.78)', paddingHorizontal: 16, minHeight: 54 },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: C.line, borderRadius: R.md, backgroundColor: C.card, paddingHorizontal: 14, minHeight: 52 },
   // Focus changes the border only: no shadow or elevation that could rebuild the native view.
   inputFocused: { borderColor: C.navy },
   input: { flex: 1, fontSize: 15, color: C.ink, ...F[400], paddingVertical: Platform.OS === 'ios' ? 14 : 10 },
-  selectCompact: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', borderRadius: R.pill, paddingHorizontal: 14, paddingVertical: 9 },
-  selectCompactText: { color: '#fff', ...F[700], fontSize: 14, flexShrink: 1 },
+  selectCompact: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.card, borderWidth: 1, borderColor: C.line2, borderRadius: R.pill, paddingHorizontal: 14, minHeight: 40 },
+  selectCompactText: { color: C.ink, ...F[600], fontSize: 14, flexShrink: 1 },
   option: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 12, borderRadius: R.md, marginBottom: 2 },
-  optionOn: { backgroundColor: C.red50 },
-  optionCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.navy, alignItems: 'center', justifyContent: 'center' },
-  segmented: { backgroundColor: 'rgba(255,255,255,0.6)', borderWidth: 1, borderColor: 'rgba(28,49,94,0.12)', borderRadius: R.pill, padding: 4, gap: 4 },
-  seg: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: R.pill },
-  segOn: { backgroundColor: C.navy, ...shadow, shadowOpacity: 0.14 },
-  segText: { fontSize: 13.5, ...F[600], color: C.muted, letterSpacing: 0.3 },
-  segTextOn: { color: '#fff', ...F[700] },
-  backdrop: { flex: 1, backgroundColor: 'rgba(20, 37, 72,0.55)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: 'rgba(236,240,248,0.88)', borderTopLeftRadius: 32, borderTopRightRadius: 32, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', padding: 22, paddingTop: 12, maxHeight: '90%', gap: 14, overflow: 'hidden' },
-  grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#d6d6d6', marginBottom: 8 },
-  closeBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.glassStrong, borderWidth: 1, borderColor: C.glassEdge, alignItems: 'center', justifyContent: 'center' },
-  item: { ...glass, borderRadius: R.lg - 4, padding: 16, overflow: 'hidden', shadowOpacity: 0.05 },
-  itemOn: { borderColor: C.gold, backgroundColor: C.red50 },
+  optionOn: { backgroundColor: C.navy50 },
+  optionCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.navyFill, alignItems: 'center', justifyContent: 'center' },
+  segmented: { backgroundColor: C.raised, borderWidth: 1, borderColor: C.line2, borderRadius: R.md, padding: 4, gap: 4 },
+  seg: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, minHeight: 40, justifyContent: 'center' },
+  segOn: { backgroundColor: C.dark ? '#2A3546' : C.card, ...shadow, shadowOpacity: C.dark ? 0.4 : 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
+  segText: { fontSize: 13.5, ...F[600], color: C.muted },
+  segTextOn: { color: C.ink, ...F[700] },
+  backdrop: { flex: 1, backgroundColor: C.dark ? 'rgba(5,8,12,0.72)' : 'rgba(15,23,42,0.45)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: C.dark ? C.surface : C.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: C.glassEdge, padding: 20, paddingTop: 10, maxHeight: '90%', gap: 14, overflow: 'hidden' },
+  grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: C.line, marginBottom: 8 },
+  closeBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.raised, borderWidth: 1, borderColor: C.glassEdge, alignItems: 'center', justifyContent: 'center' },
+  item: { ...glass, borderRadius: 16, padding: 16, overflow: 'hidden', shadowOpacity: 0 },
+  itemOn: { borderColor: C.navy, backgroundColor: C.navy50 },
   itemBar: { position: 'absolute', left: 0, top: 14, bottom: 14, width: 3, borderTopRightRadius: 3, borderBottomRightRadius: 3 },
   itemTitle: { fontSize: 15, ...F[700], color: C.ink },
   itemBody: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line2, gap: 7 },
-  routeCode: { borderRadius: R.sm, paddingHorizontal: 9, paddingVertical: 5, minWidth: 44, alignItems: 'center', borderWidth: 1, borderColor: HAIRLINE.gold },
-  routeCodeText: { color: C.gold, ...F[700], fontSize: 14, letterSpacing: 0.5 },
-  monthBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.navy50, alignItems: 'center', justifyContent: 'center' },
-  wordmark: { color: '#fff', ...F.brand, fontSize: 18, lineHeight: 22 },
-  wordmarkSub: { color: C.gold, ...F.navBold, fontSize: 8.5, letterSpacing: 3.6, lineHeight: 11 },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60, paddingLeft: 7, paddingRight: 8, borderRadius: R.pill, borderWidth: 1 },
+  routeCode: { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6, minWidth: 44, alignItems: 'center', backgroundColor: C.navyFill },
+  routeCodeText: { color: '#fff', ...F.displayBold, fontSize: 14 },
+  monthBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.raised, alignItems: 'center', justifyContent: 'center' },
+  wordmark: { color: ON_PILL, ...F.brand, fontSize: 19, lineHeight: 23 },
+  wordmarkSub: { color: PILL_LIGHT ? ON_PILL : C.muted, ...F[600], fontSize: 9.5, lineHeight: 12, letterSpacing: 4.6, marginTop: 1 },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingLeft: 8, paddingRight: 10, borderRadius: R.pill, borderWidth: 1 },
   // A fine gold line along the pill's lower edge.
-  pillGold: { position: 'absolute', left: 28, right: 28, bottom: 0, height: 1, backgroundColor: 'rgba(247,188,49,0.45)' },
+  pillGold: { position: 'absolute', left: 24, right: 24, bottom: 0, height: 1.5 },
   pillSolid: { backgroundColor: C.glassDark, borderColor: 'rgba(255,255,255,0.22)', overflow: 'hidden', ...shadowLg, shadowOpacity: 0.22, elevation: 0 },
   pillGlass: { backgroundColor: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.14)' },
-  pillTitle: { color: '#fff', fontSize: 16.5, lineHeight: 21, ...F.navBold },
-  pillEyebrow: { color: C.gold, fontSize: 8.5, lineHeight: 11, letterSpacing: 2.4, ...F.navBold },
+  pillCard: { backgroundColor: C.glassStrong, borderColor: C.glassEdge, overflow: 'hidden', ...shadowLg, shadowOpacity: 0.3, elevation: 0 },
+  pillPlain: { backgroundColor: 'transparent', borderColor: 'transparent', paddingLeft: 4, paddingRight: 4 },
+  pillWhite: { backgroundColor: 'rgba(255,255,255,0.74)', borderColor: 'rgba(255,255,255,0.85)', overflow: 'hidden', ...shadowLg, shadowColor: '#10264a', shadowOpacity: 0.16, elevation: 6 },
+  pillTitle: { color: ON_PILL, fontSize: 19, lineHeight: 24, ...F.navTitle },
+  plainTitle: { flex: 1, color: C.ink, fontSize: 28, lineHeight: 34, ...F.navTitle, letterSpacing: -0.4 },
+  pillEyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 1 },
+  pillEyebrowDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: PILL_LIGHT ? '#b08a2e' : C.gold },
+  pillEyebrow: { color: PILL_LIGHT ? '#8a6a1f' : C.gold, fontSize: 9.5, lineHeight: 12, letterSpacing: 1.8, ...F.navBold },
   pillRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pillBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' },
+  pillBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: C.card, borderWidth: 1, borderColor: C.line2 },
   pillCta: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: C.gold, ...glow(C.gold), shadowOpacity: 0.3 },
-  pillCtaText: { color: C.navy900, ...F[700], fontSize: 13.5, letterSpacing: 0.2 },
+  pillCtaText: { color: C.onGold, ...F[700], fontSize: 13.5, letterSpacing: 0.2 },
 });

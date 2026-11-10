@@ -1,0 +1,317 @@
+/* ===========================================================================
+   How things answer the pointer, and the filter dropdown. Imported last.
+   Each card takes the colour of what it shows: navy by default, and green,
+   amber or red for the status tones.
+   =========================================================================== */
+
+:root {
+  --hover-move: 0.18s ease;
+  --hover-rgb: 28, 49, 94;
+  --chart-navy: #1c315e;
+  --chart-green: #237a36;
+  --chart-red: #a02022;
+  --chart-slate: #3e4c57;
+  --hover-end: rgba(255, 255, 255, 0.96);
+}
+
+.stat, .kit-row, .kit-bus, .kit-figure, .kit-block, .kit-profile, .kit-day, .soft-card, .map-card, .panel,
+.bus-card, .feature, .route-tile, .quick-actions > *, .schedule-card, .timetable, .empty-hero, .select-route,
+.auth-card, .steps li, .pv-card, .land-stats > div, .notice-list > li, .contact-card, .upsell, .tile, .occ,
+.feed li, .trip-list li, .boarded li, .driver-students li, .auth-roles li, .contact-row,
+.route-card, .drive-card, .fleet-card, .kit-fleet, .leave-card, .att-row, .table tbody td {
+  --hover: var(--hover-rgb); /* the tint */
+  --band: 247, 188, 49; /* the line along the top */
+  transition: transform var(--hover-move), box-shadow var(--hover-move), border-color var(--hover-move),
+    background var(--hover-move), filter var(--hover-move);
+}
+.stat.live, .kit-bus.is-live { --hover: 35, 122, 54; --band: 35, 122, 54; }
+.stat.delayed, .kit-row.is-delayed { --hover: 185, 131, 42; --band: 185, 131, 42; }
+.stat.danger, .kit-row.is-alert, .kit-row.is-danger { --hover: 160, 32, 34; --band: 160, 32, 34; }
+
+.stat-icon, .kit-fold-icon, .kit-chevron, .route-code, .feature svg { transition: transform 0.18s ease, color 0.18s ease; }
+
+@media (hover: hover) {
+  /* Every light card: it lifts, fills with its colour and gains a coloured top edge. */
+  .stat.stat:hover, .kit-stats .stat:hover, .kpi-grid .stat:hover, .kpi-strip .stat:hover,
+  .panel.kit-view-card:hover, .kit-row:hover, button.kit-row:hover, a.kit-row:hover, .kit-bus:hover:not(:disabled),
+  .route-tile:hover, .bus-card:hover, .feature:hover, .land .feature:hover, .quick-actions > *:hover, .schedule-card:hover,
+  .steps li:hover, .notice-list > li:hover, .kit-day:hover {
+    transform: translateY(-3px);
+    background: linear-gradient(150deg, rgba(var(--hover), 0.2), var(--hover-end) 68%);
+    border-color: rgba(var(--hover), 0.32);
+    box-shadow: inset 0 3px 0 rgb(var(--band)), 0 14px 30px rgba(var(--hover), 0.17);
+  }
+
+  /* Large cards hold forms and lists: the same, a little quieter. */
+  .panel:hover, .kit-block:hover, .kit-profile:hover, .soft-card:hover, .map-card:hover, .timetable:hover,
+  .empty-hero:hover, .select-route:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(150deg, rgba(var(--hover), 0.12), var(--hover-end) 60%);
+    border-color: rgba(var(--hover), 0.24);
+    box-shadow: inset 0 3px 0 rgb(var(--band)), 0 16px 34px rgba(var(--hover), 0.13);
+  }
+
+  /* Dark cards: the gold edge shows, and they brighten instead of tinting. */
+  .route-card:hover, .pv-card:hover, .drive-card:hover, .fleet-card:hover, .kit-fleet:hover, .leave-card:hover, .contact-card:hover, .land-stats > div:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.07);
+    box-shadow: inset 0 3px 0 var(--gold), 0 18px 36px rgba(20, 37, 72, 0.3);
+  }
+
+  /* Rows inside cards. */
+  .feed li:hover, .trip-list li:hover, .boarded li:hover, .driver-students li:hover, .auth-roles li:hover {
+    background: rgba(28, 49, 94, 0.07);
+    box-shadow: inset 3px 0 0 var(--gold);
+  }
+  .contact-row:hover { background: rgba(255, 255, 255, 0.24); box-shadow: inset 3px 0 0 var(--gold); }
+  .tile:hover:not(:disabled), .occ:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(28, 49, 94, 0.16); }
+  .upsell:hover { filter: brightness(1.05); box-shadow: 0 12px 26px rgba(28, 49, 94, 0.18); }
+
+  .stat:hover .stat-icon { transform: scale(1.1) rotate(-4deg); }
+  .stat:hover b { color: rgb(var(--hover)); }
+  .panel.kit-view-card:hover .kit-fold-icon, .kit-row:hover .route-code, .kit-bus:hover .route-code, .feature:hover svg { transform: scale(1.08); }
+  .panel.kit-view-card:hover .kit-chevron, .kit-row:hover .kit-chevron, .att-row:hover .kit-chevron { transform: translateX(3px); color: var(--navy); }
+  .panel.kit-view-card:hover b, .kit-row:hover .kit-row-main b, .kit-bus:hover b { color: var(--navy); }
+
+  .kit-figure { padding: 4px 8px; margin: -4px -8px; border-radius: 12px; }
+  .kit-figure:hover { background: rgba(var(--hover), 0.08); }
+  .kit-figure:hover b { color: var(--navy); }
+  .kit-figures.light .kit-figure:hover { background: rgba(255, 255, 255, 0.12); }
+  .kit-figures.light .kit-figure:hover b { color: #fff; }
+
+  .att-row:hover { background: rgba(28, 49, 94, 0.06); box-shadow: inset 3px 0 0 var(--gold); }
+  .table tbody tr:hover td { background: rgba(28, 49, 94, 0.05); }
+  .kit-chips button:hover:not(.on) { background: var(--navy-50); }
+
+  /* A card inside a card, or inside a pop-up, stays where it is. */
+  .modal .panel:hover, .kit-detail-body > .panel:hover, .panel .panel:hover { transform: none; }
+}
+
+/* Every plain select: the app's look instead of the browser's. */
+.field select, .filters-row select, select.full {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%231c315e' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+@media (hover: hover) {
+  .field select:hover:not(:disabled), select.full:hover:not(:disabled) { border-color: rgba(28, 49, 94, 0.45); }
+}
+
+/* The filter dropdown (Dropdown in ui.jsx). */
+.dropdown { position: relative; min-width: 0; }
+.dropdown.is-open { z-index: 40; }
+.dropdown-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: 16px; background: #fff; color: var(--ink);
+  font: inherit; text-align: left; cursor: pointer; box-shadow: 0 2px 10px rgba(20, 37, 72, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+.dropdown-icon {
+  width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center; border-radius: 12px;
+  background: var(--navy-50); color: var(--navy); transition: background-color 0.15s ease, color 0.15s ease;
+}
+.dropdown-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.dropdown-text small { font-size: 11px; font-weight: 600; letter-spacing: 0.3px; color: var(--muted); }
+.dropdown-text b { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dropdown-chevron { flex-shrink: 0; color: var(--muted); transition: transform 0.18s ease; }
+.dropdown.is-open .dropdown-chevron { transform: rotate(180deg); }
+.dropdown.is-set .dropdown-btn { border-color: rgba(28, 49, 94, 0.35); background: var(--navy-50); }
+.dropdown.is-set .dropdown-icon, .dropdown.is-open .dropdown-icon { background: var(--navy); color: var(--gold); }
+.dropdown.is-open .dropdown-btn { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(28, 49, 94, 0.12); }
+.dropdown-btn:focus-visible { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(28, 49, 94, 0.18); }
+.dropdown-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none;
+  background: #fff; border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(20, 37, 72, 0.18); max-height: 280px; overflow-y: auto;
+  animation: dropdown-in 0.14s ease;
+}
+.dropdown-menu button {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border: 0; border-radius: 10px;
+  background: none; color: var(--ink); font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer;
+}
+.dropdown-menu button span:first-child { flex: 1; min-width: 0; }
+.dropdown-menu button:hover, .dropdown-menu button:focus-visible { background: var(--navy-50); outline: none; }
+.dropdown-menu button[aria-selected='true'] { color: var(--navy); font-weight: 700; }
+.dropdown-count { min-width: 24px; padding: 1px 7px; border-radius: 999px; background: var(--navy-50); color: var(--navy); font-size: 12px; font-weight: 600; text-align: center; }
+@keyframes dropdown-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+@media (hover: hover) {
+  .dropdown-btn:hover { border-color: rgba(28, 49, 94, 0.4); box-shadow: 0 8px 20px rgba(20, 37, 72, 0.1); transform: translateY(-1px); }
+  .dropdown-btn:hover .dropdown-icon { background: var(--navy); color: var(--gold); }
+}
+@media (max-width: 720px) {
+  .att-filters { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat:hover, .kit-row:hover, .kit-bus:hover, .panel:hover, .kit-block:hover, .kit-profile:hover, .soft-card:hover,
+  .map-card:hover, .bus-card:hover, .feature:hover, .route-tile:hover, .schedule-card:hover, .kit-day:hover,
+  .route-card:hover, .drive-card:hover, .leave-card:hover, .glance-card:hover, .dropdown-btn:hover { transform: none !important; }
+  .dropdown-menu { animation: none; }
+}
+
+/* The digital bus pass. */
+.pass-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.pass-card { display: flex; flex-direction: column; gap: 18px; padding: 22px; border-radius: 24px; color: #fff; border: 1px solid rgba(247, 188, 49, 0.45); background: radial-gradient(70% 90% at 100% 0%, rgba(247, 188, 49, 0.16), transparent 60%), linear-gradient(145deg, #1c315e, #142548); box-shadow: 0 16px 36px rgba(20, 37, 72, 0.28); }
+.pass-top { display: flex; align-items: center; gap: 12px; }
+.pass-brand { flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
+.pass-brand b { font-size: 17px; font-weight: 600; }
+.pass-brand small { color: var(--gold); font-size: 12px; letter-spacing: 0.6px; }
+.pass-holder { display: flex; align-items: center; gap: 16px; }
+.pass-photo { width: 76px; height: 76px; border-radius: 18px; object-fit: cover; border: 2px solid var(--gold); }
+.pass-who { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pass-who b { font-family: var(--heading); font-size: 22px; font-weight: 600; }
+.pass-who small { color: rgba(255, 255, 255, 0.75); font-size: 13px; }
+.pass-facts { display: grid; gap: 10px; margin: 0; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.16); }
+.pass-facts > div { display: flex; justify-content: space-between; gap: 14px; }
+.pass-facts dt { color: rgba(255, 255, 255, 0.7); font-size: 13px; }
+.pass-facts dd { margin: 0; font-size: 14px; font-weight: 600; text-align: right; }
+.pass-code { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.pass-hint { margin: 0; font-weight: 600; color: var(--navy); }
+.pass-qr { width: 240px; max-width: 100%; aspect-ratio: 1; border-radius: 14px; border: 1px solid var(--line); background: #fff; }
+.pass-meter { width: 240px; max-width: 100%; height: 5px; border-radius: 99px; background: var(--navy-50); overflow: hidden; }
+.pass-meter i { display: block; height: 100%; background: var(--gold); transition: width 1s linear; }
+
+/* Rating a trip. */
+.stars { display: flex; justify-content: center; gap: 6px; margin: 4px 0 12px; }
+.stars button { border: 0; background: none; font-size: 34px; line-height: 1; color: var(--navy-100); cursor: pointer; transition: transform 0.12s ease, color 0.12s ease; }
+.stars button.on { color: var(--gold); }
+.stars button:hover { transform: scale(1.14); }
+.tag-picks { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.tag-picks button { padding: 7px 13px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.tag-picks button.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.check-line { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 14px; cursor: pointer; }
+.check-line span { flex: 1; }
+.check-line input { width: 18px; height: 18px; margin: 0; accent-color: var(--navy); }
+.check-line small { color: var(--live); font-weight: 600; }
+.check-line.failed small { color: var(--danger); }
+.check-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 18px; margin-bottom: 8px; }
+
+/* Parent access. */
+.link-code { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 10px 0; padding: 14px; border-radius: 16px; background: var(--navy-50); }
+.link-code b { font-size: 26px; letter-spacing: 3px; color: var(--navy); }
+.link-code small { color: var(--muted); }
+.child-card { display: flex; flex-direction: column; gap: 12px; }
+.child-bus { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--offline-50); color: var(--muted); }
+.child-bus.on { background: var(--live-50); color: var(--live); }
+.child-bus span { display: flex; flex-direction: column; min-width: 0; }
+.child-bus b { color: var(--ink); font-size: 15px; font-weight: 600; }
+.child-bus small { color: var(--muted); font-size: 13px; }
+.child-trip { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.child-trip span:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.child-trip b { font-size: 14px; font-weight: 600; }
+.child-trip small { color: var(--muted); font-size: 12.5px; }
+
+/* The driver's scan result, and the service desk's single filter. */
+.scan-result { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 12px; border-radius: 16px; border: 1px solid var(--line); }
+.scan-result.ok { background: var(--live-50); border-color: rgba(35, 122, 54, 0.3); }
+.scan-result.bad { background: var(--danger-50); border-color: rgba(160, 32, 34, 0.3); }
+.scan-result img { width: 54px; height: 54px; border-radius: 12px; object-fit: cover; }
+.scan-result span:first-of-type { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.scan-result small { color: var(--muted); }
+.att-filters.narrow { grid-template-columns: minmax(0, 280px); margin-bottom: 12px; }
+
+/* The bus is almost here. */
+.near-banner { position: fixed; z-index: 90; top: 92px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; width: min(420px, calc(100vw - 32px)); padding: 12px 16px; border: 1px solid rgba(247, 188, 49, 0.5); border-radius: 18px; background: linear-gradient(145deg, #1c315e, #142548); color: #fff; font: inherit; text-align: left; cursor: pointer; box-shadow: 0 18px 38px rgba(20, 37, 72, 0.36); animation: dropdown-in 0.2s ease; }
+.near-banner svg { color: var(--gold); flex-shrink: 0; }
+.near-banner span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.near-banner small { color: rgba(255, 255, 255, 0.8); }
+@media (max-width: 760px) { .pass-layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* The signed-in person in the top bar. */
+.profile { position: relative; }
+.profile-btn { display: inline-flex; align-items: center; gap: 10px; padding: 5px 12px 5px 5px; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 999px; background: rgba(255, 255, 255, 0.06); color: #fff; font: inherit; text-align: left; cursor: pointer; transition: background-color 0.16s ease, border-color 0.16s ease; }
+.profile-btn:hover, .profile.is-open .profile-btn { background: rgba(255, 255, 255, 0.13); border-color: rgba(247, 188, 49, 0.6); }
+.profile-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.profile-chevron { color: rgba(255, 255, 255, 0.7); flex-shrink: 0; transition: transform 0.18s ease; }
+.profile.is-open .profile-chevron { transform: rotate(180deg); }
+.profile-pic { display: grid; place-items: center; flex-shrink: 0; overflow: hidden; border-radius: 50%; border: 2px solid var(--gold); background: linear-gradient(145deg, #2a4378, #1c315e); color: #fff; font-weight: 600; box-sizing: border-box; }
+.profile-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.profile-pic.small { width: 40px; height: 40px; font-size: 14px; }
+.profile-pic.large { width: 72px; height: 72px; font-size: 24px; }
+
+.profile-menu { position: absolute; top: calc(100% + 12px); right: 0; z-index: 60; width: 300px; display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 22px; background: #fff; color: var(--ink); box-shadow: 0 22px 48px rgba(20, 37, 72, 0.26); animation: dropdown-in 0.14s ease; }
+.profile-head { display: flex; align-items: center; gap: 14px; padding: 4px 4px 8px; }
+.profile-pic-btn { position: relative; flex-shrink: 0; padding: 0; border: 0; background: none; cursor: pointer; }
+.profile-pic-edit { position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; border: 2px solid #fff; background: var(--navy); color: var(--gold); }
+.profile-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.profile-who b { font-family: var(--heading); font-size: 16px; font-weight: 600; color: var(--navy-900); overflow-wrap: anywhere; }
+.profile-who small { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.profile-photo-actions { display: flex; gap: 8px; padding: 0 4px 8px; border-bottom: 1px solid var(--line); }
+.profile-photo-actions button { flex: 1; padding: 8px 10px; border: 0; border-radius: 12px; background: var(--navy); color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: filter 0.15s ease; }
+.profile-photo-actions button.quiet { background: var(--navy-50); color: var(--navy); }
+.profile-photo-actions button:hover:not(:disabled) { filter: brightness(1.12); }
+.profile-photo-actions button:disabled, .profile-pic-btn:disabled { opacity: 0.6; cursor: default; }
+.profile-error { margin: 0 4px; font-size: 13px; color: var(--danger); }
+.profile-language { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; font-size: 14px; font-weight: 500; }
+.profile-language > span:first-child { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); }
+.profile-language svg { color: var(--navy); }
+.profile-switch { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--navy-50); }
+.profile-switch button { padding: 5px 11px; border: 0; border-radius: 999px; background: none; color: var(--navy); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.profile-switch button.on { background: var(--navy); color: #fff; }
+.profile-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 0; border-radius: 12px; background: none; color: var(--ink); font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; transition: background-color 0.15s ease; }
+.profile-item svg { color: var(--navy); }
+.profile-item:hover { background: var(--navy-50); }
+.profile-item.danger, .profile-item.danger svg { color: var(--danger); }
+.profile-item.danger:hover { background: var(--danger-50); }
+@media (max-width: 1060px) {
+  .user-chip { display: block; }
+  .profile-btn { width: 100%; }
+  .profile-btn .user-meta { flex: 1; }
+  .profile-menu { position: static; width: auto; margin-top: 10px; box-shadow: none; }
+}
+
+/* Holidays and special days. */
+.day-banner { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 18px; border: 1px solid rgba(185, 131, 42, 0.35); background: var(--delayed-50); color: var(--delayed); }
+.day-banner.off { border-color: rgba(160, 32, 34, 0.3); background: var(--danger-50); color: var(--danger); }
+.day-banner span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.day-banner b { color: var(--ink); font-size: 14px; font-weight: 600; }
+.day-banner small { color: var(--muted); font-size: 13px; }
+
+/* Bus care. */
+.care-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 560px; }
+.score-ring { width: 48px; height: 48px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; border: 3px solid currentColor; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.score-ring.live { color: var(--live); }
+.score-ring.delayed { color: var(--delayed); }
+.score-ring.danger { color: var(--danger); }
+
+/* The dark mode switch. */
+.profile-toggle { position: relative; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 999px; background: var(--navy-100); cursor: pointer; transition: background-color 0.16s ease; }
+.profile-toggle i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.16s ease; }
+.profile-toggle.on { background: var(--gold); }
+.profile-toggle.on i { transform: translateX(18px); }
+
+/* Long labels, as in Tamil: options wrap instead of running off the screen. */
+.segmented { flex-wrap: wrap; overflow-x: visible; border-radius: 22px; }
+.settings-section .segmented { flex-wrap: wrap; }
+.kit-row-side { min-width: 0; flex-shrink: 1; }
+.kit-row-main { min-width: min(150px, 40%); }
+@media (max-width: 640px) {
+  .kit-row:has(.care-badges) { flex-wrap: wrap; }
+  .kit-row:has(.care-badges) .kit-row-side { flex-basis: 100%; align-items: flex-start; }
+  .care-badges { justify-content: flex-start; }
+}
+
+/* The sign-in card sits on navy, so a tint would grey it: it only lifts and brightens a little. */
+@media (hover: hover) {
+  .auth-card:hover {
+    transform: translateY(-2px);
+    background: var(--glass-gloss), rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 2px 0 rgba(247, 188, 49, 0.75), 0 22px 46px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* System health and the year's lists. */
+.health-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.health-grid > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.health-grid small { font-size: 12px; color: var(--muted); }
+.health-grid b { font-size: 15px; color: var(--ink); overflow-wrap: anywhere; }
+.health-grid em { font-style: normal; font-size: 12px; color: var(--muted); }
+.health-list { list-style: none; margin: 10px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--ink); }
+.check-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); margin: 8px 0; }
+@media (max-width: 640px) { .health-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

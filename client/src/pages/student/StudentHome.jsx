@@ -1,15 +1,18 @@
+import DayBanner from '../../components/DayBanner.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api.js';
-import { date, dateTime, etaText, OCCUPANCY, time } from '../../lib/format.js';
-import { dailyRuns, formatMinutes, greeting } from '../../lib/schedule.js';
+import { date, etaText, OCCUPANCY, thisMonth, time } from '../../lib/format.js';
+import { dailyRuns, formatMinutes, greeting, longDate } from '../../lib/schedule.js';
+import { useT } from '../../lib/i18n.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import { useLive } from '../../lib/useLive.js';
 import Icon from '../../components/Icon.jsx';
 import RouteMiniMap from '../../components/RouteMiniMap.jsx';
 import SelectRoute from '../../components/SelectRoute.jsx';
-import { Badge, ErrorText, Field, FoldPanel, Modal, Notice } from '../../components/ui.jsx';
+import { Badge, ErrorText, Field, Modal, Notice } from '../../components/ui.jsx';
 import { haversineMeters } from '../../../../shared/geo.js';
+import { DIRECTION_TEXT } from '../../../../shared/direction.js';
 import { estimateArrival, LEAVE_ALERT_M, leavePlan } from '../../../../shared/eta.js';
 import { ageLabel } from '../../../../shared/freshness.js';
 
@@ -67,6 +70,115 @@ function MapPreview({ route, buses, stopSeq, entitled, loading }) {
   );
 }
 
+/**
+ * "At a glance": the four things a student checks first, all from data the app
+ * already has - the next run at their stop, the live bus, this month's
+ * attendance and where their stop sits on the route.
+ */
+/** One tile of the home page: what it is, the answer, one line of detail. Opens the page behind it. */
+function GlanceCard({ href, tone, icon, label, value, detail, progress }) {
+  return (
+    <a className={`glance-card ${tone}`} href={href}>
+      <span className="glance-top">
+        <span className="glance-label">{label}</span>
+        <span className="glance-icon"><Icon name={icon} size={18} /></span>
+      </span>
+      <b className="glance-value tabular">{value}</b>
+      {progress != null ? (
+        <span className="glance-progress" role="img" aria-label={detail}><i style={{ width: `${progress}%` }} /></span>
+      ) : null}
+      <small className="glance-detail">{detail}</small>
+    </a>
+  );
+}
+
+function Glance({ route, stopSeq, bus, eta, entitled, loading, month, day }) {
+  const t = useT();
+  const runs = dailyRuns(route, stopSeq, day);
+  // After the evening run, the next bus is tomorrow morning's.
+  const today = runs.find((r) => r.next);
+  const next = today ?? (runs[0]?.minutes != null ? runs[0] : null);
+  const idx = route ? route.stops.findIndex((st) => st.seq === stopSeq) : -1;
+  const reporting = entitled && bus && bus.freshness !== 'offline';
+  const live = loading ? t('Checking…')
+    : !entitled ? t('Locked')
+      : !bus ? t('Not running')
+        : bus.freshness === 'offline' ? t('Offline')
+          : eta?.passed ? t('Passed') : etaText(eta);
+  const busName = bus ? bus.fleetCode.replace('BSACIST-', 'Bus ') : route ? `Bus ${route.code}` : 'No bus yet';
+  const present = month?.tripsPresent;
+  return (
+    <section className="home-glance" aria-label="At a glance">
+      <GlanceCard
+        href="#/schedule"
+        tone="gold"
+        icon="clock"
+        label={t(today ? 'Next bus' : 'Tomorrow')}
+        value={next ? formatMinutes(next.minutes) : '—'}
+        detail={next ? t(next.key === 'am' ? 'Morning · To college' : 'Evening · Going home') : 'No timetable yet'}
+      />
+      <GlanceCard
+        href={entitled ? '#/map' : '#/pay'}
+        tone={reporting ? 'green' : 'slate'}
+        icon="bus"
+        label={t('Your bus')}
+        value={live}
+        detail={reporting ? `${busName} · ${t('sharing live')}` : busName}
+      />
+      <GlanceCard
+        href={entitled ? '#/attendance' : '#/pay'}
+        tone="green"
+        icon="check"
+        label={t('This month')}
+        value={entitled ? (present == null ? '…' : `${present} ${t(present === 1 ? 'trip' : 'trips')}`) : '—'}
+        detail={entitled && month ? `${month.upPresent ?? 0} ${t('inbound')} · ${month.downPresent ?? 0} ${t('outbound')}` : 'Attendance'}
+      />
+      <GlanceCard
+        href="#/settings"
+        tone="navy"
+        icon="pin"
+        label={t('Your stop')}
+        value={idx >= 0 ? `${idx + 1} of ${route.stops.length}` : '—'}
+        detail={idx >= 0 ? `${t('Route')} ${route.code}` : t('Choose your stop')}
+        progress={idx >= 0 ? ((idx + 1) / route.stops.length) * 100 : null}
+      />
+    </section>
+  );
+}
+
+/** Your journey to campus: your stop, the next few, and campus, with timetable times. */
+function Journey({ route, stopSeq }) {
+  if (!route) return <section className="soft-card home-journey"><div className="skeleton-block short" /></section>;
+  const stops = route.stops;
+  const at = Math.max(0, stops.findIndex((st) => st.seq === stopSeq));
+  const ahead = stops.slice(at, at + 3);
+  const campus = stops[stops.length - 1];
+  const hidden = stops.length - 1 - (at + ahead.length);
+  return (
+    <section className="soft-card home-journey">
+      <div className="soft-card-head">
+        <h3><Icon name="route" size={17} /> Your journey</h3>
+        <a href="#/schedule">Full timetable</a>
+      </div>
+      <ol className="journey">
+        {ahead.map((st, i) => (
+          <li key={st.seq} className={i === 0 ? 'mine' : ''}>
+            <time className="tabular">{st.scheduled_time ?? '—'}</time>
+            <span>{st.name}{i === 0 && <em>Your stop</em>}</span>
+          </li>
+        ))}
+        {hidden > 0 && <li className="more"><time /><span>{hidden} more stop{hidden === 1 ? '' : 's'}</span></li>}
+        {campus && !ahead.includes(campus) && (
+          <li className="campus">
+            <time className="tabular">{campus.scheduled_time ?? '—'}</time>
+            <span>{campus.name}<em>Campus</em></span>
+          </li>
+        )}
+      </ol>
+    </section>
+  );
+}
+
 /** "Bus contact": who is driving, and a number to call (doc 4.3). */
 function BusContact({ bus, route }) {
   return (
@@ -92,55 +204,6 @@ function BusContact({ bus, route }) {
     </section>
   );
 }
-
-function AlertsPreview({ token, entitled }) {
-  const { data } = useAsync(() => (entitled ? api('/api/notifications', { token }) : api('/api/notices')), [token, entitled]);
-  const items = (data ?? []).slice(0, 3);
-  return (
-    <FoldPanel
-      icon="bell"
-      title="Notifications"
-      summary={data == null ? 'Loading…' : data.length ? data[0].title : "You're all caught up"}
-      badge={data?.length ? <Badge tone="info">{data.length > 9 ? '9+' : data.length}</Badge> : null}
-    >
-      {data == null ? <div className="skeleton-block short" /> : items.length === 0 ? <p className="muted">You're all caught up.</p> : (
-        <ul className="feed">
-          {items.map((n, i) => (
-            <li key={n.id} className={i === 0 ? 'hot' : n.kind !== 'ANNOUNCEMENT' ? 'warn' : ''}>
-              <span className="feed-icon"><Icon name={n.kind === 'ANNOUNCEMENT' ? 'bell' : 'alert'} size={15} /></span>
-              <span><b>{n.title}</b><small>{n.message}</small><time>{dateTime(n.created_at)}</time></span>
-            </li>
-          ))}
-        </ul>
-      )}
-      <a className="link" href="#/alerts">See all notifications →</a>
-    </FoldPanel>
-  );
-}
-
-/** What the boarding question is and when it comes (server/boarding.js), folded. */
-function BoardingInfo({ user, stop }) {
-  const on = user.boardingReminders;
-  return (
-    <FoldPanel
-      icon="bus"
-      title="Boarding check"
-      summary={on ? `Asked when your bus leaves ${stop?.name ?? 'your stop'}` : 'Switched off'}
-      badge={<Badge tone={on ? 'live' : 'offline'}>{on ? 'On' : 'Off'}</Badge>}
-    >
-      {on ? (
-        <p className="muted">When your bus's GPS shows it leaving <b>{stop?.name ?? 'your stop'}</b>, you'll get a "Did you board?" popup, repeated every 10 minutes until you answer. "Yes" marks your attendance.</p>
-      ) : (
-        <p className="muted">You won't be asked when your bus leaves your stop. Turn it on in Settings.</p>
-      )}
-      <a className="link" href="#/settings">{stop ? 'Change in Settings →' : 'Choose your boarding stop →'}</a>
-    </FoldPanel>
-  );
-}
-
-const km = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`);
-const leaveHeadline = (plan) => (plan.leaveInMin <= 0 ? 'Leave now' : `Leave by ${time(plan.leaveAt)}`);
-const arrivalRange = (plan) => (time(plan.arriveFrom) === time(plan.arriveTo) ? time(plan.arriveFrom) : `${time(plan.arriveFrom)} – ${time(plan.arriveTo)}`);
 
 function Toggle({ on, onChange, label }) {
   return <button type="button" role="switch" aria-checked={on} aria-label={label} className={`leave-switch${on ? ' on' : ''}`} onClick={(e) => { e.stopPropagation(); onChange(!on); }} />;
@@ -168,7 +231,7 @@ function LeaveHome({ plan, bus, stop, armed, onArm, onOpen }) {
       <div className="leave-card" style={{ cursor: 'default' }}>
         <div className="leave-card-row">
           <span className="kit-fold-icon"><Icon name="check" size={17} /></span>
-          <span className="leave-card-text"><b>Your bus has passed {stop?.name ?? 'your stop'}</b><small>{bus.fleetCode} · check the schedule for the next run</small></span>
+          <span className="leave-card-text"><b>Your bus has passed {stop?.name ?? 'your stop'}</b><small>{bus.fleetCode} · check the schedule for the next trip</small></span>
         </div>
       </div>
     );
@@ -179,7 +242,7 @@ function LeaveHome({ plan, bus, stop, armed, onArm, onOpen }) {
         <span className="leave-eyebrow"><i className="pulse" /> Bus is {km(plan.distanceM)} from {stop?.name ?? 'your stop'}</span>
         <span className="leave-big">{leaveHeadline(plan)}</span>
         <span className="leave-sub">{plan.leaveInMin > 0 ? `In ${plan.leaveInMin} min · ` : ''}bus arrives {arrivalRange(plan)} · {plan.walkMin} min walk{plan.walkAssumed ? ' (assumed)' : ''}</span>
-        <span className="leave-more">Details →</span>
+        <span className="leave-more">Details ›</span>
       </button>
     );
   }
@@ -230,7 +293,7 @@ function LeaveDetails({ plan, bus, stop, me, onLocate, armed, onArm, onClose, lo
   );
 }
 
-/** Missing or delayed bus, lost and found, SOS - free for everyone (doc 4.3, 8.4). */
+/** Missing or delayed bus, lost and found, SOS - open to every student (doc 4.3, 8.4). */
 function ReportProblem({ token, user, onClose }) {
   const [kind, setKind] = useState('DELAY');
   const [message, setMessage] = useState('');
@@ -279,11 +342,13 @@ export default function StudentHome() {
   const route = useAsync(() => (routeCode ? api(`/api/routes/${encodeURIComponent(routeCode)}`) : Promise.resolve(null)), [routeCode]);
   const entitled = Boolean(entitlement?.active);
   const { buses } = useLive(token, routeCode, entitled && Boolean(routeCode));
+  const calendar = useAsync(() => api('/api/calendar'), []);
+  const month = useAsync(() => (entitled ? api(`/api/attendance/me?month=${thisMonth()}`, { token }) : Promise.resolve(null)), [token, entitled]);
 
   // The 2 km alert: once per trip, when the bus first comes within range of the stop.
   const homeStop = route.data?.stops.find((st) => st.seq === user?.homeStopSeq);
   const liveBus = buses.find((b) => b.freshness !== 'offline') ?? null;
-  const liveEta = liveBus && route.data && homeStop && routeCode === user?.homeRouteCode ? estimateArrival(route.data.stops, liveBus, homeStop.seq, route.data.segmentMinutes) : null;
+  const liveEta = liveBus && liveBus.direction !== 'DOWN' && route.data && homeStop && routeCode === user?.homeRouteCode ? estimateArrival(route.data.stops, liveBus, homeStop.seq, route.data.segmentMinutes) : null;
   const nearNow = liveEta && !liveEta.passed && liveEta.remainingM <= LEAVE_ALERT_M;
   useEffect(() => {
     if (!armed || !nearNow || !liveBus || alertedTrip.current === liveBus.tripId) return;
@@ -320,6 +385,7 @@ export default function StudentHome() {
     );
   };
   const first = user.name.replace(/^(Mr|Mrs|Ms)\.?\s*/i, '').split(' ')[0];
+  const t = useT();
 
   return (
     <main className="page app-page">
@@ -327,7 +393,11 @@ export default function StudentHome() {
         <div>
           <span className="greet-sub">{greeting()},</span>
           <h1>{first}</h1>
-          <span className="greet-meta"><Icon name="pin" size={14} /> {stop ? `${stop.name} · Route ${route.data.code}` : route.data ? 'Choose your stop in Settings' : `Route ${user.homeRouteCode} · ${user.homeRouteName ?? ''}`}</span>
+          <span className="greet-metas">
+            <span className="greet-meta"><Icon name="pin" size={14} /> {stop ? `${stop.name} · Route ${route.data.code}` : route.data ? 'Choose your stop in Settings' : `Route ${user.homeRouteCode} · ${user.homeRouteName ?? ''}`}</span>
+            <span className="greet-meta"><Icon name="clock" size={14} /> {longDate()}</span>
+            {entitled && bus?.direction && <span className="greet-meta"><Icon name="bus" size={14} /> {t(DIRECTION_TEXT[bus.direction])}</span>}
+          </span>
         </div>
         <a className="bell" href="#/alerts" aria-label="Notifications"><Icon name="bell" size={20} /></a>
       </header>
@@ -347,25 +417,21 @@ export default function StudentHome() {
         </a>
       )}
 
+      <DayBanner />
+      <Glance route={route.data} stopSeq={stopSeq} bus={bus} eta={eta} entitled={entitled} loading={entitlement == null} month={month.data} day={calendar.data?.today} />
+
       <div className="app-grid">
         <div className="app-col">
           <RouteCard routes={routes.data ?? []} route={route.data} routeCode={routeCode} setRouteCode={setRouteCode} stopSeq={stopSeq} bus={bus} eta={eta} entitled={entitled} loading={entitlement == null} />
-          {entitled && isHome && <LeaveHome plan={plan} bus={bus} stop={stop} armed={armed} onArm={arm} onOpen={() => setLeaveOpen(true)} />}
-          <a className="btn indigo" href="#/schedule"><Icon name="list" size={17} /> View bus schedule</a>
+          {entitled && isHome && bus?.direction !== 'DOWN' && <LeaveHome plan={plan} bus={bus} stop={stop} armed={armed} onArm={arm} onOpen={() => setLeaveOpen(true)} />}
           <MapPreview route={route.data} buses={buses} stopSeq={stopSeq} entitled={entitled} loading={entitlement == null} />
         </div>
         <div className="app-col">
+          <Journey route={route.data} stopSeq={stopSeq} />
+          <a className="btn indigo" href="#/schedule"><Icon name="list" size={17} /> View bus schedule</a>
           <BusContact bus={entitled ? bus : null} route={route.data} />
-          <BoardingInfo user={user} stop={isHome ? stop : null} />
-          <AlertsPreview token={token} entitled={entitled} />
-          <div className="quick-actions">
-            <a href="#/attendance"><span><Icon name="check" size={20} /></span>Attendance</a>
-            {entitlement?.required
-              ? <a href="#/pay"><span><Icon name="card" size={20} /></span>Subscription</a>
-              : <a href="#/alerts"><span><Icon name="bell" size={20} /></span>Alerts</a>}
-            <button onClick={() => setReporting(true)}><span><Icon name="alert" size={20} /></span>Report</button>
-            <a href="#/settings"><span><Icon name="settings" size={20} /></span>Settings</a>
-          </div>
+          {/* Reporting a delay or an emergency stays one click away (it used to sit in Quick actions). */}
+          <button type="button" className="btn ghost report-link" onClick={() => setReporting(true)}><Icon name="alert" size={16} /> Report a delay or SOS</button>
         </div>
       </div>
       {reporting && <ReportProblem token={token} user={user} onClose={() => setReporting(false)} />}

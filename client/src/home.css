@@ -1,0 +1,112 @@
+/* The student's home page: an "At a glance" row of four tiles under the
+   greeting, then the route and map on the left and "Your journey", the
+   timetable link and bus contact on the right. */
+
+/* ---- Greeting: stop and today's date side by side ---------------------------------------- */
+.greet-metas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.greet-metas .greet-meta { margin-top: 0; }
+
+/* ---- At a glance ------------------------------------------------------------------------- */
+.home-glance { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.glance-card {
+  --tone: 28, 49, 94;
+  position: relative; display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 16px 18px 15px; overflow: hidden;
+  border: 1px solid rgba(var(--tone), 0.16); border-radius: 20px; color: var(--ink); text-decoration: none;
+  background: linear-gradient(150deg, rgba(var(--tone), 0.10), #fff 58%);
+  box-shadow: 0 6px 18px rgba(20, 37, 72, 0.07);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.glance-card::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: rgb(var(--tone)); }
+.glance-card.gold { --tone: 201, 145, 22; }
+.glance-card.green { --tone: 35, 122, 54; }
+.glance-card.slate { --tone: 92, 102, 120; }
+.glance-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.glance-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: rgb(var(--tone)); }
+.glance-icon { width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center; border-radius: 12px; background: rgba(var(--tone), 0.13); color: rgb(var(--tone)); transition: transform 0.18s ease; }
+.glance-value { font-family: var(--heading); font-size: 26px; font-weight: 700; line-height: 1.15; color: var(--navy-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.glance-detail { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.glance-progress { display: block; height: 5px; margin: 4px 0 2px; border-radius: 99px; background: rgba(var(--tone), 0.12); overflow: hidden; }
+.glance-progress i { display: block; height: 100%; border-radius: inherit; background: var(--gold); }
+@media (hover: hover) {
+  .glance-card:hover { transform: translateY(-3px); border-color: rgba(var(--tone), 0.4); box-shadow: 0 14px 30px rgba(var(--tone), 0.18); }
+  .glance-card:hover .glance-icon { transform: scale(1.08) rotate(-4deg); }
+}
+.glance-card:focus-visible { outline: 3px solid rgba(var(--tone), 0.4); outline-offset: 2px; }
+@media (max-width: 1100px) { .home-glance { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+/* Phones: icon above the figure, and labels wrap instead of being cut off. */
+@media (max-width: 600px) {
+  .glance-card { padding: 14px 14px 12px; border-radius: 18px; }
+  .glance-value { font-size: 21px; }
+  .glance-icon { width: 30px; height: 30px; border-radius: 10px; }
+}
+
+/* ---- Your journey ------------------------------------------------------------------------- */
+.home-journey .soft-card-head { margin-bottom: 6px; }
+.journey { list-style: none; margin: 0; padding: 0; }
+.journey li { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 12px; align-items: center; padding: 9px 0; }
+.journey time { font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--dark); }
+.journey li > span { position: relative; padding-left: 24px; font-size: 14px; color: #2f3545; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+/* The dot for each stop, and the line down to the next one. */
+.journey li > span::before {
+  content: ''; position: absolute; left: 0; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%;
+  background: #fff; border: 2.5px solid rgba(28, 49, 94, 0.35); box-sizing: border-box;
+}
+.journey li:not(:last-child) > span::after {
+  content: ''; position: absolute; left: 5px; top: calc(50% + 8px); height: calc(100% + 4px); width: 2px; border-radius: 1px;
+  background: rgba(28, 49, 94, 0.14);
+}
+.journey li.mine > span::before { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 0 4px rgba(247, 188, 49, 0.22); }
+.journey li.mine time { color: var(--navy); }
+.journey li.mine > span { font-weight: 700; color: var(--navy); }
+.journey li.campus > span::before { background: var(--navy); border-color: var(--navy); }
+.journey li.campus > span { font-weight: 700; color: var(--navy); }
+.journey li.more > span { color: var(--muted); font-size: 13px; font-style: italic; }
+.journey li.more > span::before { width: 8px; height: 8px; margin-top: -4px; left: 2px; border-width: 2px; border-style: dashed; }
+.journey em {
+  font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 99px; background: var(--gold); color: var(--navy-900);
+}
+.journey li.campus em { background: var(--navy); color: #fff; }
+
+/* ---- Right-column actions ------------------------------------------------------------------ */
+.app-col > .report-link { align-self: flex-start; }
+/* The app's crimson: this is the button for trouble on the road. */
+.btn.report-link { color: #a02022; background: rgba(160, 32, 34, 0.06); border-color: rgba(160, 32, 34, 0.28); }
+.btn.report-link .icon { color: #a02022; }
+.btn.report-link:hover { color: #fff; background: #a02022; border-color: #a02022; }
+.btn.report-link:hover .icon { color: #fff; }
+html[data-theme='dark'] .btn.report-link { color: #f28b8d; background: rgba(242, 139, 141, 0.08); border-color: rgba(242, 139, 141, 0.3); }
+html[data-theme='dark'] .btn.report-link .icon { color: #f28b8d; }
+html[data-theme='dark'] .btn.report-link:hover { color: #fff; background: #a02022; border-color: #a02022; }
+html[data-theme='dark'] .btn.report-link:hover .icon { color: #fff; }
+
+/* ---- Public home: contacts instead of the long feature, route and notice lists ------------ */
+.land-contacts { margin-bottom: 44px; }
+.land-contacts h2 { font-size: clamp(22px, 2.6vw, 30px); color: var(--dark); margin: 12px 0 20px; }
+.contact-tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.contact-tiles a {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; text-decoration: none; color: var(--ink);
+  background: rgba(255, 255, 255, 0.86); border: 1px solid rgba(28, 49, 94, 0.10);
+  box-shadow: 0 10px 24px rgba(20, 37, 72, 0.08), inset 0 1px 0 #fff;
+  transition: transform 0.18s var(--ease), box-shadow 0.22s var(--ease), border-color 0.2s var(--ease);
+}
+.contact-tiles a:hover { transform: translateY(-2px); border-color: rgba(28, 49, 94, 0.24); box-shadow: 0 16px 32px rgba(20, 37, 72, 0.12), inset 0 1px 0 #fff; }
+.contact-tiles .contact-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.contact-tiles .contact-text small { color: var(--red-600); font-weight: 700; }
+.contact-tiles > li > a > .icon:last-child { color: var(--muted); }
+
+/* ---- Settings: bus fee on DigiiCampus ------------------------------------------------------ */
+.bus-fee-pay { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px; text-decoration: none; }
+.bus-fee-pay + .fine-print { display: block; text-align: center; margin-top: 8px; }
+
+/* Verify your university email: one centred card in place of the student pages. */
+.verify-email { max-width: 480px; margin: 32px auto; padding: 0 16px; }
+.verify-email .muted { line-height: 1.5; margin: 0 0 14px; }
+.verify-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.verify-signout { margin-top: 16px; display: inline-flex; align-items: center; gap: 6px; }
+
+/* Sign-in: "Forgot password?" and "Back" are text links, not buttons. */
+.link-btn { background: none; border: 0; padding: 4px 0; color: var(--navy, #1b3365); font: inherit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: underline; text-underline-offset: 3px; }
+.link-btn:hover { color: var(--red, #b3262b); }
+.forgot-link { align-self: flex-end; font-size: 13px; margin-top: -4px; }
+.forgot-note { font-size: 12.5px; margin: 4px 0 0; }

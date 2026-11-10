@@ -57,13 +57,27 @@ export async function refreshPlan() {
         plan = await api('/api/attendance/plan', { token });
         set({ otp: null });
       } catch (err) {
-        if (err.body?.code === 'OTP_REQUIRED') set({ otp: { devOtp: err.body.devOtp ?? null } });
+        if (err.body?.code === 'OTP_REQUIRED') keepOtpPrompt(err.body);
       }
     }
     set({ plan, error: null });
     applyPlan();
   } catch (err) {
     set({ error: err.message });
+  }
+}
+
+/** The server repeats "code needed" on every check; only a new code changes what is shown. */
+function keepOtpPrompt(body) {
+  set({ otp: { devOtp: body.devOtp ?? state.otp?.devOtp ?? null, emailedTo: body.emailedTo ?? state.otp?.emailedTo ?? null } });
+}
+
+export async function requestNewOtp() {
+  try {
+    await api('/api/devices/bind', { token, body: { deviceId: await deviceId(), platform: PLATFORM, resend: true } });
+  } catch (err) {
+    if (err.body?.code !== 'OTP_REQUIRED') throw err;
+    keepOtpPrompt(err.body);
   }
 }
 

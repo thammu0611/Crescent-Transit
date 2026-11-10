@@ -28,7 +28,8 @@ export class ReportService {
   async attendanceRegister(query) {
     const { from, to, route } = this.range(query);
     const tz = this.config.timeZone;
-    const params = [from, to, tz, route];
+    const direction = query.direction ? String(query.direction) : null;
+    const params = [from, to, tz, route, direction];
     const base = `
       FROM attendance a
       JOIN trips t  ON t.id = a.trip_id
@@ -38,11 +39,14 @@ export class ReportService {
       LEFT JOIN stops bs ON bs.id = a.boarding_stop_id
       LEFT JOIN stops als ON als.id = a.alighting_stop_id
      WHERE (a.boarded_at AT TIME ZONE $3)::date BETWEEN $1 AND $2
-       AND ($4::text IS NULL OR r.code = $4)`;
+       AND ($4::text IS NULL OR r.code = $4)
+       AND ($5::text IS NULL OR t.direction = $5)`;
     if (query.group === 'student') {
       const { rows } = await this.db.query(
         `SELECT u.username, u.full_name, u.register_no, u.department,
                 count(*) FILTER (WHERE ${PRESENT_SQL})::int AS trips_present,
+                count(*) FILTER (WHERE t.direction = 'UP' AND ${PRESENT_SQL})::int AS up_present,
+                count(*) FILTER (WHERE t.direction = 'DOWN' AND ${PRESENT_SQL})::int AS down_present,
                 count(*) FILTER (WHERE a.method = 'GPS' AND ${PRESENT_SQL})::int AS by_gps,
                 count(*) FILTER (WHERE a.method IN ('QR', 'MANUAL', 'STOP') AND ${PRESENT_SQL})::int AS by_fallback,
                 count(*) FILTER (WHERE a.status = 'PROVISIONAL')::int AS provisional,
@@ -53,7 +57,7 @@ export class ReportService {
       return rows;
     }
     const { rows } = await this.db.query(
-      `SELECT to_char(a.boarded_at AT TIME ZONE $3, 'YYYY-MM-DD') AS date, a.trip_id, r.code AS route, b.fleet_code AS bus,
+      `SELECT to_char(a.boarded_at AT TIME ZONE $3, 'YYYY-MM-DD') AS date, a.trip_id, t.direction, r.code AS route, b.fleet_code AS bus,
               u.username, u.full_name, u.register_no, u.department, a.status, a.method,
               ${PRESENT_SQL} AS present,
               to_char(a.boarded_at AT TIME ZONE $3, 'HH24:MI') AS boarded, bs.name AS boarding_stop,
@@ -65,7 +69,7 @@ export class ReportService {
     return rows;
   }
 
-  /** Boarding demand per stop and hour (doc 9.14). */
+  /** Boarding demand per stop and hour (doc 9.14). The DOWN run all boards at the college, so UP only. */
   async demand(query) {
     const { from, to, route } = this.range(query);
     const { rows } = await this.db.query(
@@ -76,7 +80,7 @@ export class ReportService {
          JOIN routes r ON r.id = t.route_id
          JOIN stops s ON s.id = a.boarding_stop_id
         WHERE ${PRESENT_SQL} AND (a.boarded_at AT TIME ZONE $3)::date BETWEEN $1 AND $2
-          AND ($4::text IS NULL OR r.code = $4)
+          AND ($4::text IS NULL OR r.code = $4) AND t.direction = 'UP'
         GROUP BY r.code, s.seq, s.name, hour
         ORDER BY r.code, s.seq, hour`,
       [from, to, this.config.timeZone, route],
@@ -88,7 +92,7 @@ export class ReportService {
   async occupancy(query) {
     const { from, to, route } = this.range(query);
     const { rows } = await this.db.query(
-      `SELECT t.id AS trip_id, to_char(t.started_at AT TIME ZONE $3, 'YYYY-MM-DD HH24:MI') AS started,
+      `SELECT t.id AS trip_id, t.direction, to_char(t.started_at AT TIME ZONE $3, 'YYYY-MM-DD HH24:MI') AS started,
               r.code AS route, b.fleet_code AS bus, b.capacity,
               count(a.*) FILTER (WHERE ${PRESENT_SQL})::int AS travelled, t.occupancy AS driver_reported, t.flagged
          FROM trips t
@@ -278,11 +282,13 @@ export class ReportService {
       this.db.query(`SELECT count(*)::int AS n FROM rejected_pings WHERE (received_at AT TIME ZONE $1)::date = $2`, [tz, today]),
       this.db.query(`SELECT count(*)::int AS n FROM incidents WHERE status = 'OPEN'`),
       this.db.query(
-        `SELECT count(*) FILTER (WHERE ${PRESENT_SQL})::int AS present, count(*) FILTER (WHERE a.method = 'GPS')::int AS gps
-           FROM attendance a WHERE (a.boarded_at AT TIME ZONE $1)::date = $2`,
+        `SELECT count(*) FILTER (WHERE ${PRESENT_SQL})::int AS present, count(*) FILTER (WHERE a.method = 'GPS')::int AS gps,
+                count(*) FILTER (WHERE t.direction = 'UP' AND ${PRESENT_SQL})::int AS up,
+                count(*) FILTER (WHERE t.direction = 'DOWN' AND ${PRESENT_SQL})::int AS down
+           FROM attendance a JOIN trips t ON t.id = a.trip_id WHERE (a.boarded_at AT TIME ZONE $1)::date = $2`,
         [tz, today],
       ),
-      // Schedule adherence: minutes from trip start to each stop vs the timetable offset.
+      // Schedule adherence, UP run (the timetable is the morning one): minutes from trip start to each stop vs its offset.
       this.db.query(
         `SELECT count(*)::int AS n,
                 count(*) FILTER (WHERE extract(epoch FROM (sa.arrived_at - t.started_at)) / 60
@@ -291,7 +297,7 @@ export class ReportService {
            JOIN trips t ON t.id = sa.trip_id
            JOIN stops s ON s.route_id = t.route_id AND s.seq = sa.stop_seq
            JOIN stops first ON first.route_id = t.route_id AND first.seq = 1
-          WHERE (sa.arrived_at AT TIME ZONE $1)::date = $2 AND s.offset_minutes IS NOT NULL`,
+          WHERE (sa.arrived_at AT TIME ZONE $1)::date = $2 AND s.offset_minutes IS NOT NULL AND t.direction = 'UP'`,
         [tz, today],
       ),
       this.db.query(`SELECT count(*)::int AS n FROM attendance WHERE status IN ('PROVISIONAL', 'DISPUTED')`),
@@ -305,6 +311,8 @@ export class ReportService {
       gpsFailuresToday: failures.rows[0].n,
       openIncidents: incidents.rows[0].n,
       presentToday: attendance.rows[0].present,
+      presentUpToday: attendance.rows[0].up,
+      presentDownToday: attendance.rows[0].down,
       gpsRecordsToday: attendance.rows[0].gps,
       awaitingReview: review.rows[0].n,
     };

@@ -4,16 +4,17 @@ import { useMap } from 'react-leaflet';
 
 const ANIMATION_MS = 1200;
 
+const BUS_GLYPH = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17V6a3 3 0 013-3h8a3 3 0 013 3v11M5 17h14M5 17v2h3v-2M16 17v2h3v-2M5 11h14M8 14h.01M16 14h.01"/></svg>';
+
+/** A pill with the route number; its tip marks the bus's exact position. */
 function busIcon({ routeCode, freshness, heading, selected }) {
-  const arrow =
-    heading === null || heading === undefined || freshness === 'offline'
-      ? ''
-      : `<i class="bus-arrow" style="transform: rotate(${heading}deg)"></i>`;
+  const moving = heading !== null && heading !== undefined && freshness !== 'offline';
+  const glyph = moving ? `<i class="bus-pin-arrow" style="transform: rotate(${heading}deg)"></i>` : BUS_GLYPH;
   return L.divIcon({
     className: '',
-    html: `<div class="bus-marker ${freshness}${selected ? ' selected' : ''}">${arrow}<span>${routeCode}</span></div>`,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
+    html: `<div class="bus-pin ${freshness}${selected ? ' selected' : ''}"><span class="bus-pin-body"><span class="bus-pin-disc">${glyph}</span><b>${routeCode}</b></span></div>`,
+    iconSize: [84, 46],
+    iconAnchor: [42, 42],
   });
 }
 

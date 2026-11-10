@@ -52,7 +52,7 @@ function DriverForm({ token, driver, buses, onClose, onSaved }) {
   const save = () => {
     if (!driver && !f.username.trim()) return a.setError('Username is required.');
     if (!f.fullName.trim()) return a.setError('Full name is required.');
-    if ((!driver || f.password) && f.password.length < 8) return a.setError('Password must be at least 8 characters.');
+    if ((!driver || f.password) && f.password.length < 10) return a.setError('Password must be at least 10 characters.');
     const body = driver
       ? { fullName: f.fullName, phone: f.phone, fleetCode: f.fleetCode || null, status: f.status, ...(f.password ? { password: f.password } : {}) }
       : { ...f, fleetCode: f.fleetCode || undefined };
@@ -70,7 +70,7 @@ function DriverForm({ token, driver, buses, onClose, onSaved }) {
           onChange={set('fleetCode')}
           options={[{ value: '', label: 'None' }, ...buses.map((b) => ({ value: b.fleet_code, label: `${b.fleet_code}${b.driver_username && b.driver_username !== driver?.username ? ` (${b.driver_username})` : ''}` }))]}
         />
-        <TextField label={driver ? 'New password (optional)' : 'Password'} value={f.password} onChangeText={set('password')} secureTextEntry autoComplete="new-password" />
+        <TextField label={driver ? 'Reset to a temporary password (optional)' : 'Temporary password'} hint="The driver chooses their own at first sign-in" value={f.password} onChangeText={set('password')} secureTextEntry autoComplete="new-password" />
         {driver && <Select label="Status" value={f.status} onChange={set('status')} options={[{ value: 'active', label: 'Active' }, { value: 'suspended', label: 'Suspended' }]} />}
         <ErrorText>{a.error}</ErrorText>
         <Button title="Save" busy={a.busy} onPress={save} />
