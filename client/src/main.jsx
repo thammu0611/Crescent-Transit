@@ -16,6 +16,7 @@ import './home.css';
 import './interactions.css';
 import './navbar-glass.css';
 import './dark.css';
+import './redesign.css';
 import { applyTheme, savedTheme } from './lib/theme.js';
 import App from './App.jsx';
 import { installSubmitGuard } from './lib/submitGuard.js';

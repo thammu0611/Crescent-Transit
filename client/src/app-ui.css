@@ -242,7 +242,6 @@ html { scroll-behavior: smooth; }
 .settings-chips li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 600; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85); }
 .settings-chips li .icon { color: var(--gold); }
 .settings-chips li.on { background: rgba(97, 206, 112, 0.16); color: #b6ecbe; }
-.settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
 .settings-section .panel-head h3 { font-size: 16px; }
 .section-lead { margin: -6px 0 6px; color: var(--muted); font-size: 13px; }
 .setting-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line-2); }
@@ -281,5 +280,4 @@ html { scroll-behavior: smooth; }
 .contact-list li:first-child { border-top: 0; }
 .contact-list a { font-weight: 700; color: var(--red-600); text-decoration: none; white-space: nowrap; }
 @media (max-width: 900px) {
-  .settings-grid { grid-template-columns: 1fr; }
 }

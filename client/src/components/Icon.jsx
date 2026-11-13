@@ -21,7 +21,7 @@ const PATHS = {
   signal: 'M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16',
   swap: 'M16 3l4 4-4 4M20 7H4M8 21l-4-4 4-4M4 17h16',
   arrow: 'M9 5.5l6.5 6.5L9 18.5', // a thin chevron, as on the phone's own lists
-  back: 'M19 12H5M11 18l-6-6 6-6',
+  back: 'M15 5.5L8.5 12l6.5 6.5', // chevron, as in the phone app
   lock: 'M5 11h14v10H5zM8 11V7a4 4 0 018 0v4',
   mail: 'M3 5h18v14H3zM3 6l9 7 9-7',
   id: 'M4 9h16M4 15h16M10 3L8 21M16 3l-2 18',

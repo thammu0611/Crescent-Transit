@@ -400,13 +400,13 @@ export default function Trips() {
                   const on = status === k;
                   return (
                     <Pressable key={k} accessibilityRole="button" accessibilityState={{ selected: on }} onPress={() => setStatus(on ? '' : k)}
-                      style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: on ? C.navy : C.line, backgroundColor: on ? C.navy50 : 'transparent', justifyContent: 'center' }}>
+                      style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: on ? C.navy : C.line, backgroundColor: on ? C.navy50 : C.card, justifyContent: 'center' }}>
                       <Text style={{ fontSize: 14, ...F[600], color: on ? C.navy : C.ink }}>{label}{k === 'active' ? ` ${running}` : ''}</Text>
                     </Pressable>
                   );
                 })}
                 <Pressable accessibilityRole="button" accessibilityState={{ selected: today }} onPress={() => setToday((x) => !x)}
-                  style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: today ? C.navy : C.line, backgroundColor: today ? C.navy50 : 'transparent', justifyContent: 'center' }}>
+                  style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: today ? C.navy : C.line, backgroundColor: today ? C.navy50 : C.card, justifyContent: 'center' }}>
                   <Text style={{ fontSize: 14, ...F[600], color: today ? C.navy : C.ink }}>Today</Text>
                 </Pressable>
               </ScrollView>

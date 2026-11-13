@@ -8,7 +8,7 @@ import { useAction, useAsync } from '../../lib/useAsync.js';
 import { CHILD_STATUS_TEXT } from '../../../../shared/service.js';
 import { DIRECTION_TEXT } from '../../../../shared/direction.js';
 import Icon from '../../components/Icon.jsx';
-import { Avatar } from '../../components/adminkit.jsx';
+import { Avatar, ViewList } from '../../components/adminkit.jsx';
 import DayBanner from '../../components/DayBanner.jsx';
 import { Badge, Empty, ErrorText, Field, ListCard, Page, Panel } from '../../components/ui.jsx';
 
@@ -93,7 +93,7 @@ export default function ParentHome() {
         <ErrorText>{a.error}</ErrorText>
       </Panel>
       <p className="fine-print">You see the bus and today's trips, never your child's phone location.</p>
-      <YourData />
+      <ViewList label="Account"><YourData /></ViewList>
     </Page>
   );
 }

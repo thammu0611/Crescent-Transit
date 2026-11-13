@@ -1,0 +1,1152 @@
+/* ===========================================================================
+   The phone app's design system, for the web app. The last style layer.
+
+   Same tokens as mobile-app/src/theme.js: a quiet grey ground with white
+   cards (near-black with elevated cards in dark mode), one blue accent, status
+   colours for live / delayed / danger, Plus Jakarta Sans for headings and
+   Inter for the interface, hairline borders, 14 px controls and 20 px cards.
+   No glass, no gradients on light surfaces, no decorative backdrop; the only
+   deep-blue surfaces are the hero cards (bus pass, next bus, sign-in).
+
+   It restyles only: layout and behaviour stay in the sheets before it. The
+   earlier skins use long selectors, so skin properties here are !important.
+   Remove the import in main.jsx to go back to the previous look.
+   =========================================================================== */
+
+/* ---- Tokens ----------------------------------------------------------------------- */
+:root {
+  --bg: #F1F1F1;
+  --card: #FFFFFF;
+  --surface: #FFFFFF;
+  --raised: #E9ECF1;
+  --ink: #141414;
+  --muted: #54595F;
+  --faint: #6B7280;
+  --dark: #3E4C57;
+  --line: rgba(28, 49, 94, 0.14);
+  --line-2: rgba(28, 49, 94, 0.09);
+
+  --accent: #1C315E;
+  --accent-fill: #1C315E;
+  --accent-press: #142548;
+  --accent-soft: rgba(28, 49, 94, 0.06);
+  --accent-soft-2: rgba(28, 49, 94, 0.10);
+  --seg-on: #FFFFFF;
+
+  /* The older names, mapped: navy and red are the accent, gold only lights deep-blue heroes. */
+  --navy: #1C315E;
+  --navy-900: #142548;
+  --navy-800: #18294F;
+  --navy-700: #454E70;
+  --navy-50: #EEF1F6;
+  --navy-100: #D9DEE8;
+  --gold: #F7BC31;
+  --red-600: #A02022;
+  --red-50: #F9E9E9;
+  --crimson: #A02022;
+  --link: #0170B9;
+  --sky: #6EC1E4;
+  --indigo: #454E70;
+  --indigo-700: #363E5A;
+  --indigo-50: #ECEEF3;
+
+  --live: #237A36;
+  --live-50: #E9F7EB;
+  --emerald: #237A36;
+  --emerald-700: #1F6B2F;
+  --emerald-50: #E9F7EB;
+  --delayed: #96650A;
+  --delayed-50: #FBF1DC;
+  --danger: #A02022;
+  --danger-fill: #A02022;
+  --danger-50: #F9E9E9;
+  --offline: #5F6672;
+  --offline-50: #ECEEF1;
+
+  --radius: 20px;
+  --radius-sm: 14px;
+  --control-h: 44px;
+  --heading: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --shadow-sm: 0 1px 3px rgba(20, 37, 72, 0.12);
+  --shadow: 0 1px 2px rgba(20, 37, 72, 0.06), 0 8px 24px rgba(20, 37, 72, 0.07);
+  --shadow-lg: 0 2px 6px rgba(20, 37, 72, 0.08), 0 20px 48px rgba(20, 37, 72, 0.18);
+  --soft-shadow: var(--shadow);
+  --lift-shadow: var(--shadow);
+
+  /* The glass variables the earlier sheets paint with: solid now. */
+  --glass: var(--card);
+  --glass-strong: var(--card);
+  --glass-edge: var(--line-2);
+  --glass-hi: transparent;
+  --glass-dark: #142548;
+  --glass-blur: none;
+  --glass-gloss: linear-gradient(transparent, transparent);
+  --glass-shadow: var(--shadow);
+  --glass-shadow-hover: var(--shadow);
+  --hover-end: var(--card);
+
+  --g-navy: linear-gradient(135deg, #1C315E, #142548);
+  --g-emerald: linear-gradient(135deg, #1C315E, #142548);
+  --g-violet: linear-gradient(135deg, #1C315E, #142548);
+  --g-dark: linear-gradient(135deg, #3E4C57, #2C3740);
+  --g-indigo: linear-gradient(#1C315E, #1C315E);
+  --g-red: linear-gradient(#1C315E, #1C315E);
+  --g-danger: linear-gradient(#A02022, #A02022);
+  --hero-edge: rgba(255, 255, 255, 0.10);
+  --hair-light: rgba(255, 255, 255, 0.10);
+  --hair-gold: rgba(255, 255, 255, 0.14);
+  --hairline: 1px solid var(--line-2);
+  --motif: none;
+  --glow: linear-gradient(transparent, transparent);
+  --chart-navy: #1C315E;
+  --chart-green: #237A36;
+  --chart-red: #A02022;
+  --chart-slate: #8B909B;
+}
+
+html[data-theme='dark'] {
+  --g-indigo: linear-gradient(#2F4E96, #2F4E96);
+  --g-red: linear-gradient(#2F4E96, #2F4E96);
+  --g-danger: linear-gradient(#B5282A, #B5282A);
+  --gold: #F7BC31;
+  --bg: #0D1524;
+  --card: #18233A;
+  --surface: #121C30;
+  --raised: #22304D;
+  --ink: #E9EDF5;
+  --muted: #A7B0C3;
+  --faint: #8793AB;
+  --dark: #D5DAE5;
+  --line: rgba(255, 255, 255, 0.13);
+  --line-2: rgba(255, 255, 255, 0.08);
+
+  --accent: #F7BC31;
+  --accent-fill: #2F4E96;
+  --accent-press: #26407C;
+  --accent-soft: rgba(247, 188, 49, 0.10);
+  --accent-soft-2: rgba(247, 188, 49, 0.16);
+  --seg-on: #2B3A5C;
+
+  --navy: #F7BC31;
+  --navy-900: #E9EDF5;
+  --navy-800: #DCE3F3;
+  --navy-700: #B7C3E0;
+  --navy-50: rgba(247, 188, 49, 0.13);
+  --navy-100: rgba(247, 188, 49, 0.28);
+  --red-600: #F28B8D;
+  --red-50: rgba(242, 139, 141, 0.14);
+  --crimson: #F28B8D;
+  --link: #8CC4EE;
+  --indigo: #C6D3F2;
+  --indigo-700: #C6D3F2;
+  --indigo-50: rgba(150, 175, 235, 0.16);
+
+  --live: #6FD487;
+  --live-50: rgba(111, 212, 135, 0.14);
+  --emerald: #6FD487;
+  --emerald-700: #6FD487;
+  --emerald-50: rgba(111, 212, 135, 0.14);
+  --delayed: #EABC69;
+  --delayed-50: rgba(234, 188, 105, 0.14);
+  --danger: #F28B8D;
+  --danger-fill: #B5282A;
+  --danger-50: rgba(242, 139, 141, 0.14);
+  --offline: #A7B0C3;
+  --offline-50: #22304D;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
+  --glass: var(--card);
+  --glass-strong: var(--card);
+  --glass-edge: var(--line-2);
+  --glass-hi: transparent;
+  --glass-gloss: linear-gradient(transparent, transparent);
+  --glass-shadow: var(--shadow);
+  --glass-shadow-hover: var(--shadow);
+  --hover-end: var(--card);
+  --g-navy: linear-gradient(135deg, #1F3157, #18233A);
+  --g-emerald: linear-gradient(135deg, #1F3157, #18233A);
+  --g-violet: linear-gradient(135deg, #1F3157, #18233A);
+  --g-dark: linear-gradient(135deg, #22304D, #18233A);
+  --chart-navy: #86A2E6;
+  --chart-green: #6FD487;
+  --chart-red: #F28B8D;
+  --chart-slate: #8793AB;
+}
+
+/* ---- Ground: the app's colour with a quiet transit-map backdrop ----------------------- */
+/* Two soft glows in the accent, then the route map (components/RouteBackdrop.jsx):
+   winding routes with stops, and two small buses. Cards are solid, so
+   it only shows in the gaps and never sits behind text inside a card. */
+:root {
+  --bgx-glow-a: rgba(28, 49, 94, 0.10);
+  --bgx-glow-b: rgba(247, 188, 49, 0.10);
+  --bgx-casing: rgba(255, 255, 255, 0.75);
+  --bgx-line: rgba(28, 49, 94, 0.16);
+  --bgx-line-soft: rgba(28, 49, 94, 0.09);
+  --bgx-stop-fill: #FFFFFF;
+  --bgx-stop: rgba(28, 49, 94, 0.35);
+  --bgx-halo: rgba(28, 49, 94, 0.06);
+  --bgx-mine: #F7BC31;
+  --bgx-campus: #237A36;
+  --bgx-bus: #1C315E;
+}
+html[data-theme='dark'] {
+  --bgx-glow-a: rgba(60, 90, 160, 0.22);
+  --bgx-glow-b: rgba(247, 188, 49, 0.07);
+  --bgx-casing: rgba(13, 21, 36, 0.7);
+  --bgx-line: rgba(150, 175, 235, 0.20);
+  --bgx-line-soft: rgba(150, 175, 235, 0.11);
+  --bgx-stop-fill: #0D1524;
+  --bgx-stop: rgba(150, 175, 235, 0.45);
+  --bgx-halo: rgba(150, 175, 235, 0.08);
+  --bgx-mine: #F7BC31;
+  --bgx-campus: #6FD487;
+  --bgx-bus: #F7BC31;
+}
+html, body { background: var(--bg) !important; color: var(--ink); }
+html .app, html[data-theme='dark'] .app {
+  background:
+    radial-gradient(44% 40% at 0% 0%, var(--bgx-glow-a), transparent 70%),
+    radial-gradient(40% 38% at 100% 100%, var(--bgx-glow-b), transparent 70%),
+    var(--bg) !important;
+  background-attachment: fixed !important;
+}
+.masthead { background: transparent !important; }
+.route-bg, html[data-theme='dark'] .route-bg { display: block; opacity: 1 !important; }
+.route-bg-line .casing { stroke: var(--bgx-casing) !important; stroke-width: 9 !important; }
+.route-bg-line .line { stroke: var(--bgx-line) !important; stroke-width: 3 !important; stroke-dasharray: none !important; animation: none !important; }
+.route-bg-line.soft .line { stroke: var(--bgx-line-soft) !important; }
+.route-bg-line.dashed .line { stroke-dasharray: 2 12 !important; stroke-width: 3.5 !important; animation: route-flow 16s linear infinite !important; }
+.route-bg-stop .dot { fill: var(--bgx-stop-fill) !important; stroke: var(--bgx-stop) !important; stroke-width: 2 !important; }
+.route-bg-stop .halo { fill: var(--bgx-halo) !important; stroke: none !important; }
+.route-bg-stop.mine .dot { fill: var(--bgx-mine) !important; stroke: var(--bgx-stop-fill) !important; stroke-width: 2.5 !important; }
+.route-bg-stop.mine .halo { fill: var(--bgx-mine) !important; opacity: 0.16; }
+.route-bg-stop.campus .dot { fill: var(--bgx-campus) !important; stroke: var(--bgx-stop-fill) !important; stroke-width: 2.5 !important; }
+.route-bg-stop.campus .halo { fill: var(--bgx-campus) !important; opacity: 0.16; }
+.route-bg-bus { filter: none !important; opacity: 0.55 !important; }
+.route-bg-bus .body { fill: var(--bgx-bus); }
+.route-bg-bus .glass { fill: rgba(255, 255, 255, 0.9); }
+.route-bg-bus .roof { fill: rgba(255, 255, 255, 0.32); }
+@media (prefers-reduced-motion: reduce) { .route-bg-line.dashed .line { animation: none !important; } }
+/* On the deep-blue landing and sign-in pages the map is drawn in light strokes. */
+.app:has(.auth, .land-hero) .route-bg { --bgx-casing: transparent; --bgx-line: rgba(255, 255, 255, 0.16); --bgx-line-soft: rgba(255, 255, 255, 0.09);
+  --bgx-stop-fill: #1C315E; --bgx-stop: rgba(255, 255, 255, 0.45); --bgx-halo: rgba(255, 255, 255, 0.06); --bgx-bus: #F7BC31;
+  opacity: 1 !important;
+}
+/* Phones: fewer, fainter lines so the smaller screen stays calm. */
+@media (max-width: 900px) {
+  .route-bg-line.soft { display: none; }
+  .route-bg { opacity: 0.8 !important; }
+}
+::selection { background: rgba(247, 188, 49, 0.35); color: inherit; }
+:focus-visible { outline-color: var(--accent) !important; }
+a { color: var(--link); }
+
+/* ---- Type --------------------------------------------------------------------------- */
+h1, h2, .stat b, .eta-big, .hero-stats b, .land-stats b, .pv-greet b, .fleet-big b, .money-big b, .be-figures > b,
+.next-stop b, .drive-stats b, .checkout-head strong, .prompt-q, .step-n, .glance-value, .leave-big, .leave-hero b, .kit-figure b {
+  font-family: var(--heading) !important; letter-spacing: -0.01em;
+}
+h1 { font-weight: 800 !important; letter-spacing: -0.02em; }
+h2 { font-weight: 700 !important; }
+h3, h4, .panel h3, .soft-card-head h3 { font-family: var(--font) !important; font-weight: 600; letter-spacing: 0; }
+.stat b, .kpi-strip .stat b, .kpi-grid .stat b, .glance-value { font-weight: 800 !important; color: var(--ink); }
+
+/* Labels are sentence case, as in the phone app: no tracked capitals. */
+.eyebrow, .eyebrow:not(.light), .section-kicker, .kit-section-title, .field > span, .stat span, .glance-label,
+.route-card-label, .badge, .leave-eyebrow, .land-stats span, th, .table th, .kit-table-head, .kit-kv dt {
+  text-transform: none !important; letter-spacing: 0 !important;
+}
+.eyebrow, .eyebrow:not(.light) { color: var(--muted) !important; font-size: 13px !important; font-weight: 500; }
+.eyebrow::before, .eyebrow:not(.light)::before, .section-kicker::before, .kit-section-title::before { display: none !important; }
+.section-kicker, .kit-section-title { color: var(--muted) !important; font-size: 13px !important; font-weight: 600 !important; font-family: var(--font) !important; }
+.field > span { color: var(--muted) !important; font-size: 13px !important; font-weight: 600 !important; }
+.stat span, .glance-label { color: var(--muted) !important; font-size: 13px !important; font-weight: 500 !important; }
+th, .table th { color: var(--muted) !important; font-size: 12.5px !important; font-weight: 600 !important; }
+.muted, small.muted, .fine-print { color: var(--muted); }
+
+/* ---- Cards: solid, hairline edge, one soft shadow ------------------------------------- */
+.panel, .soft-card, .kit-block, .kit-profile, .stat, .kpi-grid .stat, .kit-stats .stat, .kpi-strip .stat,
+.map-card, .kit-day, .kit-shortcut, .kit-bus, .kit-row, .route-tile, .feature, .bus-card, .schedule-card,
+.select-route, .steps li, .empty-hero, .float-card, .notice-list > li, .timetable, .glance-card, .leave-card:not(.near),
+.quick-actions > *, .kit-detail, .dropdown-menu, .profile-menu, .nav-more-menu {
+  background: var(--card) !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  border: 1px solid var(--line-2) !important;
+  box-shadow: var(--shadow) !important;
+}
+.panel, .soft-card, .kit-block, .kit-profile, .map-card, .schedule-card, .empty-hero, .select-route, .timetable, .leave-card { border-radius: 20px !important; }
+.stat, .kit-row, .kit-bus, .kit-day, .route-tile, .feature, .bus-card, .steps li, .glance-card, .kit-shortcut, .notice-list > li, .quick-actions > * { border-radius: 18px !important; }
+.kit-row, .kit-bus, .kit-day, .notice-list > li, .stat, .glance-card, .kit-shortcut { box-shadow: none !important; }
+.kit-detail { background: var(--bg) !important; border: 0 !important; }
+.glance-card { border-top: 1px solid var(--line-2) !important; }
+.glance-card::before, .glance-card::after, .kit-shortcuts .kit-shortcut::after { display: none !important; }
+.kit-row.is-alert { box-shadow: inset 4px 0 0 var(--danger) !important; }
+
+/* Section lists (ViewList) keep their one-card look. */
+.view-list.panel { background: var(--card) !important; }
+.view-list > .panel.kit-view-card { background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
+.view-list > .panel.kit-view-card + .panel.kit-view-card { border-top: 1px solid var(--line-2) !important; }
+
+/* Hover: no lifting or colour washes; rows and cards answer with the edge only. */
+@media (hover: hover) {
+  .stat.stat:hover, .kit-stats .stat:hover, .kpi-grid .stat:hover, .kpi-strip .stat:hover,
+  .panel.kit-view-card:hover, .kit-row:hover, button.kit-row:hover, a.kit-row:hover, .kit-bus:hover:not(:disabled),
+  .route-tile:hover, .bus-card:hover, .feature:hover, .land .feature:hover, .quick-actions > *:hover, .schedule-card:hover,
+  .steps li:hover, .notice-list > li:hover, .kit-day:hover, .glance-card:hover, .kit-shortcuts .kit-shortcut:hover,
+  .panel:hover, .kit-block:hover, .kit-profile:hover, .soft-card:hover, .map-card:hover, .timetable:hover,
+  .empty-hero:hover, .select-route:hover {
+    transform: none !important;
+  }
+  .panel:hover, .kit-block:hover, .kit-profile:hover, .soft-card:hover, .map-card:hover, .timetable:hover,
+  .empty-hero:hover, .select-route:hover, .schedule-card:hover, .stat.stat:hover, .kit-stats .stat:hover,
+  .kpi-grid .stat:hover, .kpi-strip .stat:hover, .steps li:hover, .glance-card:hover {
+    background: var(--card) !important; border-color: var(--line-2) !important; box-shadow: var(--shadow) !important;
+  }
+  .stat.stat:hover, .kit-stats .stat:hover, .kpi-grid .stat:hover, .kpi-strip .stat:hover, .glance-card:hover { box-shadow: none !important; }
+  .panel.kit-view-card:hover, .kit-row:hover, button.kit-row:hover, a.kit-row:hover, .kit-bus:hover:not(:disabled),
+  .route-tile:hover, .bus-card:hover, .feature:hover, .land .feature:hover, .quick-actions > *:hover,
+  .notice-list > li:hover, .kit-day:hover, .kit-shortcuts .kit-shortcut:hover {
+    background: var(--card) !important; border-color: var(--accent) !important; box-shadow: none !important;
+  }
+  .view-list > .panel.kit-view-card:hover { background: var(--accent-soft) !important; }
+  .view-list.panel:hover { background: var(--card) !important; }
+  .route-card:hover, .pv-card:hover, .drive-card:hover, .fleet-card:hover, .kit-fleet:hover, .leave-card:hover, .contact-card:hover, .land-stats > div:hover {
+    transform: none !important; filter: none !important;
+  }
+  .feed li:hover, .trip-list li:hover, .boarded li:hover, .driver-students li:hover, .auth-roles li:hover { background: var(--accent-soft) !important; box-shadow: none !important; }
+  .panel.kit-view-card:hover .kit-fold-icon, .kit-row:hover .route-code, .kit-bus:hover .route-code, .feature:hover svg { transform: none !important; }
+  .panel.kit-view-card:hover b, .kit-row:hover .kit-row-main b, .kit-bus:hover b { color: var(--ink) !important; }
+}
+
+/* ---- Page titles: plain text on the ground, not a banner ---------------------------- */
+.page > .page-head, .app-greet, .app-title {
+  background: transparent !important; background-color: transparent !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+  color: var(--ink) !important; overflow: visible !important;
+}
+.page > .page-head { padding: 4px 2px 2px !important; }
+.app-greet { padding: 4px 2px 6px !important; }
+.app-title { padding: 2px 2px 4px !important; }
+.page > .page-head::after, .page > .page-head::before, .app-greet::before, .app-greet::after, .app-title::before, .app-title::after { display: none !important; }
+.page > .page-head h1, .app-greet h1, .app-title h1 { color: var(--ink) !important; font-size: 28px !important; line-height: 34px !important; }
+.page > .page-head .eyebrow { color: var(--muted) !important; }
+.page > .page-head .page-sub { color: var(--muted) !important; }
+.greet-sub { color: var(--muted) !important; font-size: 14px !important; font-weight: 500 !important; }
+.greet-meta { background: var(--card) !important; color: var(--ink) !important; border: 1px solid var(--line-2) !important; }
+.greet-meta .icon { color: var(--accent) !important; }
+.bell, .app-title .back, .kit-back, .icon-btn {
+  background: var(--card) !important; color: var(--ink) !important; border: 1px solid var(--line-2) !important; box-shadow: none !important; border-radius: 50% !important;
+}
+.bell:hover, .app-title .back:hover, .kit-back:hover, .icon-btn:hover { background: var(--raised) !important; color: var(--ink) !important; }
+.dot-count { background: var(--danger-fill) !important; color: #fff !important; border: 2px solid var(--bg) !important; }
+.app-title .clear { color: var(--accent) !important; }
+.page > .page-head .btn.ghost { background: var(--raised) !important; color: var(--ink) !important; border: 1px solid var(--line) !important; }
+.page > .page-head input, .page > .page-head select { border-color: var(--line) !important; background: var(--card) !important; color: var(--ink) !important; }
+
+/* ---- Deep-blue hero cards (the only gradients left) ---------------------------------- */
+.route-card, .contact-card, .upsell, .kit-fleet, .fleet-card, .drive-card, .driver-hero, .schedule-head, .money-card,
+.pv-card, .pass-card, .settings-hero, .leave-card.near {
+  background: var(--g-navy) !important; background-color: #142548 !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  border: 1px solid var(--hero-edge) !important;
+  box-shadow: var(--shadow) !important;
+}
+.pass-card { background: linear-gradient(135deg, #2A4787 0%, #1C315E 55%, #142548 100%) !important; }
+.leave-card.near { background: var(--accent-fill) !important; border-color: transparent !important; }
+.route-card::before, .route-card::after, .contact-card::before, .contact-card::after, .upsell::before, .upsell::after,
+.kit-fleet::before, .kit-fleet::after, .fleet-card::before, .fleet-card::after, .drive-card::before, .drive-card::after,
+.schedule-head::before, .schedule-head::after, .money-card::before, .money-card::after { display: none !important; }
+
+/* ---- Icon tiles: a tinted square with an accent glyph ----------------------------------- */
+.panel-icon, .kit-fold-icon, .soft-card-head h3 .icon, .stat-icon, .glance-icon, .quick-actions span, .feed-icon,
+.kit-shortcuts .kit-shortcut .ks-icon, .feature-icon, .hero-badge, .kit-row-icon {
+  background: var(--accent-soft-2) !important; color: var(--accent) !important; box-shadow: none !important; border: 0 !important;
+  border-radius: 12px !important;
+}
+.stat.live .stat-icon, .feature-icon.emerald { background: var(--live-50) !important; color: var(--live) !important; }
+.stat.delayed .stat-icon { background: var(--delayed-50) !important; color: var(--delayed) !important; }
+.stat.danger .stat-icon, .quick-actions button span { background: var(--danger-50) !important; color: var(--danger) !important; }
+.leave-card-row .kit-fold-icon { color: var(--accent) !important; }
+.leave-card.near .kit-fold-icon { background: rgba(255, 255, 255, 0.18) !important; color: #fff !important; }
+.kit-shortcuts .kit-shortcut .ks-go { background: transparent !important; color: var(--faint) !important; }
+.kit-shortcuts .kit-shortcut:hover .ks-go { background: transparent !important; color: var(--accent) !important; }
+.kit-chevron { color: var(--faint) !important; }
+
+/* ---- Buttons: flat fills, 14 px corners --------------------------------------------- */
+.btn { border-radius: 14px !important; font-weight: 600 !important; letter-spacing: 0 !important; box-shadow: none !important; filter: none !important; }
+.btn:not(.small) { min-height: 44px; }
+.btn.primary, .btn.red, .btn.indigo, .btn.dark, .land-cta .btn.dark, .auth-card .btn.dark, .tabs a.nav-cta {
+  background: var(--accent-fill) !important; color: #fff !important; border: 1px solid transparent !important;
+}
+.btn.primary:hover, .btn.red:hover, .btn.indigo:hover, .btn.dark:hover, .land-cta .btn.dark:hover, .auth-card .btn.dark:hover { background: var(--accent-press) !important; filter: none !important; }
+.btn.danger { background: var(--danger-fill) !important; color: #fff !important; border: 1px solid transparent !important; }
+.btn.danger:hover { background: #7D1618 !important; }
+.btn.soft { background: var(--accent-soft-2) !important; color: var(--accent) !important; border: 1px solid transparent !important; }
+.btn.soft:hover { background: var(--navy-100) !important; }
+.btn.ghost, .btn.light { background: var(--raised) !important; color: var(--ink) !important; border: 1px solid var(--line) !important; }
+.btn.ghost:hover, .btn.light:hover { background: var(--card) !important; border-color: var(--accent) !important; }
+.btn.ghost.danger-text, .danger-text { color: var(--danger) !important; }
+.btn:disabled, .btn[disabled] { opacity: 0.45; }
+.link, .table .link, .row-actions .link, .report-link, .soft-card-head a { color: var(--accent) !important; }
+/* Buttons that sit on a deep-blue hero keep a light ghost. */
+.route-card .btn.light, .drive-card .btn.light, .fleet-card .btn.light, .kit-fleet .btn.light, .contact-card .btn.light,
+.land-cta .btn.soft {
+  background: rgba(255, 255, 255, 0.10) !important; color: #fff !important; border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ---- Fields --------------------------------------------------------------------------- */
+.field > input, .field > select, .field > textarea, .search-box, .full, .inline-form input, .panel-head select, .page-head select, input[type='month'],
+input[type='date'], input[type='datetime-local'], .dropdown-btn, .filters-row select {
+  border: 1px solid var(--line) !important; border-radius: 14px !important; background: var(--card) !important; color: var(--ink) !important; box-shadow: none !important;
+}
+.field > input:focus, .field > select:focus, .field > textarea:focus, .full:focus, .inline-form input:focus, .search-box:focus-within {
+  border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--accent-soft-2) !important; background: var(--card) !important;
+}
+::placeholder { color: var(--faint) !important; }
+
+/* ---- Segmented control and chips --------------------------------------------------------- */
+.segmented { background: var(--raised) !important; border: 1px solid var(--line-2) !important; border-radius: 14px !important; padding: 4px !important; }
+.segmented button { border-radius: 10px !important; letter-spacing: 0 !important; color: var(--muted) !important; background: transparent !important; font-weight: 600 !important; min-height: 36px; }
+.segmented button.on, .segmented button[aria-selected='true'] { background: var(--seg-on) !important; color: var(--ink) !important; box-shadow: var(--shadow-sm) !important; }
+.chip, .kit-chip, .kit-chips button, .tag-picks button {
+  border-radius: 999px !important; border: 1px solid var(--line) !important; background: var(--card) !important; color: var(--ink) !important; box-shadow: none !important; letter-spacing: 0 !important;
+}
+.chip.on, .kit-chip.on, .kit-chips button.on, .kit-chips button[aria-pressed='true'], .tag-picks button.on {
+  background: var(--accent-fill) !important; border-color: var(--accent-fill) !important; color: #fff !important;
+}
+.kit-chips button.on *, .kit-chip.on * { color: #fff !important; }
+.kit-chips button.on .count, .kit-chips button.on small, .kit-chips button.on b { background: rgba(255, 255, 255, 0.2) !important; color: #fff !important; }
+
+/* ---- Status chips ---------------------------------------------------------------------- */
+.badge { border-radius: 999px !important; border: 1px solid var(--line-2) !important; font-size: 12.5px !important; font-weight: 600 !important; padding: 3px 10px !important; }
+.badge.live { background: var(--live-50) !important; color: var(--live) !important; }
+.badge.delayed { background: var(--delayed-50) !important; color: var(--delayed) !important; }
+.badge.danger { background: var(--danger-50) !important; color: var(--danger) !important; }
+.badge.offline, .badge:not(.live):not(.delayed):not(.danger):not(.info) { background: var(--offline-50) !important; color: var(--offline) !important; }
+.badge.info { background: var(--accent-soft-2) !important; color: var(--accent) !important; }
+.route-code, .route-pill { background: var(--accent-fill) !important; color: #fff !important; box-shadow: none !important; border: 0 !important; border-radius: 10px !important; letter-spacing: 0 !important; font-family: var(--heading) !important; }
+.map-chip { background: var(--card) !important; color: var(--ink) !important; border: 1px solid var(--line-2) !important; box-shadow: var(--shadow) !important; letter-spacing: 0 !important; }
+
+/* ---- Messages ---------------------------------------------------------------------------- */
+.error { background: var(--danger-50) !important; border: 1px solid transparent !important; color: var(--danger) !important; border-radius: 14px !important; }
+.notice { background: var(--live-50) !important; border: 1px solid transparent !important; color: var(--live) !important; border-radius: 14px !important; }
+.setting-summary { background: var(--raised) !important; border-color: transparent !important; color: var(--muted) !important; border-radius: 14px !important; }
+
+/* ---- Dialogs and sheets --------------------------------------------------------------------- */
+.modal { border-radius: 24px !important; background: var(--surface) !important; border: 1px solid var(--line-2) !important; box-shadow: var(--shadow-lg) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.modal-backdrop, .backdrop { background: rgba(5, 8, 12, 0.6) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.kit-detail-backdrop { background: var(--bg) !important; }
+.kit-detail-head { background: var(--bg) !important; border-bottom: 1px solid var(--line-2) !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* ---- Tables and lists ------------------------------------------------------------------------- */
+.table { border-color: var(--line-2) !important; }
+.table thead th, .table th { background: var(--raised) !important; border-color: var(--line-2) !important; }
+.table td { border-color: var(--line-2) !important; }
+.table tbody tr:hover td { background: var(--accent-soft) !important; }
+.feed li, .trip-list li, .boarded li, .driver-students li { border-color: var(--line-2) !important; }
+
+/* ---- Navigation bar: a frosted pill; the links sit in a recessed track and the
+   current page rides on a raised white pill with a gold mark (MainNav's glider). ---- */
+html .app .topbar, html .app:has(.auth, .land-hero) .topbar, html[data-theme='dark'] .app .topbar {
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0.70) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(28, 49, 94, 0.06), 0 12px 32px rgba(16, 38, 70, 0.16), 0 2px 6px rgba(16, 38, 70, 0.06) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(180%) !important; backdrop-filter: blur(22px) saturate(180%) !important;
+  color: #1C315E !important;
+}
+html[data-theme='dark'] .app .topbar {
+  background: linear-gradient(180deg, rgba(232, 236, 244, 0.90) 0%, rgba(214, 221, 234, 0.82) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 14px 36px rgba(0, 0, 0, 0.45) !important;
+}
+html .app .topbar::after, html .app .topbar::before { display: none !important; }
+html .app.scrolled .topbar { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 18px 44px rgba(16, 38, 70, 0.24), 0 2px 8px rgba(16, 38, 70, 0.08) !important; }
+html .app .topbar .brand, html .app .topbar .brand-text strong { color: #1C315E !important; font-family: 'Poppins', var(--heading) !important; font-weight: 600 !important; }
+html .app .topbar .brand-sub { color: #1C315E !important; }
+html .app .topbar .brand-sub::before { background: #F7BC31 !important; }
+html .app .topbar .brand-icon { box-shadow: 0 4px 12px rgba(16, 38, 70, 0.22) !important; }
+html .app .topbar .tabs a { color: #1C315E !important; font-weight: 600 !important; letter-spacing: 0 !important; background: none !important; box-shadow: none !important; }
+html .app .topbar .tabs a .icon { color: #1C315E !important; opacity: 0.7 !important; }
+html .app .topbar .tabs a:not(.active):not(.nav-cta):hover { color: #142548 !important; background: rgba(28, 49, 94, 0.06) !important; }
+html .app .topbar .tabs a.active { color: #142548 !important; }
+html .app .topbar .tabs a.active .icon { color: #B08A2E !important; opacity: 1 !important; }
+html .app .topbar .tabs a.active::after { display: none !important; }
+html .app .topbar .tabs a.nav-cta, html .app .topbar .tabs a.nav-cta.active { background: #1C315E !important; color: #fff !important; }
+html .app .topbar .tabs a.nav-cta .icon { color: #F7BC31 !important; opacity: 1 !important; }
+@media (min-width: 1061px) {
+  html .app .topbar .nav-track {
+    background: rgba(28, 49, 94, 0.06) !important; border: 0 !important;
+    box-shadow: inset 0 1px 2px rgba(28, 49, 94, 0.10), inset 0 0 0 1px rgba(28, 49, 94, 0.06) !important;
+  }
+  html .app .topbar .nav-glider {
+    background: linear-gradient(180deg, #FFFFFF, #F6F8FB) !important; border: 0 !important;
+    box-shadow: 0 4px 12px rgba(16, 38, 70, 0.14), inset 0 0 0 1px rgba(28, 49, 94, 0.06) !important;
+  }
+  html .app .topbar .nav-glider::after { display: block !important; background: #C9A23F !important; box-shadow: none !important; }
+}
+html .app .topbar .nav-more-btn { color: #1C315E !important; }
+html .app .topbar .nav-more-btn:hover, html .app .topbar .nav-more.is-open .nav-more-btn { color: #142548 !important; background: rgba(28, 49, 94, 0.06) !important; }
+html .app .topbar .nav-more-menu { background: #FFFFFF !important; border: 1px solid rgba(28, 49, 94, 0.10) !important; box-shadow: 0 22px 48px rgba(20, 37, 72, 0.22) !important; }
+html .app .topbar .nav-more-menu a { color: #1C315E !important; }
+html .app .topbar .nav-more-menu a .icon { color: #B08A2E !important; }
+html .app .topbar .nav-more-menu a:hover, html .app .topbar .nav-more-menu a:focus-visible { background: rgba(28, 49, 94, 0.06) !important; }
+html .app .topbar .user-chip { border-left-color: rgba(28, 49, 94, 0.12) !important; }
+html .app .topbar .profile-btn { background: rgba(255, 255, 255, 0.6) !important; border: 1px solid rgba(28, 49, 94, 0.12) !important; box-shadow: none !important; }
+html .app .topbar .profile-btn:hover, html .app .topbar .profile.is-open .profile-btn { background: #FFFFFF !important; border-color: rgba(176, 138, 46, 0.55) !important; }
+html .app .topbar .user-meta b { color: #1C315E !important; }
+html .app .topbar .user-meta small { color: #5D6B80 !important; }
+html .app .topbar .profile-chevron { color: #1C315E !important; }
+html .app .topbar .avatar, html .app .topbar .profile-pic { background: #1C315E !important; color: #fff !important; border: 1.5px solid #F7BC31 !important; }
+html .app .topbar .menu-toggle { color: #1C315E !important; background: rgba(255, 255, 255, 0.6) !important; border: 1px solid rgba(28, 49, 94, 0.14) !important; }
+.avatar, .profile-pic, .kit-avatar { background: var(--accent-soft-2) !important; color: var(--accent) !important; border: 1.5px solid var(--navy-100) !important; box-shadow: none !important; }
+@media (max-width: 1060px) {
+  html .app .topbar:has(.tabs.open) { border-radius: 26px !important; }
+  html .app .topbar .tabs.open a.active { background: rgba(28, 49, 94, 0.08) !important; color: #142548 !important; }
+  html .app .topbar .tabs.open .user-chip { border-top-color: rgba(28, 49, 94, 0.12) !important; }
+}
+.utility-bar { color: var(--muted) !important; }
+.util-item a { color: var(--ink) !important; }
+.util-item .icon { color: var(--danger) !important; }
+html[data-theme='dark'] .util-item .icon { color: #F7BC31 !important; }
+
+/* ---- Phone tab bar: docked, the active tab's icon sits on an accent pill ----------------- */
+@media (max-width: 900px) {
+  .bottom-tabs {
+    background: var(--surface) !important; border: 1px solid var(--line-2) !important; border-radius: 22px !important;
+    box-shadow: var(--shadow) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  }
+  .bottom-tabs a { color: var(--faint) !important; opacity: 1 !important; font-weight: 500 !important; background: transparent !important; box-shadow: none !important; }
+  .bottom-tabs a .icon { color: var(--faint) !important; box-sizing: content-box; padding: 4px 16px; border-radius: 15px; }
+  .bottom-tabs a.active { color: var(--accent) !important; font-weight: 600 !important; background: transparent !important; }
+  .bottom-tabs a.active .icon { color: var(--accent) !important; background: var(--accent-soft-2); }
+  .bottom-tabs a.active::before, .bottom-tabs a.active::after { display: none !important; }
+}
+
+/* ---- Landing and sign-in: the deep-blue hero with the new palette ---------------------- */
+.app:has(.auth) { background: linear-gradient(160deg, #2A4787 0%, #1C315E 50%, #142548 100%) !important; }
+.land-hero { background: linear-gradient(160deg, #2A4787 0%, #1C315E 55%, #142548 100%) !important; box-shadow: none !important; }
+.app:has(.land-hero) .masthead { background: transparent !important; }
+.app:has(.auth) .masthead { background: transparent !important; }
+.app:has(.auth, .land-hero) .utility-bar { color: rgba(255, 255, 255, 0.7) !important; }
+.app:has(.auth, .land-hero) .util-item a { color: #fff !important; }
+.app:has(.auth, .land-hero) .util-item .icon { color: #F7BC31 !important; }
+.land-copy h1 .em { background: none !important; -webkit-background-clip: border-box !important; background-clip: border-box !important; color: #F7BC31 !important; }
+.pill-badge { background: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 255, 255, 0.16) !important; }
+.land-stats > div { background: rgba(255, 255, 255, 0.06) !important; border-color: rgba(255, 255, 255, 0.12) !important; }
+.land-stats span { color: #F9D27A !important; }
+.auth-card { background: var(--surface) !important; border: 1px solid var(--line-2) !important; border-radius: 24px !important; box-shadow: var(--shadow-lg) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.auth-logo, .brand-mark { background: rgba(255, 255, 255, 0.12) !important; box-shadow: none !important; border-radius: 14px !important; }
+.auth-back:hover { color: #fff !important; }
+.step-n { color: var(--navy-50) !important; -webkit-text-stroke: 1px var(--navy-100) !important; }
+
+/* ---- Maps ---------------------------------------------------------------------------------- */
+.leaflet-container { background: var(--raised) !important; font-family: var(--font) !important; }
+.leaflet-bar { border: 1px solid var(--line-2) !important; box-shadow: var(--shadow) !important; border-radius: 14px !important; overflow: hidden; }
+.leaflet-bar a { background: var(--surface) !important; color: var(--ink) !important; border-color: var(--line-2) !important; }
+
+/* ---- Small pieces ---------------------------------------------------------------------------- */
+.leave-switch.on, .switch.on { background: var(--accent-fill) !important; }
+.glance-progress, .progress { background: var(--raised) !important; }
+.glance-progress > *, .progress > * { background: var(--accent-fill) !important; }
+.skeleton-block, .line-skeleton { background: var(--raised) !important; }
+.kit-kv dt, .settings-kv dt { color: var(--muted) !important; }
+.settings-chips li { background: rgba(255, 255, 255, 0.10) !important; border-color: rgba(255, 255, 255, 0.16) !important; }
+hr { border-color: var(--line-2) !important; }
+
+/* ---- Route pickers that sit inside a card or a hero ----------------------------------- */
+.route-pick { background: var(--card) !important; color: var(--ink) !important; border: 1px solid var(--line-2) !important; border-radius: 14px !important; box-shadow: none !important; }
+.route-pick select, .route-pill select { border: 0 !important; background: transparent !important; box-shadow: none !important; border-radius: 0 !important; }
+.route-pick select { color: var(--ink) !important; }
+.route-pick .icon:first-child { color: var(--accent) !important; }
+.route-pill select { color: #fff !important; }
+
+/* ---- Small tags (Next, Your stop, Campus): chips, not gold capitals -------------------- */
+.stop-name em, .journey em, .runs em, .route-card em, .next-tag {
+  font-style: normal; text-transform: none !important; letter-spacing: 0 !important; font-size: 12px !important; font-weight: 600 !important;
+  padding: 2px 9px !important; border-radius: 999px !important;
+  background: var(--accent-soft-2) !important; color: var(--accent) !important; border: 1px solid var(--line-2);
+}
+.journey li.campus em { background: var(--live-50) !important; color: var(--live) !important; }
+.route-card em, .route-card .next-tag { background: rgba(255, 255, 255, 0.16) !important; color: #fff !important; border-color: rgba(255, 255, 255, 0.2); }
+.route-card-label { color: #F9D27A !important; font-size: 13px !important; font-weight: 500 !important; }
+.route-live { background: rgba(255, 255, 255, 0.10) !important; border-radius: 14px !important; }
+.contact-row { background: rgba(255, 255, 255, 0.10) !important; border-radius: 14px !important; }
+.settings-hero .avatar, .route-card .avatar, .contact-avatar { background: rgba(255, 255, 255, 0.14) !important; color: #fff !important; border: 1.5px solid rgba(255, 255, 255, 0.3) !important; }
+
+/* ---- Schedule: direction switch, the week, and the stop timeline (as in the phone app) -- */
+.sch { gap: 14px; }
+.sch-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
+.sch-head h1 { margin: 0; font-size: 28px; line-height: 34px; color: var(--ink); }
+.sch-head .btn { min-height: 44px; padding: 0 14px; font-size: 14px; gap: 8px; }
+.sch-dir { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: var(--raised); border: 1px solid var(--line-2); flex-shrink: 0; }
+.sch-dir button { min-height: 40px; padding: 4px 8px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font: 600 14px/1.25 var(--font); cursor: pointer; }
+.sch-dir button.on { background: var(--seg-on); color: var(--ink); box-shadow: var(--shadow-sm); }
+.sch-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; flex-shrink: 0; }
+.sch-day { position: relative; height: 60px; padding: 0; border-radius: 14px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; font-family: var(--font); }
+.sch-day span { font-size: 11.5px; font-weight: 500; line-height: 14px; }
+.sch-day b { font-family: var(--heading); font-size: 17px; font-weight: 700; line-height: 20px; }
+.sch-day.weekend { color: var(--faint); }
+.sch-day.on { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; }
+.sch-day.today:not(.on)::after { content: ''; position: absolute; bottom: 5px; width: 4px; height: 4px; border-radius: 2px; background: var(--accent); }
+.sch-day:hover:not(.on) { border-color: var(--accent); }
+.sch-special { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: var(--delayed-50); color: var(--delayed); flex-shrink: 0; }
+.sch-special.off { background: var(--danger-50); color: var(--danger); }
+.sch-special span { display: flex; flex-direction: column; }
+.sch-special b { color: var(--ink); font-weight: 600; font-size: 14px; }
+.sch-special small { color: var(--muted); font-size: 13px; }
+.sch-card { background: var(--card); border: 1px solid var(--line-2); border-radius: 20px; box-shadow: var(--shadow); padding: 10px 0; overflow: hidden; flex-shrink: 0; }
+.sch-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 16px 8px; }
+.sch-card-head p { margin: 0; font-size: 15px; font-weight: 600; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sch-change { position: relative; display: inline-flex; align-items: center; min-height: 32px; padding-left: 8px; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; }
+.sch-change select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.sch-change:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.sch-list { list-style: none; margin: 0; padding: 0; }
+.sch-row { display: flex; align-items: stretch; gap: 12px; padding: 0 16px; min-height: 46px; }
+.sch-row.mine { background: var(--accent-soft-2); min-height: 78px; }
+.sch-row.has-bus { min-height: 64px; }
+.sch-time { width: 72px; flex-shrink: 0; padding-top: 12px; font-size: 13px; line-height: 18px; font-weight: 500; color: var(--muted); }
+.sch-row.mine .sch-time { font-weight: 700; }
+.sch-row.passed .sch-time { color: var(--faint); }
+.sch-rail { width: 16px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
+.sch-line { width: 2px; height: 13px; background: var(--line); }
+.sch-line.grow { flex: 1; height: auto; }
+.sch-line.done { background: var(--faint); }
+.sch-line.bus { background: var(--accent); }
+.sch-line.none { background: transparent; }
+.sch-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-sizing: border-box; background: var(--card); border: 2px solid var(--faint); }
+.sch-row.passed .sch-dot { background: var(--faint); }
+.sch-row.mine .sch-dot { width: 14px; height: 14px; background: var(--accent); border-color: var(--accent); }
+.sch-row.end .sch-dot { width: 14px; height: 14px; background: var(--live); border-color: var(--live); }
+.sch-main { flex: 1; min-width: 0; padding: 10px 0; display: flex; flex-direction: column; gap: 6px; }
+.sch-name { font-size: 14.5px; line-height: 20px; font-weight: 500; color: var(--ink); }
+.sch-row.mine .sch-name, .sch-row.end .sch-name { font-weight: 700; }
+.sch-row.passed .sch-name { color: var(--faint); }
+.sch-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sch-bus { display: inline-flex; align-items: flex-start; gap: 6px; color: var(--accent); font-size: 12.5px; line-height: 17px; font-weight: 600; }
+.sch-bus .icon { margin-top: 1px; flex-shrink: 0; }
+.sch-note { margin: 0; padding: 8px 16px 4px; color: var(--muted); font-size: 13px; }
+.sch-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px; text-align: center; color: var(--muted); }
+.sch-empty b { font-family: var(--heading); font-size: 17px; color: var(--ink); }
+.sch-skel { display: flex; align-items: center; gap: 14px; padding: 9px 16px; }
+.sch-skel span { height: 14px; border-radius: 8px; background: var(--raised); animation: sch-pulse 1.4s ease-in-out infinite; }
+.sch-skel span:first-child { width: 58px; }
+.sch-skel span:last-child { flex: 1; }
+.sch-skel i { width: 12px; height: 12px; border-radius: 50%; background: var(--raised); }
+@keyframes sch-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sch-skel span { animation: none; } }
+
+/* ---- Notifications: filter chips, day headers, grouped delay threads (as in the phone app) -- */
+.ntf { gap: 12px; }
+.ntf-filters { display: flex; gap: 8px; overflow-x: auto; flex-shrink: 0; padding-bottom: 2px; scrollbar-width: none; }
+.ntf-filters::-webkit-scrollbar { display: none; }
+.ntf-filters button { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 600 13.5px/1 var(--font); cursor: pointer; white-space: nowrap; }
+.ntf-filters button span { color: var(--muted); font-weight: 500; }
+.ntf-filters button.on { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; }
+.ntf-filters button.on span { color: rgba(255, 255, 255, 0.85); }
+.ntf-list { display: flex; flex-direction: column; gap: 10px; }
+.ntf-item { display: flex; flex-direction: column; gap: 10px; }
+.ntf-day { margin: 4px 0 0; font: 600 13px/18px var(--font) !important; color: var(--muted); letter-spacing: 0; }
+.ntf-card { background: var(--card); border: 1px solid var(--line-2); border-radius: 20px; padding: 16px; }
+.ntf-thread { display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow); }
+.ntf-top, .ntf-single { display: flex; gap: 12px; align-items: flex-start; }
+.ntf-single { padding: 14px; }
+.ntf-icon { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; background: var(--accent-soft-2); color: var(--accent); }
+.ntf-icon.amber { background: var(--delayed-50); color: var(--delayed); }
+.ntf-icon.green { background: var(--live-50); color: var(--live); }
+.ntf-icon.violet { background: rgba(124, 58, 237, 0.12); color: #7C3AED; }
+html[data-theme='dark'] .ntf-icon.violet { background: rgba(167, 139, 250, 0.16); color: #A78BFA; }
+.ntf-icon.big { width: 72px; height: 72px; border-radius: 24px; }
+.ntf-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ntf-text b { font-size: 16px; line-height: 22px; font-weight: 700; color: var(--ink); }
+.ntf-text small, .ntf-line time { font-size: 13px; color: var(--muted); }
+.ntf-line { display: flex; align-items: flex-start; gap: 8px; }
+.ntf-line b { flex: 1; min-width: 0; }
+.ntf-line time { padding-top: 2px; white-space: nowrap; }
+.ntf-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 7px; flex-shrink: 0; }
+.ntf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ntf-body { margin: 0; font-size: 15px; line-height: 22px; color: var(--muted); overflow-wrap: anywhere; }
+.ntf-updates { list-style: none; margin: 0; padding: 12px; border-radius: 14px; background: var(--raised); display: flex; flex-direction: column; gap: 10px; }
+.ntf-updates li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--muted); }
+.ntf-updates i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); margin-top: 6px; flex-shrink: 0; }
+.ntf-updates li.latest i { background: var(--delayed); }
+.ntf-updates time { width: 78px; flex-shrink: 0; font-weight: 600; color: var(--ink); }
+.ntf-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ntf-actions button, .ntf-actions a { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--accent); font: 600 14px/1 var(--font); cursor: pointer; text-decoration: none; }
+.ntf-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 16px; text-align: center; }
+.ntf-empty h3 { margin: 0; font-family: var(--heading) !important; font-size: 20px; font-weight: 700; color: var(--ink); }
+
+/* ---- Older feed rows (driver and dashboard lists) --------------------------------------- */
+.feed li, .feed li.hot, .feed li.warn { background: var(--card) !important; border: 1px solid var(--line-2) !important; box-shadow: none !important; border-radius: 16px !important; }
+.feed li.hot b, .feed li.hot small, .feed li.hot time, .feed b { color: var(--ink) !important; }
+.feed small { color: var(--muted) !important; }
+.feed li.hot time, .feed time { color: var(--faint) !important; opacity: 1 !important; }
+
+/* ---- Bus pass ------------------------------------------------------------------------------ */
+.pass-card { border-radius: 24px !important; }
+.pass-brand small { color: #F9D27A !important; letter-spacing: 0 !important; }
+.pass-photo, .pass-card .avatar, .pass-card .kit-avatar { border: 2px solid rgba(247, 188, 49, 0.75) !important; border-radius: 18px !important; background: linear-gradient(135deg, #3C5BA3, #1C315E) !important; color: #fff !important; }
+.pass-who small { color: #F9D27A !important; }
+.pass-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pass-facts > div { flex-direction: column; justify-content: flex-start; gap: 2px; }
+.pass-facts dt { color: rgba(255, 255, 255, 0.7) !important; font-size: 12px !important; }
+.pass-facts dd { text-align: left !important; }
+.pass-code.panel, .pass-code { background: #fff !important; }
+.pass-hint { color: #1C315E !important; }
+.pass-code .muted, .pass-code small { color: #334155 !important; }
+.pass-meter { background: #E2E8F0 !important; height: 6px !important; }
+.pass-meter i { background: #1C315E !important; }
+.pass-qr { border-color: transparent !important; }
+
+/* ---- Headings inside cards are ink, not the accent ------------------------------------------- */
+.panel h2, .panel h3, .soft-card-head h3, .kit-block h3, .panel-head h3, .live-head h2, .map-side h2, h2, h3 { color: var(--ink) !important; }
+.land-copy h1, .land-hero h2, .auth-side h1, .route-card h3, .route-card h2, .drive-card h2, .drive-card h3, .fleet-card h2, .fleet-card h3, .kit-fleet h2, .kit-fleet h3,
+.contact-card h3, .upsell h2, .upsell h3, .pass-card h2, .pass-card h3, .money-card h2, .money-card h3 { color: #fff !important; }
+
+/* ---- Landing: the floating chips beside the phone are solid cards ---------------------- */
+html .land-hero .float-card b, .float-card b { color: var(--ink) !important; }
+html .land-hero .float-card small, .float-card small { color: var(--muted) !important; }
+.float-card { border-radius: 16px !important; }
+
+/* ---- Driver: trip buttons ------------------------------------------------------------------ */
+.btn.start-trip { background: var(--accent-fill) !important; color: #fff !important; border: 1px solid transparent !important; border-radius: 16px !important; box-shadow: none !important; }
+.btn.start-trip:hover { background: var(--accent-press) !important; }
+.btn.end-trip { background: var(--danger-fill) !important; color: #fff !important; border: 1px solid transparent !important; border-radius: 16px !important; box-shadow: none !important; filter: none !important; }
+.btn.end-trip:hover { background: #7D1618 !important; }
+.drive-card .btn.light .icon { color: #fff !important; }
+.drive-card select, .drive-settings select { background: rgba(255, 255, 255, 0.10) !important; color: #fff !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; border-radius: 14px !important; }
+.drive-card select option, .drive-settings select option { color: #141414; }
+.occ { border-radius: 16px !important; box-shadow: none !important; }
+
+/* ---- Home: the "Next" tag and the journey's stop dots ------------------------------------ */
+.runs li.next span::after {
+  content: 'Next' !important; text-transform: none !important; letter-spacing: 0 !important; font-size: 12px !important; font-weight: 600 !important;
+  background: rgba(255, 255, 255, 0.16) !important; color: #fff !important; border-radius: 999px !important; padding: 2px 9px !important;
+}
+.journey li > span::before { background: var(--card) !important; border-color: var(--faint) !important; box-shadow: none !important; }
+.journey li.mine > span::before { background: var(--accent) !important; border-color: var(--accent) !important; box-shadow: 0 0 0 4px var(--accent-soft-2) !important; }
+.journey li.campus > span::before { background: var(--live) !important; border-color: var(--live) !important; }
+.journey li > span::after, .journey li::after { background: var(--line) !important; }
+.journey li.mine time, .journey li.mine b { color: var(--ink) !important; }
+
+/* ---- Text on the deep-blue hero cards stays white ------------------------------------------ */
+.settings-hero h2, .settings-hero h3, .settings-who h2, .driver-hero h2, .driver-hero h3, .schedule-head h2, .schedule-head h3,
+.pv-card h2, .pv-card h3, .leave-card.near h2, .leave-card.near h3 { color: #fff !important; }
+.settings-avatar { background: rgba(255, 255, 255, 0.14) !important; color: #fff !important; border: 1.5px solid rgba(255, 255, 255, 0.3) !important; box-shadow: none !important; }
+.settings-chips li .icon { color: #F7BC31 !important; }
+.settings-chips li.on { color: #86EFAC !important; }
+
+/* ---- crescent.education colours: gold as the highlight ------------------------------------ */
+/* The site sets gold on navy: the call to action, the brand rule and the active page's mark. */
+.land-cta .btn.dark {
+  background: #F7BC31 !important; color: #142548 !important; border-color: transparent !important;
+}
+.land-cta .btn.dark:hover { background: #E0A51F !important; }
+.dot-count { background: var(--danger-fill) !important; }
+/* In dark mode the accent is gold, so text set on an accent pill stays readable. */
+html[data-theme='dark'] .leave-card.near { background: var(--accent-fill) !important; }
+html[data-theme='dark'] .sch-row.mine .sch-dot { border-color: var(--accent); }
+html[data-theme='dark'] .pass-hint { color: #1C315E !important; }
+
+.fc-icon { background: var(--accent-soft-2) !important; color: var(--accent) !important; border-radius: 10px !important; }
+.fc-icon.ok { background: var(--live-50) !important; color: var(--live) !important; }
+
+/* ---- Card hover: every card answers the pointer in the university colours --------------- */
+/* Large cards (panels, blocks): a soft navy-to-gold wash, a gold top edge and a deeper shadow.
+   Small cards and rows: they lift a little more, with a navy edge and a gold glow.
+   Dark mode uses the same idea with lighter tints. Keyboard focus gets the same edge. */
+:root {
+  --hv-wash: linear-gradient(150deg, rgba(28, 49, 94, 0.06) 0%, rgba(247, 188, 49, 0.07) 100%);
+  --hv-edge: rgba(28, 49, 94, 0.28);
+  --hv-band: #F7BC31;
+  --hv-shadow: 0 14px 32px rgba(28, 49, 94, 0.14), 0 2px 6px rgba(28, 49, 94, 0.06);
+  --hv-icon-bg: #1C315E;
+  --hv-icon-fg: #F7BC31;
+}
+html[data-theme='dark'] {
+  --hv-wash: linear-gradient(150deg, rgba(150, 175, 235, 0.08) 0%, rgba(247, 188, 49, 0.08) 100%);
+  --hv-edge: rgba(247, 188, 49, 0.45);
+  --hv-band: #F7BC31;
+  --hv-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(247, 188, 49, 0.10);
+  --hv-icon-bg: #F7BC31;
+  --hv-icon-fg: #142548;
+}
+.panel, .soft-card, .kit-block, .kit-profile, .map-card, .schedule-card, .sch-card, .empty-hero, .select-route, .timetable,
+.stat, .kit-row, .kit-bus, .kit-day, .route-tile, .feature, .bus-card, .steps li, .glance-card, .kit-shortcut, .notice-list > li,
+.quick-actions > *, .ntf-card, .feed li, .float-card, .leave-card, .sch-day, .panel.kit-view-card {
+  transition: transform 0.2s var(--ease, ease), box-shadow 0.22s ease, border-color 0.2s ease, background 0.22s ease !important;
+}
+@media (hover: hover) {
+  /* Large cards */
+  html .panel:not(.kit-view-card):not(.view-list):hover, html .soft-card:hover, html .kit-block:hover, html .kit-profile:hover,
+  html .map-card:hover, html .schedule-card:hover, html .sch-card:hover, html .empty-hero:hover, html .select-route:hover, html .timetable:hover,
+  html .ntf-thread:hover {
+    transform: translateY(-2px) !important;
+    background: var(--hv-wash), var(--card) !important;
+    border-color: var(--hv-edge) !important;
+    box-shadow: inset 0 3px 0 var(--hv-band), var(--hv-shadow) !important;
+  }
+  /* Small cards and rows */
+  html .stat.stat:hover, html .kit-stats .stat:hover, html .kpi-grid .stat:hover, html .kpi-strip .stat:hover, html .glance-card:hover,
+  html .kit-row:hover, html button.kit-row:hover, html a.kit-row:hover, html .kit-bus:hover:not(:disabled), html .kit-day:hover,
+  html .route-tile:hover, html .bus-card:hover, html .feature:hover, html .land .feature:hover, html .steps li:hover,
+  html .kit-shortcuts .kit-shortcut:hover, html .notice-list > li:hover, html .quick-actions > *:hover, html .ntf-single:hover,
+  html .feed li:hover, html .float-card:hover, html .leave-card:not(.near):hover {
+    transform: translateY(-3px) !important;
+    background: var(--hv-wash), var(--card) !important;
+    border-color: var(--hv-edge) !important;
+    box-shadow: var(--hv-shadow) !important;
+  }
+  /* Their icon tiles fill with navy and gold. */
+  html .stat:hover .stat-icon, html .glance-card:hover .glance-icon, html .kit-row:hover .kit-row-icon, html .feature:hover .feature-icon,
+  html .kit-shortcut:hover .ks-icon, html .panel:hover > .panel-head .panel-icon, html .ntf-card:hover .ntf-icon, html .quick-actions > *:hover span,
+  html .panel.kit-view-card:hover .kit-fold-icon, html .view-list > .panel.kit-view-card:hover .kit-fold-icon {
+    background: var(--hv-icon-bg) !important; color: var(--hv-icon-fg) !important; transform: scale(1.06) !important;
+  }
+  html .kit-row:hover .route-code, html .kit-bus:hover .route-code { transform: scale(1.05) !important; }
+  html .kit-row:hover .kit-chevron, html .panel.kit-view-card:hover .kit-chevron, html .kit-shortcut:hover .ks-go { transform: translateX(3px) !important; color: var(--hv-icon-bg) !important; }
+  html[data-theme='dark'] .kit-row:hover .kit-chevron, html[data-theme='dark'] .panel.kit-view-card:hover .kit-chevron { color: #F7BC31 !important; }
+  /* Section lists: the row tints, the list itself stays put. */
+  html .view-list.panel:hover { transform: none !important; background: var(--card) !important; border-color: var(--line-2) !important; box-shadow: var(--shadow) !important; }
+  html .view-list > .panel.kit-view-card:hover { transform: none !important; background: var(--hv-wash) !important; box-shadow: inset 3px 0 0 var(--hv-band) !important; }
+  /* Week days on the schedule. */
+  html .sch-day:not(.on):hover { transform: translateY(-2px); border-color: var(--hv-edge); box-shadow: var(--hv-shadow); background: var(--hv-wash), var(--card); }
+  /* Deep-blue hero cards brighten and show the gold edge. */
+  html .route-card:hover, html .contact-card:hover, html .upsell:hover, html .kit-fleet:hover, html .fleet-card:hover, html .drive-card:hover,
+  html .pass-card:hover, html .settings-hero:hover, html .money-card:hover, html .pv-card:hover, html .leave-card.near:hover {
+    transform: translateY(-2px) !important; filter: brightness(1.08) !important;
+    box-shadow: inset 0 3px 0 #F7BC31, 0 18px 40px rgba(20, 37, 72, 0.32) !important;
+  }
+}
+/* Keyboard users see the same edge on focus. */
+.panel.kit-view-card:focus-visible, .kit-row:focus-visible, .kit-shortcut:focus-visible, .route-tile:focus-visible, .quick-actions > *:focus-visible {
+  border-color: var(--hv-edge) !important; box-shadow: 0 0 0 3px rgba(247, 188, 49, 0.45) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html *:hover { transform: none !important; }
+}
+
+/* ---- Landing hero: the transit map drawn into the navy, as in the app ---------------------- */
+/* Routes with stops, the gold dashed route, an amber "your stop", a green campus, two buses,
+   soft glows and faint rings. The page-wide backdrop can't show through the hero's solid navy,
+   so the hero carries its own. */
+.land-hero {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 800' preserveAspectRatio='xMidYMid slice'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M-80 240 C 200 160 340 380 600 300 S 980 120 1240 240 S 1560 380 1700 300' stroke='rgba(255,255,255,0.10)' stroke-width='12'/%3E%3Cpath d='M-80 240 C 200 160 340 380 600 300 S 980 120 1240 240 S 1560 380 1700 300' stroke='rgba(255,255,255,0.22)' stroke-width='3'/%3E%3Cpath d='M-80 660 C 180 560 380 760 640 660 S 1020 480 1280 580 S 1560 720 1700 640' stroke='rgba(247,188,49,0.55)' stroke-width='3.5' stroke-dasharray='2 14'/%3E%3Cpath d='M320 -60 C 360 160 220 340 400 520 S 600 820 500 900' stroke='rgba(255,255,255,0.12)' stroke-width='2.5'/%3E%3Cpath d='M1360 -60 C 1290 180 1480 340 1340 560 S 1180 780 1290 900' stroke='rgba(110,193,228,0.30)' stroke-width='2.5'/%3E%3Cpath d='M820 -60 C 860 120 760 220 880 360' stroke='rgba(255,255,255,0.08)' stroke-width='2'/%3E%3C/g%3E%3Cg fill='%231C315E' stroke='rgba(255,255,255,0.55)' stroke-width='2.5'%3E%3Ccircle cx='150' cy='196' r='6'/%3E%3Ccircle cx='980' cy='160' r='6'/%3E%3Ccircle cx='1420' cy='320' r='6'/%3E%3Ccircle cx='240' cy='620' r='6'/%3E%3Ccircle cx='640' cy='660' r='6'/%3E%3Ccircle cx='1150' cy='540' r='6'/%3E%3Ccircle cx='372' cy='330' r='6'/%3E%3Ccircle cx='392' cy='520' r='6'/%3E%3Ccircle cx='1400' cy='250' r='6'/%3E%3Ccircle cx='1330' cy='600' r='6'/%3E%3C/g%3E%3Ccircle cx='600' cy='300' r='18' fill='rgba(247,188,49,0.18)'/%3E%3Ccircle cx='600' cy='300' r='8' fill='%23F7BC31' stroke='%231C315E' stroke-width='3'/%3E%3Ccircle cx='1240' cy='240' r='18' fill='rgba(111,212,135,0.18)'/%3E%3Ccircle cx='1240' cy='240' r='8' fill='%236FD487' stroke='%231C315E' stroke-width='3'/%3E%3Cg transform='translate(430 330) rotate(-12)' opacity='0.85'%3E%3Crect x='-18' y='-10' width='36' height='20' rx='6' fill='%23F7BC31'/%3E%3Crect x='8' y='-7' width='7' height='14' rx='2' fill='%231C315E'/%3E%3Crect x='-13' y='-6' width='17' height='12' rx='2' fill='rgba(28,49,94,0.45)'/%3E%3C/g%3E%3Cg transform='translate(900 600) rotate(-20)' opacity='0.7'%3E%3Crect x='-18' y='-10' width='36' height='20' rx='6' fill='%236EC1E4'/%3E%3Crect x='8' y='-7' width='7' height='14' rx='2' fill='%231C315E'/%3E%3Crect x='-13' y='-6' width='17' height='12' rx='2' fill='rgba(28,49,94,0.45)'/%3E%3C/g%3E%3Cg fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='1.5'%3E%3Ccircle cx='1480' cy='60' r='220'/%3E%3Ccircle cx='1480' cy='60' r='320'/%3E%3Ccircle cx='80' cy='780' r='180'/%3E%3C/g%3E%3C/svg%3E") center / cover no-repeat,
+    radial-gradient(640px 380px at 92% 8%, rgba(247, 188, 49, 0.16), transparent 65%),
+    radial-gradient(560px 420px at 4% 96%, rgba(110, 193, 228, 0.14), transparent 70%),
+    radial-gradient(900px 600px at 30% 40%, rgba(60, 90, 160, 0.35), transparent 70%),
+    linear-gradient(160deg, #2A4787 0%, #1C315E 55%, #142548 100%) !important;
+}
+.app:has(.land-hero) .route-bg { opacity: 0.6 !important; }
+
+
+/* ===========================================================================
+   Glassmorphism: the last word on surfaces.
+   Every card, list, bar, dialog and control is frosted glass over the
+   transit-map ground: a translucent fill, a strong background blur that keeps
+   text crisp, a bright top edge, a faint inner gloss and a soft navy shadow.
+   The ground gains a few more colour pools so the glass has something to show.
+   =========================================================================== */
+:root {
+  --glass-fill: rgba(255, 255, 255, 0.58);
+  --glass-fill-strong: rgba(255, 255, 255, 0.80);
+  --glass-fill-soft: rgba(255, 255, 255, 0.42);
+  --glass-line: rgba(255, 255, 255, 0.70);
+  --glass-line-soft: rgba(28, 49, 94, 0.10);
+  --glass-hi: inset 0 1px 0 rgba(255, 255, 255, 0.90), inset 0 -1px 0 rgba(28, 49, 94, 0.05);
+  --glass-gloss-2: linear-gradient(160deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.12) 42%, rgba(255, 255, 255, 0.04) 100%);
+  --glass-blur-2: blur(22px) saturate(180%);
+  --glass-drop: 0 10px 30px rgba(20, 37, 72, 0.10), 0 2px 6px rgba(20, 37, 72, 0.05);
+  --glass-drop-lg: 0 24px 60px rgba(20, 37, 72, 0.22), 0 4px 12px rgba(20, 37, 72, 0.08);
+  --card: rgba(255, 255, 255, 0.58);
+  --surface: rgba(255, 255, 255, 0.72);
+  --raised: rgba(233, 236, 241, 0.62);
+  --seg-on: rgba(255, 255, 255, 0.92);
+  --hv-wash: linear-gradient(150deg, rgba(28, 49, 94, 0.07) 0%, rgba(247, 188, 49, 0.08) 100%);
+}
+html[data-theme='dark'] {
+  --glass-fill: rgba(28, 41, 68, 0.52);
+  --glass-fill-strong: rgba(24, 35, 58, 0.86);
+  --glass-fill-soft: rgba(28, 41, 68, 0.36);
+  --glass-line: rgba(255, 255, 255, 0.12);
+  --glass-line-soft: rgba(255, 255, 255, 0.08);
+  --glass-hi: inset 0 1px 0 rgba(255, 255, 255, 0.10), inset 0 -1px 0 rgba(0, 0, 0, 0.20);
+  --glass-gloss-2: linear-gradient(160deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0) 100%);
+  --glass-blur-2: blur(24px) saturate(160%);
+  --glass-drop: 0 12px 32px rgba(0, 0, 0, 0.38);
+  --glass-drop-lg: 0 26px 64px rgba(0, 0, 0, 0.55);
+  --card: rgba(28, 41, 68, 0.52);
+  --surface: rgba(22, 33, 56, 0.72);
+  --raised: rgba(255, 255, 255, 0.06);
+  --seg-on: rgba(255, 255, 255, 0.14);
+}
+
+/* ---- Ground: more colour pools behind the glass ---------------------------------- */
+html .app, html[data-theme='dark'] .app {
+  background:
+    radial-gradient(38% 34% at 6% 8%, rgba(28, 49, 94, 0.22), transparent 70%),
+    radial-gradient(34% 32% at 96% 18%, rgba(247, 188, 49, 0.20), transparent 70%),
+    radial-gradient(36% 36% at 8% 82%, rgba(110, 193, 228, 0.22), transparent 70%),
+    radial-gradient(32% 30% at 92% 92%, rgba(160, 32, 34, 0.10), transparent 70%),
+    radial-gradient(50% 40% at 50% 50%, rgba(28, 49, 94, 0.06), transparent 75%),
+    var(--bg) !important;
+  background-attachment: fixed !important;
+}
+html[data-theme='dark'] .app {
+  background:
+    radial-gradient(40% 36% at 6% 8%, rgba(60, 90, 160, 0.30), transparent 70%),
+    radial-gradient(34% 32% at 96% 18%, rgba(247, 188, 49, 0.10), transparent 70%),
+    radial-gradient(36% 36% at 8% 82%, rgba(60, 130, 170, 0.18), transparent 70%),
+    radial-gradient(32% 30% at 92% 92%, rgba(181, 40, 42, 0.12), transparent 70%),
+    var(--bg) !important;
+  background-attachment: fixed !important;
+}
+
+/* ---- Glass surfaces ------------------------------------------------------------------ */
+html .panel, html .soft-card, html .kit-block, html .kit-profile, html .stat, html .kpi-grid .stat, html .kit-stats .stat,
+html .kpi-strip .stat, html .map-card, html .kit-day, html .kit-shortcut, html .kit-bus, html .kit-row, html .route-tile,
+html .feature, html .bus-card, html .schedule-card, html .sch-card, html .select-route, html .steps li, html .empty-hero,
+html .float-card, html .notice-list > li, html .timetable, html .glance-card, html .leave-card:not(.near), html .quick-actions > *,
+html .ntf-card, html .feed li, html .auth-card, html .view-list.panel, html .sch-day:not(.on), html .pass-code,
+html .greet-meta, html .bell, html .app-title .back, html .kit-back, html .icon-btn, html .map-chip, html .leaflet-bar {
+  background: var(--glass-gloss-2), var(--glass-fill) !important;
+  -webkit-backdrop-filter: var(--glass-blur-2) !important; backdrop-filter: var(--glass-blur-2) !important;
+  border: 1px solid var(--glass-line) !important;
+  box-shadow: var(--glass-hi), var(--glass-drop) !important;
+}
+/* Rows and tiles inside a glass card are lighter glass, without their own drop. */
+html .panel .kit-row, html .panel .kit-bus, html .panel .stat, html .kit-block .kit-row, html .panel .feed li, html .panel .kit-day {
+  background: var(--glass-fill-soft) !important; border-color: var(--glass-line-soft) !important; box-shadow: var(--glass-hi) !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+/* Section lists: one glass sheet, rows are clear. */
+html .view-list > .panel.kit-view-card { background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html .view-list > .panel.kit-view-card + .panel.kit-view-card { border-top: 1px solid var(--glass-line-soft) !important; }
+/* The pass's code card stays near-white so the QR scans. */
+html .pass-code { background: rgba(255, 255, 255, 0.94) !important; }
+/* Deep-blue hero cards: navy glass with a gold-lit edge. */
+html .route-card, html .contact-card, html .upsell, html .kit-fleet, html .fleet-card, html .drive-card, html .driver-hero,
+html .schedule-head, html .money-card, html .pv-card, html .settings-hero {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0) 70%),
+              linear-gradient(135deg, rgba(42, 71, 135, 0.90) 0%, rgba(28, 49, 94, 0.92) 55%, rgba(20, 37, 72, 0.94) 100%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%) !important; backdrop-filter: blur(18px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(0, 0, 0, 0.15), 0 18px 40px rgba(20, 37, 72, 0.28) !important;
+}
+html .pass-card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 45%, rgba(255, 255, 255, 0) 70%),
+              linear-gradient(135deg, rgba(42, 71, 135, 0.94) 0%, rgba(28, 49, 94, 0.96) 55%, rgba(20, 37, 72, 0.98) 100%) !important;
+  border: 1px solid rgba(247, 188, 49, 0.30) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 22px 48px rgba(20, 37, 72, 0.32) !important;
+}
+html[data-theme='dark'] .route-card, html[data-theme='dark'] .contact-card, html[data-theme='dark'] .kit-fleet, html[data-theme='dark'] .fleet-card,
+html[data-theme='dark'] .drive-card, html[data-theme='dark'] .settings-hero, html[data-theme='dark'] .upsell, html[data-theme='dark'] .money-card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 60%), linear-gradient(135deg, rgba(31, 49, 87, 0.80), rgba(24, 35, 58, 0.86)) !important;
+  border-color: rgba(247, 188, 49, 0.18) !important;
+}
+/* Glass inside a hero: lighter glass. */
+html .route-live, html .contact-row, html .route-card .route-pick, html .settings-chips li {
+  background: rgba(255, 255, 255, 0.10) !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  -webkit-backdrop-filter: blur(10px) !important; backdrop-filter: blur(10px) !important;
+}
+html .route-card .route-pick { background: rgba(255, 255, 255, 0.92) !important; }
+
+/* ---- Controls --------------------------------------------------------------------------- */
+html .segmented, html .sch-dir {
+  background: var(--glass-fill-soft) !important; border: 1px solid var(--glass-line) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(170%) !important; backdrop-filter: blur(16px) saturate(170%) !important;
+  box-shadow: inset 0 1px 2px rgba(28, 49, 94, 0.08) !important;
+}
+html .segmented button.on, html .segmented button[aria-selected='true'], html .sch-dir button.on {
+  background: var(--seg-on) !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 12px rgba(20, 37, 72, 0.12) !important;
+}
+html[data-theme='dark'] .segmented button.on, html[data-theme='dark'] .segmented button[aria-selected='true'], html[data-theme='dark'] .sch-dir button.on {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+html .field > input, html .field > select, html .field > textarea, html .search-box, html .full, html .inline-form input,
+html .panel-head select, html .page-head select, html input[type='month'], html input[type='date'], html .dropdown-btn, html .filters-row select {
+  background: var(--glass-fill-strong) !important; border-color: var(--glass-line-soft) !important;
+  box-shadow: inset 0 1px 2px rgba(20, 37, 72, 0.06) !important;
+}
+html .chip, html .kit-chip, html .kit-chips button, html .tag-picks button, html .ntf-filters button:not(.on) {
+  background: var(--glass-fill) !important; border-color: var(--glass-line) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(170%) !important; backdrop-filter: blur(14px) saturate(170%) !important;
+}
+html .btn.ghost, html .btn.light {
+  background: var(--glass-gloss-2), var(--glass-fill) !important; border: 1px solid var(--glass-line) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(170%) !important; backdrop-filter: blur(14px) saturate(170%) !important;
+  box-shadow: var(--glass-hi) !important;
+}
+html .btn.primary, html .btn.red, html .btn.indigo, html .btn.dark, html .btn.start-trip {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0)), var(--accent-fill) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 8px 20px rgba(28, 49, 94, 0.25) !important;
+}
+html .btn.danger, html .btn.end-trip {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0)), var(--danger-fill) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 20px rgba(160, 32, 34, 0.25) !important;
+}
+html .badge { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+
+/* ---- Bars, dialogs and menus ---------------------------------------------------------------- */
+@media (max-width: 900px) {
+  html .bottom-tabs {
+    background: var(--glass-gloss-2), var(--glass-fill-strong) !important; border: 1px solid var(--glass-line) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(180%) !important; backdrop-filter: blur(26px) saturate(180%) !important;
+    box-shadow: var(--glass-hi), var(--glass-drop-lg) !important; border-radius: 28px !important;
+  }
+}
+html .modal, html .kit-detail, html .dropdown-menu, html .profile-menu, html .nav-more-menu, html .app .topbar .nav-more-menu {
+  background: var(--glass-gloss-2), var(--glass-fill-strong) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(180%) !important; backdrop-filter: blur(30px) saturate(180%) !important;
+  border: 1px solid var(--glass-line) !important; box-shadow: var(--glass-hi), var(--glass-drop-lg) !important;
+}
+html .modal-backdrop, html .backdrop {
+  background: rgba(13, 21, 36, 0.38) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(120%) !important; backdrop-filter: blur(8px) saturate(120%) !important;
+}
+html .kit-detail-backdrop { background: rgba(241, 241, 241, 0.55) !important; -webkit-backdrop-filter: blur(18px) !important; backdrop-filter: blur(18px) !important; }
+html[data-theme='dark'] .kit-detail-backdrop { background: rgba(13, 21, 36, 0.6) !important; }
+html .kit-detail { background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html .kit-detail-head { background: var(--glass-fill-strong) !important; -webkit-backdrop-filter: blur(24px) saturate(180%) !important; backdrop-filter: blur(24px) saturate(180%) !important; border-bottom: 1px solid var(--glass-line) !important; }
+html .table thead th, html .table th { background: var(--glass-fill-soft) !important; }
+html .error, html .notice, html .setting-summary { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+
+/* ---- Hover on glass: brighter glass, gold edge ------------------------------------------------- */
+@media (hover: hover) {
+  html .panel:not(.kit-view-card):not(.view-list):hover, html .soft-card:hover, html .kit-block:hover, html .kit-profile:hover,
+  html .map-card:hover, html .schedule-card:hover, html .sch-card:hover, html .empty-hero:hover, html .select-route:hover, html .timetable:hover,
+  html .ntf-thread:hover, html .stat.stat:hover, html .kit-stats .stat:hover, html .kpi-grid .stat:hover, html .kpi-strip .stat:hover, html .glance-card:hover,
+  html .kit-row:hover, html button.kit-row:hover, html a.kit-row:hover, html .kit-bus:hover:not(:disabled), html .kit-day:hover,
+  html .route-tile:hover, html .bus-card:hover, html .feature:hover, html .steps li:hover, html .kit-shortcuts .kit-shortcut:hover,
+  html .notice-list > li:hover, html .quick-actions > *:hover, html .ntf-single:hover, html .feed li:hover, html .float-card:hover, html .leave-card:not(.near):hover {
+    background: var(--hv-wash), var(--glass-gloss-2), var(--glass-fill-strong) !important;
+    border-color: rgba(247, 188, 49, 0.55) !important;
+    box-shadow: var(--glass-hi), inset 0 3px 0 var(--hv-band), var(--hv-shadow) !important;
+  }
+  html .view-list.panel:hover { background: var(--glass-gloss-2), var(--glass-fill) !important; border-color: var(--glass-line) !important; box-shadow: var(--glass-hi), var(--glass-drop) !important; }
+  html .view-list > .panel.kit-view-card:hover { background: var(--hv-wash) !important; border-color: transparent !important; box-shadow: inset 3px 0 0 var(--hv-band) !important; }
+  html .btn.ghost:hover, html .btn.light:hover { background: var(--glass-gloss-2), var(--glass-fill-strong) !important; border-color: rgba(247, 188, 49, 0.55) !important; }
+}
+
+/* ---- Browsers without backdrop blur: a near-solid fill so text stays readable ------------------ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass-fill: rgba(255, 255, 255, 0.92); --glass-fill-soft: rgba(255, 255, 255, 0.85); --card: rgba(255, 255, 255, 0.92); }
+  html[data-theme='dark'] { --glass-fill: rgba(24, 35, 58, 0.94); --glass-fill-soft: rgba(24, 35, 58, 0.85); --card: rgba(24, 35, 58, 0.94); }
+}
+/* People who ask for less transparency get solid surfaces. */
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass-fill: #FFFFFF; --glass-fill-soft: #F7F8FA; --glass-fill-strong: #FFFFFF; --card: #FFFFFF; }
+  html[data-theme='dark'] { --glass-fill: #18233A; --glass-fill-soft: #1C2944; --glass-fill-strong: #18233A; --card: #18233A; }
+}
+
+/* The screen's glide-in must not leave a held animation behind: a parent with an active
+   opacity/transform effect cuts its children's backdrop blur off from the page backdrop. */
+.screen { animation-fill-mode: backwards !important; }
+.panel { animation-fill-mode: backwards !important; }
+
+/* The route picker on the deep-blue route card is near-white glass: its text stays navy in both themes. */
+html .route-card .route-pick, html .route-card .route-pick select { color: #142548 !important; }
+html .route-card .route-pick .icon { color: #1C315E !important; }
+html .route-card .route-pick select option { color: #141414; background: #fff; }
+
+/* ---- Landing: "Sign in or register" is the university crimson ------------------------------ */
+html .land-cta .btn.dark, html .land-cta .btn.primary {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0)), #A02022 !important;
+  color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 12px 26px rgba(160, 32, 34, 0.38) !important;
+}
+html .land-cta .btn.dark:hover, html .land-cta .btn.primary:hover { background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0)), #7D1618 !important; }
+html .land-cta .btn.dark .icon { color: #FFFFFF !important; }
+
+/* ---- Profile menu: each setting is one aligned row; a long switch drops under its label ----- */
+.profile-language { flex-wrap: wrap; row-gap: 8px; padding: 8px 10px !important; }
+.profile-language > span:first-child { flex: 1 1 auto; min-width: 0; white-space: nowrap; }
+.profile-switch { flex: 0 0 auto; margin-left: auto; max-width: 100%; }
+.profile-switch button { white-space: nowrap; flex: 1 1 auto; text-align: center; line-height: 1.2; }
+.profile-item { align-items: center; text-align: left; line-height: 1.3; }
+.profile-item svg { flex-shrink: 0; }
+
+/* ---- Menus over the page: nearly solid glass, so the cards beneath never show through.
+   (A blur inside the bar can only see the bar, not the page.) ----------------------------- */
+html .profile-menu, html .nav-more-menu, html .app .topbar .nav-more-menu, html .dropdown-menu {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.2)), rgba(255, 255, 255, 0.97) !important;
+}
+html[data-theme='dark'] .profile-menu, html[data-theme='dark'] .nav-more-menu, html[data-theme='dark'] .app .topbar .nav-more-menu, html[data-theme='dark'] .dropdown-menu {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0)), rgba(22, 33, 56, 0.98) !important;
+}
+html .profile-menu .profile-item, html .profile-menu > div:not(.profile-head) { background: transparent !important; box-shadow: none !important; border: 0 !important; }
+
+/* ---- Tamil: the tags drawn by CSS, and headings sized for the longer words --------------- */
+html[lang='ta'] .runs li.next span::after { content: 'அடுத்து' !important; }
+html[lang='ta'] .land-copy h1 { font-size: clamp(30px, 4.2vw, 56px) !important; line-height: 1.22 !important; letter-spacing: 0 !important; }
+html[lang='ta'] .page > .page-head h1, html[lang='ta'] .app-greet h1, html[lang='ta'] .app-title h1, html[lang='ta'] .sch-head h1 { font-size: 26px !important; line-height: 34px !important; letter-spacing: 0 !important; }
+html[lang='ta'] .stat span, html[lang='ta'] .glance-label, html[lang='ta'] .kit-view-text small { letter-spacing: 0 !important; }
+html[lang='ta'] .btn { letter-spacing: 0 !important; }
+
+/* ---- The signed-in account chip: quiet frosted glass that belongs to the bar ---------------- */
+html .app .topbar .profile-btn, html[data-theme='dark'] .app .topbar .profile-btn {
+  gap: 10px !important; padding: 4px 12px 4px 4px !important; min-height: 46px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.52)) !important;
+  border: 1px solid rgba(201, 162, 63, 0.55) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 3px rgba(247, 188, 49, 0.08), 0 1px 3px rgba(20, 37, 72, 0.06) !important;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+html .app .topbar .profile-btn:hover, html .app .topbar .profile.is-open .profile-btn,
+html[data-theme='dark'] .app .topbar .profile-btn:hover, html[data-theme='dark'] .app .topbar .profile.is-open .profile-btn {
+  background: linear-gradient(180deg, #FFFFFF, rgba(255, 255, 255, 0.82)) !important;
+  border-color: rgba(201, 162, 63, 0.85) !important;
+  box-shadow: inset 0 1px 0 #FFFFFF, 0 0 0 3px rgba(247, 188, 49, 0.14), 0 4px 14px rgba(20, 37, 72, 0.10) !important;
+  transform: none !important;
+}
+html .app .topbar .profile-btn:focus-visible { outline: 2px solid rgba(201, 162, 63, 0.8) !important; outline-offset: 2px; }
+html .app .topbar .profile-btn .avatar, html .app .topbar .profile-btn .profile-pic {
+  background: #1C315E !important; color: #FFFFFF !important; font-weight: 600 !important;
+  border: 1.5px solid rgba(201, 162, 63, 0.85) !important; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9) !important;
+}
+html .app .topbar .profile-btn .user-meta { gap: 1px; }
+html .app .topbar .profile-btn .user-meta b { color: #1C315E !important; font-size: 13.5px !important; font-weight: 600 !important; max-width: 150px !important; letter-spacing: 0 !important; }
+html .app .topbar .profile-btn .user-meta small { color: #6B7280 !important; font-size: 11.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; }
+html .app .topbar .profile-btn .profile-chevron { color: #8A93A6 !important; transition: transform 0.2s ease, color 0.2s ease; }
+html .app .topbar .profile-btn:hover .profile-chevron { color: #1C315E !important; }
+html .app .topbar .profile.is-open .profile-btn .profile-chevron { transform: rotate(180deg); }
+html .app .topbar .user-chip { border-left-color: rgba(28, 49, 94, 0.10) !important; }
+
+/* ---- Next-bus rows (home card and the landing mockup): name, "Next" tag and time on one line --- */
+html .runs li { display: flex !important; align-items: center !important; justify-content: space-between; gap: 10px !important; }
+html .runs li span {
+  display: inline-flex !important; align-items: center; gap: 6px; min-width: 0; flex: 1 1 auto;
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+}
+html .runs li.next span::after { margin-left: 0 !important; flex-shrink: 0; display: inline-flex !important; align-items: center; line-height: 1.4; }
+html .runs li b { flex-shrink: 0; white-space: nowrap; text-align: right; }
+/* The mockup is a small screen: tighter type so a row never wraps. */
+html .phone .runs li span { font-size: 12.5px !important; }
+html .phone .runs li b { font-size: 17px !important; }
+html .phone .runs li.next span::after { font-size: 10.5px !important; padding: 1px 7px !important; }
+/* The route picker inside the cards is near-white: its words stay navy in both themes. */
+html .route-card .route-pick .pick-text b, html .route-card .route-pick b { color: #142548 !important; }
+html .route-card .route-pick .pick-text small, html .route-card .route-pick small { color: #5D6B80 !important; }
+html .route-card .route-pick .icon { color: #1C315E !important; }
+/* The live line: the pulsing dot keeps clear of its words. */
+html .route-live { display: flex !important; align-items: center; gap: 10px !important; padding: 8px 12px !important; }
+html .route-live .pulse { flex-shrink: 0; margin: 0 2px 0 4px; }
+
+/* The next run is marked by a gold dot and a gold time, not a tag that crowds the row. */
+html .runs li.next span::after { display: none !important; }
+html .runs li.next span::before {
+  content: ''; flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%;
+  background: #F7BC31; box-shadow: 0 0 0 3px rgba(247, 188, 49, 0.22);
+}
+html .runs li.next b { color: #F9D27A !important; }
+html .runs li.next span { color: #FFFFFF !important; font-weight: 600; }
+/* The live line in the small mockup stays on one row. */
+html .phone .route-live { font-size: 11.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html .phone .feed b { font-size: 12.5px !important; }
+
+html .runs li.next span { padding-left: 4px; }

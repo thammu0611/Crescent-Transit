@@ -4,7 +4,7 @@ import { Platform, Pressable, ScrollView, Share, TextInput, useWindowDimensions,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '../components/Icon.js';
 import { BusPin, CampusPin, MapBox, RouteLayer } from '../components/maps';
-import { Badge, Button, ErrorText, Select, Skeleton, Text, Txt, useTabBarSpace } from '../components/ui.js';
+import { Badge, Button, ErrorText, Frost, Select, Skeleton, Text, Txt, useTabBarSpace } from '../components/ui.js';
 import { api, getSocket } from '../lib/api.js';
 import { etaText, OCCUPANCY } from '../lib/format.js';
 import { useNow } from '../lib/hooks.js';
@@ -261,7 +261,8 @@ export default function LiveMap({ navigation, route: screen }) {
       {!loading ? <MapButton icon="locate" label="Centre on the bus" size={48} color={C.navy} onPress={recentre} style={{ position: 'absolute', right: 20, top: mapH - 40 - 64 }} /> : null}
 
       {/* The sheet. */}
-      <View style={{ position: 'absolute', left: 0, right: 0, top: mapH - 40, bottom: 0, backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: C.line2, ...shadowLg, shadowOffset: { width: 0, height: -8 } }}>
+      <View style={{ position: 'absolute', left: 0, right: 0, top: mapH - 40, bottom: 0, backgroundColor: C.glassStrong, overflow: 'hidden', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: C.line2, ...shadowLg, shadowOffset: { width: 0, height: -8 } }}>
+        <Frost intensity={70} />
         <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: C.line, marginTop: 10 }} />
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 24 + tabSpace, gap: 14 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <ErrorText>{error}</ErrorText>

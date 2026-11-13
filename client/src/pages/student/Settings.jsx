@@ -6,7 +6,7 @@ import { refreshPlan } from '../../lib/sampler.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import { Badge, ErrorText, Field, Notice, Page, Segmented } from '../../components/ui.jsx';
-import { ViewCard } from '../../components/adminkit.jsx';
+import { ViewCard, ViewList } from '../../components/adminkit.jsx';
 import YourData from '../../components/YourData.jsx';
 
 /**
@@ -161,8 +161,8 @@ export default function Settings() {
       <Notice>{message}</Notice>
       <ErrorText>{error}</ErrorText>
 
-      <div className="settings-grid">
-        {/* Each settings group shows its current state, and opens in its own view. */}
+      {/* Each settings group is one row of a list: its current state, and it opens in its own view. */}
+      <ViewList label="Settings">
         <ViewCard
           icon="route"
           title="Travel"
@@ -277,10 +277,10 @@ export default function Settings() {
         </ViewCard>
 
         <BusFee />
-      </div>
+      </ViewList>
 
       <h2 className="kit-section-title settings-more-title">More</h2>
-      <div className="settings-more">
+      <ViewList label="More">
         <ViewCard icon="lock" title="Account and security" summary={`@${user.username}${user.registerNo ? ` · ${user.registerNo}` : ''}`}>
           <dl className="settings-kv">
             <dt>Username</dt><dd>@{user.username}</dd>
@@ -321,7 +321,7 @@ export default function Settings() {
             <dt>Access</dt><dd>{entitlement?.required ? <a href="#/pay">Monthly subscription</a> : 'Included for every student'}</dd>
           </dl>
         </ViewCard>
-      </div>
+      </ViewList>
       {changingPassword && <ChangePassword onClose={() => setChangingPassword(false)} />}
     </Page>
   );

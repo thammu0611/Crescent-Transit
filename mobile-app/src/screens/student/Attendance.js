@@ -23,7 +23,7 @@ import { C, F, R, shadow } from '../../theme.js';
 
 const QUEUE_KEY = 'ubts.qrQueue';
 const TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISIONAL: 'delayed', PROMPTED: 'delayed', DISPUTED: 'delayed', ADJUSTED: 'offline', REJECTED: 'offline', VOID: 'offline' };
-const HERO = C.dark ? ['#1A2740', '#161D27'] : ['#EAF1FF', '#FFFFFF'];
+const HERO = C.dark ? ['#1F3157', '#18233A'] : ['#EEF1F6', '#FFFFFF'];
 const busName = (fleet) => String(fleet ?? '').replace('BSACIST-', 'Bus ');
 const tripName = (dir) => (dir === 'DOWN' ? 'Evening trip' : 'Morning trip');
 const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
@@ -113,7 +113,7 @@ function ScanViewport({ onScan, error, onRetry }) {
     return () => loop.stop();
   }, [line]);
   useEffect(() => { if (!error) done.current = false; }, [error]);
-  const bracket = error ? '#F87171' : '#4F8CFF';
+  const bracket = error ? '#F87171' : '#F7BC31';
   const B = { position: 'absolute', width: 30, height: 30, borderColor: bracket };
   const live = permission?.granted && Platform.OS !== 'web';
   return (
@@ -137,7 +137,7 @@ function ScanViewport({ onScan, error, onRetry }) {
           <View style={[B, { left: 0, bottom: 0, borderLeftWidth: 4, borderBottomWidth: 4, borderBottomLeftRadius: 14 }]} />
           <View style={[B, { right: 0, bottom: 0, borderRightWidth: 4, borderBottomWidth: 4, borderBottomRightRadius: 14 }]} />
           {!error && (live || !permission || Platform.OS === 'web') ? (
-            <Animated.View style={{ position: 'absolute', left: 8, right: 8, top: 4, height: 2, backgroundColor: '#4F8CFF', shadowColor: '#4F8CFF', shadowOpacity: 1, shadowRadius: 6, transform: [{ translateY: line.interpolate({ inputRange: [0, 1], outputRange: [0, 100] }) }] }} />
+            <Animated.View style={{ position: 'absolute', left: 8, right: 8, top: 4, height: 2, backgroundColor: '#F7BC31', shadowColor: '#F7BC31', shadowOpacity: 1, shadowRadius: 6, transform: [{ translateY: line.interpolate({ inputRange: [0, 1], outputRange: [0, 100] }) }] }} />
           ) : null}
         </View>
       </View>
@@ -470,7 +470,7 @@ export default function StudentAttendance({ navigation }) {
           const fg = sel ? C.ink : C.muted;
           return (
             <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: sel }} onPress={() => { setMethod(k); setError(null); }}
-              style={{ flex: 1, height: 44, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: sel ? (C.dark ? '#2A3546' : C.card) : 'transparent', ...(sel ? shadow : null) }}>
+              style={{ flex: 1, height: 44, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: sel ? (C.dark ? '#2B3A5C' : C.card) : 'transparent', ...(sel ? shadow : null) }}>
               <Icon name={icon} size={16} color={fg} />
               <Text style={{ fontSize: 13.5, ...F[600], color: fg }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
             </Pressable>
@@ -483,7 +483,7 @@ export default function StudentAttendance({ navigation }) {
         <>
           <ScanViewport error={scanError} onRetry={() => setScanError(null)} onScan={(payload) => checkIn({ payload })} />
           <Pressable accessibilityRole="button" onPress={() => setMethod('code')}
-            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1, borderColor: C.line }, pressed && { opacity: 0.8 }]}>
+            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card }, pressed && { opacity: 0.8 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
               <Icon name="keypad" size={18} color={C.muted} />
               <Text style={{ fontSize: 15, ...F[600], color: C.ink, flexShrink: 1 }}>No camera? Enter the 6-digit code</Text>

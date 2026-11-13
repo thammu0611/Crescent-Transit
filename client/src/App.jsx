@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import BrandMark from './components/BrandMark.jsx';
+import PageTranslator from './components/PageTranslator.jsx';
 import RouteBackdrop from './components/RouteBackdrop.jsx';
 import AttendancePrompt from './components/AttendancePrompt.jsx';
 import BoardingCheck from './components/BoardingCheck.jsx';
@@ -177,6 +178,7 @@ function Shell() {
     <div className={`app${scrolled ? ' scrolled' : ''}`}>
       <a className="skip-link" href="#main-content" onClick={(e) => { e.preventDefault(); document.getElementById('main-content')?.focus(); }}>Skip to content</a>
       <RouteBackdrop />
+      <PageTranslator />
       {/* Contact strip and the floating navigation pill. */}
       <div className="masthead">
         <div className="utility-bar">
@@ -193,7 +195,7 @@ function Shell() {
         <header className="topbar">
           <a className="brand" href="#/" aria-label="Crescent Transit - home">
             <BrandMark size={50} />
-            <span className="brand-text">
+            <span className="brand-text" data-no-translate="">
               <strong>Crescent</strong>
               <span className="brand-sub">Transit</span>
               <small>B.S. Abdur Rahman Crescent Institute · Bus Tracker</small>

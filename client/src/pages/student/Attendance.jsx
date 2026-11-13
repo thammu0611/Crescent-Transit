@@ -7,7 +7,7 @@ import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
 import { Badge, DirectionBadge, Empty, ErrorText, Field, Modal, Notice, Page, Panel, Table } from '../../components/ui.jsx';
-import { Chips, ViewCard } from '../../components/adminkit.jsx';
+import { Chips, ViewCard, ViewList } from '../../components/adminkit.jsx';
 import RateTrip from '../../components/RateTrip.jsx';
 import { useT } from '../../lib/i18n.js';
 
@@ -264,8 +264,10 @@ export default function StudentAttendance() {
     <Page eyebrow="Student" title={t('Attendance')}>
       <div className="cols">
         <div className="col">
-          <SamplingStatus token={token} user={user} />
-          <CheckIn token={token} user={user} onDone={record.reload} />
+          <ViewList label="Ways to check in">
+            <SamplingStatus token={token} user={user} />
+            <CheckIn token={token} user={user} onDone={record.reload} />
+          </ViewList>
         </div>
         <div className="col wide">
           <Panel

@@ -915,7 +915,7 @@ export default function DriverApp() {
       <View style={{ position: 'absolute', left: 20, right: 20, bottom: 16 + insets.bottom }}>
         <Pressable accessibilityRole="button" accessibilityLabel="SOS. Press and hold to send an emergency alert" accessibilityHint="Opens a confirmation that sends in 5 seconds"
           delayLongPress={800} onLongPress={() => { Vibration.vibrate(60); setSos(true); }} onPress={() => setNotice('Press and hold the SOS button to send an emergency alert.')}
-          style={({ pressed }) => [{ minHeight: 60, borderRadius: 16, backgroundColor: C.dark ? '#DC2626' : '#DC2626', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, ...shadow }, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}>
+          style={({ pressed }) => [{ minHeight: 60, borderRadius: 16, backgroundColor: C.dark ? '#A02022' : '#A02022', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, ...shadow }, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}>
           <Icon name="siren" size={22} color="#fff" />
           <Text style={{ color: '#fff', fontSize: 17, ...F[700] }}>SOS · press and hold</Text>
         </Pressable>

@@ -93,7 +93,7 @@ export default function Schedule({ navigation }) {
   const evening = moved(r?.evening_departure, special?.evening_shift);
   const nextSeq = isToday && !bus ? stops.find((s) => (parseTime(s.scheduled_time) ?? -1) >= nowMinutes())?.seq : null;
 
-  const segOn = C.dark ? '#2A3546' : C.card;
+  const segOn = C.dark ? '#2B3A5C' : C.card;
   const DirTab = ({ k, label }) => {
     const on = dir === k;
     return (

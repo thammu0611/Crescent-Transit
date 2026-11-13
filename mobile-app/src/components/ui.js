@@ -8,12 +8,12 @@ import { useIsFocused } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { createContext, forwardRef, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, forwardRef, memo, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo, ActivityIndicator, Alert, Animated, Easing, Keyboard, KeyboardAvoidingView, LayoutAnimation, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text as RNText, TextInput, useWindowDimensions, View, Image,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Defs, G as SvgG, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { monthName, shiftMonth, thisMonth } from '../lib/format.js';
 import { tickPress, tickSelect } from '../lib/haptics.js';
 import { useT } from '../lib/offline.js';
@@ -60,15 +60,67 @@ function useAndroidKeyboard() {
   return height;
 }
 
+// The backdrop's colours: the same quiet transit map as the web app (redesign.css --bgx-*).
+const BG = C.dark
+  ? { glowA: '#3C5AA0', glowAo: 0.22, glowB: '#F7BC31', glowBo: 0.07, casing: 'rgba(13,21,36,0.7)', line: 'rgba(150,175,235,0.20)', soft: 'rgba(150,175,235,0.11)', stopFill: '#0D1524', stop: 'rgba(150,175,235,0.45)', halo: 'rgba(150,175,235,0.08)', mine: '#F7BC31', campus: '#6FD487', bus: '#F7BC31' }
+  : { glowA: '#1C315E', glowAo: 0.10, glowB: '#F7BC31', glowBo: 0.10, casing: 'rgba(255,255,255,0.75)', line: 'rgba(28,49,94,0.16)', soft: 'rgba(28,49,94,0.09)', stopFill: '#FFFFFF', stop: 'rgba(28,49,94,0.35)', halo: 'rgba(28,49,94,0.06)', mine: '#F7BC31', campus: '#237A36', bus: '#1C315E' };
+const BG_ROUTES = [
+  { d: 'M-30 150 C 60 110, 130 220, 220 190 S 330 110, 420 170', tone: 'main' },
+  { d: 'M-30 560 C 70 510, 150 630, 240 580 S 350 480, 420 540', tone: 'dashed' },
+  { d: 'M300 -30 C 330 160, 250 300, 310 460 S 370 700, 320 880', tone: 'soft' },
+];
+// [x, y, kind]: plain stops, the amber "your stop" and the green campus.
+const BG_STOPS = [[62, 131], [220, 190, 'mine'], [352, 136, 'campus'], [96, 548], [240, 580], [348, 512], [286, 300], [311, 468]];
+// [x, y, degrees]: two small buses parked on their routes.
+const BG_BUSES = [[132, 187, 18], [168, 600, -8]];
+
 /**
- * The page ground behind every screen: one flat colour (redesign: calm, no
- * decoration). Kept as a component so headers and screens still line up.
+ * The page ground behind every screen: the app's colour with a quiet transit
+ * map - two soft glows, a few bus routes with their stops (one
+ * amber "your stop", one green campus) and two small buses. Cards are solid,
+ * so it only shows in the gaps. It is still: nothing here animates.
  */
-export function GlassBackdrop({ offset = 0, top = -offset }) {
+export const GlassBackdrop = memo(function GlassBackdrop({ offset = 0, top = -offset }) {
   const { height } = useWindowDimensions();
   const tall = Math.max(height, 640) + offset;
-  return <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top, height: tall, backgroundColor: C.bg }} />;
-}
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top, height: tall, backgroundColor: C.bg, overflow: 'hidden' }}>
+      <Svg width="100%" height="100%" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice">
+        <Defs>
+          <RadialGradient id="ctBgA" cx="0%" cy="0%" r="75%">
+            <Stop offset="0" stopColor={BG.glowA} stopOpacity={BG.glowAo} />
+            <Stop offset="1" stopColor={BG.glowA} stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient id="ctBgB" cx="100%" cy="100%" r="70%">
+            <Stop offset="0" stopColor={BG.glowB} stopOpacity={BG.glowBo} />
+            <Stop offset="1" stopColor={BG.glowB} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect x={0} y={0} width={390} height={844} fill="url(#ctBgA)" />
+        <Rect x={0} y={0} width={390} height={844} fill="url(#ctBgB)" />
+        {BG_ROUTES.map((r) => (
+          <SvgG key={r.d}>
+            <Path d={r.d} stroke={BG.casing} strokeWidth={8} fill="none" strokeLinecap="round" />
+            <Path d={r.d} stroke={r.tone === 'soft' ? BG.soft : BG.line} strokeWidth={r.tone === 'dashed' ? 3 : 2.5} strokeDasharray={r.tone === 'dashed' ? '2 10' : undefined} fill="none" strokeLinecap="round" />
+          </SvgG>
+        ))}
+        {BG_STOPS.map(([x, y, kind]) => (
+          <SvgG key={`${x},${y}`}>
+            <Circle cx={x} cy={y} r={kind ? 11 : 8} fill={kind === 'mine' ? BG.mine : kind === 'campus' ? BG.campus : BG.halo} opacity={kind ? 0.16 : 1} />
+            <Circle cx={x} cy={y} r={kind ? 5 : 4} fill={kind === 'mine' ? BG.mine : kind === 'campus' ? BG.campus : BG.stopFill} stroke={kind ? BG.stopFill : BG.stop} strokeWidth={2} />
+          </SvgG>
+        ))}
+        {BG_BUSES.map(([x, y, deg]) => (
+          <SvgG key={`${x},${y}`} transform={`translate(${x} ${y}) rotate(${deg})`} opacity={0.5}>
+            <Rect x={-13} y={-7} width={26} height={14} rx={4.5} fill={BG.bus} />
+            <Rect x={5} y={-5} width={5} height={10} rx={2} fill="rgba(255,255,255,0.9)" />
+            <Rect x={-10} y={-4.5} width={12} height={9} rx={2} fill="rgba(255,255,255,0.32)" />
+          </SvgG>
+        ))}
+      </Svg>
+    </View>
+  );
+});
 
 /** Real frosted glass behind a surface (header, tab bar, sheets). */
 export function Frost({ tint = C.dark ? 'dark' : 'light', intensity = 50, style }) {
@@ -178,7 +230,7 @@ export function LivePulse({ color = '#61ce70', size = 10 }) {
 
 /** A deep-blue (dark: elevated) gradient surface for hero cards and banners. */
 // Dark mode: banners and gradient cards take the same mild dark glass as every other card.
-const DARK_CARD = ['#1A2740', '#161D27'];
+const DARK_CARD = ['#1F3157', '#18233A'];
 
 export function GradientCard({ colors = G.navy, style, children, orbs = true, radius = R.xl, animate = true }) {
   const card = (
@@ -316,6 +368,7 @@ export function PillHeader({ navigation, route, options, back }) {
   // buttons when it has them) on a transparent strip, so the background runs to the top.
   return (
     <View onLayout={(e) => setH(e.nativeEvent.layout.height)} style={{ overflow: 'hidden', backgroundColor: C.bg, paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 6, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: insets.top + 56 }}>
+      <GlassBackdrop offset={h} top={0} />
       {back ? <PillIconButton icon="back" label="Back" onPress={navigation.goBack} /> : null}
       <Text style={s.plainTitle} numberOfLines={1} accessibilityRole="header">{title}</Text>
       {right ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{right}</View> : null}
@@ -974,7 +1027,7 @@ export const s = StyleSheet.create({
   orbGold: { position: 'absolute', backgroundColor: 'rgba(247, 188, 49,0.10)' },
   heroSheen: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 1, backgroundColor: HAIRLINE.gold },
   headerBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
-  headerBadge: { position: 'absolute', top: -3, right: -3, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: '#DC2626', borderWidth: 2, borderColor: C.dark ? C.bg : '#fff', alignItems: 'center', justifyContent: 'center' },
+  headerBadge: { position: 'absolute', top: -3, right: -3, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, backgroundColor: '#B5282A', borderWidth: 2, borderColor: C.dark ? C.bg : '#fff', alignItems: 'center', justifyContent: 'center' },
   headerBadgeText: { color: '#fff', fontSize: 10.5, ...F[700] },
   h2: { fontSize: 20, lineHeight: 26, ...F.display, color: C.ink },
   h3: { fontSize: 16, ...F[600], color: C.ink, flexShrink: 1, lineHeight: 22 },
@@ -1012,11 +1065,11 @@ export const s = StyleSheet.create({
   optionCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.navyFill, alignItems: 'center', justifyContent: 'center' },
   segmented: { backgroundColor: C.raised, borderWidth: 1, borderColor: C.line2, borderRadius: R.md, padding: 4, gap: 4 },
   seg: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, minHeight: 40, justifyContent: 'center' },
-  segOn: { backgroundColor: C.dark ? '#2A3546' : C.card, ...shadow, shadowOpacity: C.dark ? 0.4 : 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
+  segOn: { backgroundColor: C.dark ? '#2B3A5C' : C.card, ...shadow, shadowOpacity: C.dark ? 0.4 : 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
   segText: { fontSize: 13.5, ...F[600], color: C.muted },
   segTextOn: { color: C.ink, ...F[700] },
   backdrop: { flex: 1, backgroundColor: C.dark ? 'rgba(5,8,12,0.72)' : 'rgba(15,23,42,0.45)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: C.dark ? C.surface : C.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: C.glassEdge, padding: 20, paddingTop: 10, maxHeight: '90%', gap: 14, overflow: 'hidden' },
+  sheet: { backgroundColor: C.dark ? 'rgba(18,28,48,0.80)' : 'rgba(241,241,241,0.80)', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: C.glassEdge, padding: 20, paddingTop: 10, maxHeight: '90%', gap: 14, overflow: 'hidden' },
   grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: C.line, marginBottom: 8 },
   closeBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.raised, borderWidth: 1, borderColor: C.glassEdge, alignItems: 'center', justifyContent: 'center' },
   item: { ...glass, borderRadius: 16, padding: 16, overflow: 'hidden', shadowOpacity: 0 },

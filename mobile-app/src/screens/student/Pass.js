@@ -24,7 +24,7 @@ const STATUS = {
 
 const Fact = ({ k, v }) => (
   <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-    <Text style={{ color: '#A9BCE6', fontSize: 12, ...F[500] }}>{k}</Text>
+    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, ...F[500] }}>{k}</Text>
     <Text style={{ color: '#fff', ...F[700], fontSize: 14 }} numberOfLines={3}>{v}</Text>
   </View>
 );
@@ -124,14 +124,14 @@ export default function BusPass({ navigation }) {
         </>
       ) : (
         <>
-          <LinearGradient colors={['#1E3A8A', '#172554', '#0B1220']} locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 24, padding: 20, gap: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)' }}>
+          <LinearGradient colors={['#2A4787', '#1C315E', '#142548']} locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 24, padding: 20, gap: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="bus" size={18} color="#FBBF24" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: '#fff', fontSize: 15, lineHeight: 19, ...F.display }}>Crescent Transit</Text>
-                <Text style={{ color: '#BFD0F4', fontSize: 12 }}>{t('Student bus pass')}</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 12 }}>{t('Student bus pass')}</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 28, borderRadius: 14, backgroundColor: tone === 'live' ? 'rgba(34,197,94,0.16)' : 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: tone === 'live' ? 'rgba(74,222,128,0.45)' : 'rgba(255,255,255,0.2)' }}>
                 <Icon name={tone === 'live' ? 'tick' : tone === 'danger' ? 'alert' : 'clock'} size={13} color={tone === 'live' ? '#4ADE80' : tone === 'danger' ? '#FCA5A5' : '#FBBF24'} strokeWidth={2.6} />
@@ -140,15 +140,15 @@ export default function BusPass({ navigation }) {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               {pass.photo
-                ? <Image source={{ uri: pass.photo }} style={{ width: 68, height: 68, borderRadius: 18, borderWidth: 2, borderColor: 'rgba(147,180,255,0.6)' }} />
+                ? <Image source={{ uri: pass.photo }} style={{ width: 68, height: 68, borderRadius: 18, borderWidth: 2, borderColor: 'rgba(247,188,49,0.75)' }} />
                 : (
-                  <LinearGradient colors={['#3B82F6', '#1D4ED8']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 68, height: 68, borderRadius: 18, borderWidth: 2, borderColor: 'rgba(147,180,255,0.6)', alignItems: 'center', justifyContent: 'center' }}>
+                  <LinearGradient colors={['#3C5BA3', '#1C315E']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 68, height: 68, borderRadius: 18, borderWidth: 2, borderColor: 'rgba(247,188,49,0.75)', alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: '#fff', fontSize: 22, ...F.displayBold }}>{initials(pass.name)}</Text>
                   </LinearGradient>
                 )}
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ color: '#fff', fontSize: 21, lineHeight: 26, ...F.displayBold }} numberOfLines={2}>{pass.name}</Text>
-                <Text style={{ color: '#9DBBFF', fontSize: 13.5, ...F[500] }}>{[pass.registerNo, pass.department].filter(Boolean).join(' · ') || 'Student'}</Text>
+                <Text style={{ color: '#F9D27A', fontSize: 13.5, ...F[500] }}>{[pass.registerNo, pass.department].filter(Boolean).join(' · ') || 'Student'}</Text>
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.14)' }}>
@@ -164,7 +164,7 @@ export default function BusPass({ navigation }) {
             </View>
             <View style={{ alignSelf: 'stretch', gap: 8 }}>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: '#E2E8F0', overflow: 'hidden' }}>
-                <View style={{ height: '100%', width: `${offline ? 0 : (left / 90) * 100}%`, backgroundColor: '#2563EB', borderRadius: 3 }} />
+                <View style={{ height: '100%', width: `${offline ? 0 : (left / 90) * 100}%`, backgroundColor: '#1C315E', borderRadius: 3 }} />
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={{ color: '#0F172A', ...F[600], fontSize: 13, fontVariant: ['tabular-nums'] }}>{offline ? 'Offline copy' : `${t('New code in')} ${left} s`}</Text>

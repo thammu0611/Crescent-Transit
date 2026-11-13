@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tickSelect } from '../lib/haptics.js';
 import { C, F } from '../theme.js';
 import Icon from './Icon.js';
+import { Frost } from './ui.js';
 
 const PAD = 8;
 const ICON_ON = C.navy;
@@ -99,6 +100,7 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
       style={[s.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}
       onLayout={(e) => reportHeight?.(e.nativeEvent.layout.height)}
     >
+      <Frost intensity={60} />
       {state.routes.map((route, i) => {
         const { options } = descriptors[route.key];
         const focused = state.index === i;
@@ -132,8 +134,8 @@ const s = StyleSheet.create({
   bar: {
     position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 8, paddingHorizontal: PAD,
     flexDirection: 'row',
-    backgroundColor: C.dark ? 'rgba(18,24,33,0.97)' : 'rgba(255,255,255,0.97)',
-    borderTopWidth: 1, borderTopColor: C.line2,
+    backgroundColor: C.dark ? 'rgba(18,28,48,0.72)' : 'rgba(255,255,255,0.70)',
+    borderTopWidth: 1, borderTopColor: C.glassEdge, overflow: 'hidden',
   },
   tab: { flex: 1, minWidth: 0, minHeight: 52, paddingHorizontal: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 4 },
   pill: { width: 56, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
@@ -142,7 +144,7 @@ const s = StyleSheet.create({
   labelOn: { color: ICON_ON, ...F.navBold },
   labelOff: { color: ICON_OFF },
   badgeAt: { position: 'absolute', top: -4, right: 6 },
-  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#DC2626', borderWidth: 1.5, borderColor: C.dark ? '#121821' : '#fff' },
-  count: { minWidth: 20, height: 18, paddingHorizontal: 5, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: '#DC2626', borderWidth: 1.5, borderColor: C.dark ? '#121821' : '#fff' },
+  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#B5282A', borderWidth: 1.5, borderColor: C.dark ? '#121C30' : '#fff' },
+  count: { minWidth: 20, height: 18, paddingHorizontal: 5, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: '#B5282A', borderWidth: 1.5, borderColor: C.dark ? '#121C30' : '#fff' },
   countText: { color: '#fff', fontSize: 10.5, ...F[700] },
 });

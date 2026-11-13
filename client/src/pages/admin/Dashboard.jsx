@@ -7,7 +7,7 @@ import { useAsync } from '../../lib/useAsync.js';
 import { useLive } from '../../lib/useLive.js';
 import Icon from '../../components/Icon.jsx';
 import RouteMiniMap from '../../components/RouteMiniMap.jsx';
-import { Block, ColumnChart, Donut, Figure, HBars, SERIES, ViewCard, dayLabel } from '../../components/adminkit.jsx';
+import { Block, ColumnChart, Donut, Figure, HBars, SERIES, ViewCard, ViewList, dayLabel } from '../../components/adminkit.jsx';
 import { Badge, Empty, ListCard, SearchBox, Segmented, Stat } from '../../components/ui.jsx';
 
 // The four shortcuts, each in its own colour from the site's palette.
@@ -174,7 +174,7 @@ export default function Dashboard() {
           <Stat icon="route" label="Active routes" value={tot.routes} />
         </div>
 
-        <div className="kit-grid-2 top">
+        <ViewList label="Live operations">
           <ViewCard
             icon="bus"
             title="Trips running now"
@@ -223,7 +223,7 @@ export default function Dashboard() {
               </div>
             )}
           </ViewCard>
-        </div>
+        </ViewList>
       </div>
     </main>
   );

@@ -8,7 +8,7 @@ import { useServerInfo } from '../lib/serverInfo.js';
 import { useSession } from '../lib/session.jsx';
 import Icon from '../components/Icon.jsx';
 import { Badge, ErrorText, Modal, Notice, SearchBox } from '../components/ui.jsx';
-import { ViewCard } from '../components/adminkit.jsx';
+import { ViewCard, ViewList } from '../components/adminkit.jsx';
 import { FoundItem, FuelEntry, PassScanner, PreTripCheck } from '../components/DriverTools.jsx';
 import DayBanner from '../components/DayBanner.jsx';
 import { useT } from '../lib/i18n.js';
@@ -629,13 +629,14 @@ export default function DriverApp() {
             <BoardingCode token={token} />
           </div>
         )}
-        <PreTripCheck token={token} />
-        <PassScanner token={token} tripRunning={Boolean(trip)} />
-        <StudentList token={token} tripId={trip?.id ?? null} />
-        {trip && <BoardedList token={token} tripId={trip.id} />}
-
-        <FuelEntry token={token} />
-        <FoundItem token={token} />
+        <ViewList label="Driver tools">
+          <PreTripCheck token={token} />
+          <PassScanner token={token} tripRunning={Boolean(trip)} />
+          <StudentList token={token} tripId={trip?.id ?? null} />
+          {trip && <BoardedList token={token} tripId={trip.id} />}
+          <FuelEntry token={token} />
+          <FoundItem token={token} />
+        </ViewList>
         <ProblemTiles token={token} disabled={!trip} />
 
         {demo && trip && (

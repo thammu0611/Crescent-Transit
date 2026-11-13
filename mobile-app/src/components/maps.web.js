@@ -11,8 +11,8 @@ export const CAMPUS = { lat: 12.8737, lng: 80.0823 };
 export const ll = (p) => ({ latitude: p.lat, longitude: p.lng });
 
 const PAL = C.dark
-  ? { land: '#0E141C', block: '#121A24', park: '#10231B', water: '#0B2131', casing: '#0A0F15', road: '#243040', minor: '#18212D', route: '#4F8CFF', traveled: '#64748B', stop: '#0E141C', campus: '#16A34A', bus: '#2563EB' }
-  : { land: '#EEF2F6', block: '#E4E9EF', park: '#D7ECD9', water: '#CBE1F4', casing: '#D3DAE3', road: '#FFFFFF', minor: '#F8FAFC', route: '#2563EB', traveled: '#94A3B8', stop: '#FFFFFF', campus: '#15803D', bus: '#1D4ED8' };
+  ? { land: '#0E141C', block: '#121A24', park: '#10231B', water: '#0B2131', casing: '#0A0F15', road: '#243040', minor: '#18212D', route: '#8FA8E0', traveled: '#64748B', stop: '#0E141C', campus: '#16A34A', bus: '#2F4E96' }
+  : { land: '#EEF2F6', block: '#E4E9EF', park: '#D7ECD9', water: '#CBE1F4', casing: '#D3DAE3', road: '#FFFFFF', minor: '#F8FAFC', route: '#1C315E', traveled: '#94A3B8', stop: '#FFFFFF', campus: '#15803D', bus: '#1C315E' };
 
 export const MapBox = forwardRef(function MapBox({ style }, ref) {
   useImperativeHandle(ref, () => ({ fit: () => {}, focus: () => {} }));

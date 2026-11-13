@@ -1,3 +1,4 @@
+import { TA_MORE, translateLine } from './i18n-ta.js';
 // Tamil for the screens students and parents use every day. The English text is
 // the key: anything not listed here simply stays in English.
 const TA = {
@@ -213,7 +214,7 @@ const TA = {
   'Student bus pass': 'மாணவர் பேருந்து அனுமதிச்சீட்டு',
   'Boost brightness': 'ஒளிர்வை அதிகரி',
   'Brightness boosted': 'ஒளிர்வு அதிகரிக்கப்பட்டது',
-  System: 'சாதனம் போல்',
+  System: 'சாதனம்',
   Light: 'ஒளி',
   Dark: 'இருள்',
   'Last 7 days': 'கடந்த 7 நாட்கள்',
@@ -291,10 +292,15 @@ const TA = {
   'Recent alerts': 'சமீபத்திய அறிவிப்புகள்',
 };
 
-const TEXT = { ta: TA };
+// The office, driver and setup screens' Tamil lives in i18n-ta.js; entries here win.
+const TEXT = { ta: { ...TA_MORE, ...TA } };
 
 /** The text in this language, or the English if there is no translation. */
 export const translate = (language, english) => TEXT[language]?.[english] ?? english;
+/** Every translation for a language, English text to translated text (for translating the page itself). */
+export const dictionary = (language) => TEXT[language] ?? null;
+/** A whole line of page text in this language (exact, pattern, date, or part by part), or null. */
+export const translatePageText = (language, line) => (TEXT[language] ? translateLine(TEXT[language], line) : null);
 export const LANGUAGES = [
   { value: 'en', label: 'English' },
   { value: 'ta', label: 'தமிழ்' },

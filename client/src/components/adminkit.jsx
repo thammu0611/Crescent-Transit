@@ -181,6 +181,11 @@ export function ViewCard({ title: name, icon, summary, badge, actions, children,
   );
 }
 
+/** A group of ViewCards shown as one list: a single card with a row per section. */
+export function ViewList({ children, label }) {
+  return <div className="panel view-list" role="group" aria-label={label}>{children}</div>;
+}
+
 /** Minutes between two moments as "1h 05m" / "42m". */
 export function duration(from, to) {
   if (from == null || to == null) return '—';

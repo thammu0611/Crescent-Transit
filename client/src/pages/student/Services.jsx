@@ -6,7 +6,7 @@ import { useSession } from '../../lib/session.jsx';
 import { useAction, useAsync } from '../../lib/useAsync.js';
 import { FEEDBACK_TEXT, LOST_STATUS_TEXT, REQUEST_TEXT } from '../../../../shared/service.js';
 import Icon from '../../components/Icon.jsx';
-import { ViewCard } from '../../components/adminkit.jsx';
+import { ViewCard, ViewList } from '../../components/adminkit.jsx';
 import { Badge, Empty, ErrorText, Field, ListCard, Notice, Page, Segmented } from '../../components/ui.jsx';
 
 const REQUEST_TONE = { PENDING: 'delayed', APPROVED: 'live', REJECTED: 'danger', CANCELLED: 'offline' };
@@ -176,12 +176,12 @@ export default function Services() {
   const t = useT();
   return (
     <Page eyebrow="Student" title={t('Services')}>
-      <div className="kit-grid-2 top">
+      <ViewList label="Services">
         <ParentAccess token={token} />
         <RouteChange token={token} />
         <LostAndFound token={token} user={user} />
         <MyFeedback token={token} />
-      </div>
+      </ViewList>
     </Page>
   );
 }

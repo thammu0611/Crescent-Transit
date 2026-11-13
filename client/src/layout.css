@@ -157,10 +157,20 @@ a.kit-row { text-decoration: none; }
 .leave-switch.on { background: var(--live); }
 .leave-switch.on::after { transform: translateX(18px); }
 
-/* Settings: the three main sections, then the secondary ones folded in a row. */
+/* Section lists (ViewList): one card per group, one row per section, divided by hairlines. */
 .settings-more-title { margin: 26px 0 12px; }
-.settings-more { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
-@media (max-width: 900px) { .settings-more { grid-template-columns: minmax(0, 1fr); } }
+.view-list.panel { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.view-list.panel:hover { transform: none; background: var(--glass-gloss), var(--glass); border-color: var(--glass-edge); box-shadow: var(--glass-shadow); }
+.view-list > .panel.kit-view-card { gap: 14px; min-height: 68px; padding: 14px 20px; border: 0; border-radius: 0; background: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; transition: background 0.15s ease; }
+.view-list > .panel.kit-view-card + .panel.kit-view-card { border-top: 1px solid var(--line-2); }
+.view-list > .panel.kit-view-card:hover { transform: none; background: rgba(28, 49, 94, 0.05); box-shadow: none; border-color: var(--line-2); }
+.view-list > .panel.kit-view-card:focus-visible { outline: 3px solid var(--navy); outline-offset: -3px; }
+.view-list > .panel.kit-view-card:hover .kit-fold-icon { transform: none; }
+.view-list .kit-view-text b { font-size: 15.5px; }
+html[data-theme='dark'] .view-list.panel:hover { background: var(--glass-strong); }
+html[data-theme='dark'] .view-list > .panel.kit-view-card { background: transparent; }
+html[data-theme='dark'] .view-list > .panel.kit-view-card + .panel.kit-view-card { border-top-color: rgba(255, 255, 255, 0.08); }
+html[data-theme='dark'] .view-list > .panel.kit-view-card:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.08); }
 
 /* ---- Driver page ---------------------------------------------------------------------------- */
 /* The bus / route strip on the dark trip card stays solid white. */

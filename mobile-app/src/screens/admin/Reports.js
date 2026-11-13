@@ -71,7 +71,7 @@ function DayBars({ title, data, height = 120 }) {
       </View>
       <View accessibilityRole="image" accessibilityLabel={data.map((d) => `${d.label} ${d.value}`).join(', ')} style={{ height, flexDirection: 'row', alignItems: 'flex-end', gap: 5 }}>
         {data.map((d, i) => (
-          <View key={`${d.label}-${i}`} style={{ flex: 1, height: `${Math.max(3, (d.value / max) * 100)}%`, borderTopLeftRadius: 5, borderTopRightRadius: 5, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, backgroundColor: i === data.length - 1 ? C.navy : C.dark ? '#2A3F66' : '#BFD3FB' }} />
+          <View key={`${d.label}-${i}`} style={{ flex: 1, height: `${Math.max(3, (d.value / max) * 100)}%`, borderTopLeftRadius: 5, borderTopRightRadius: 5, borderBottomLeftRadius: 2, borderBottomRightRadius: 2, backgroundColor: i === data.length - 1 ? C.navy : C.dark ? '#3A4A6E' : '#C9D2E3' }} />
         ))}
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: (avg / max) * height, borderTopWidth: 1, borderStyle: 'dashed', borderColor: C.faint }} />
       </View>
@@ -340,7 +340,7 @@ export default function Reports({ navigation }) {
           const on = tab === x.value;
           return (
             <Pressable key={x.value} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => setTab(x.value)}
-              style={{ minHeight: 40, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1, borderColor: on ? C.navyFill : C.line, backgroundColor: on ? C.navyFill : 'transparent', justifyContent: 'center' }}>
+              style={{ minHeight: 40, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1, borderColor: on ? C.navyFill : C.line, backgroundColor: on ? C.navyFill : C.card, justifyContent: 'center' }}>
               <Text style={{ fontSize: 14, ...F[600], color: on ? '#fff' : C.ink }}>{x.label}</Text>
             </Pressable>
           );
