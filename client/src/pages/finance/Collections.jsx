@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { api, download } from '../../lib/api.js';
 import { dateTime, rupees, thisMonth } from '../../lib/format.js';
-import { greeting, longDate } from '../../lib/schedule.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
+import GreetHeader from '../../components/GreetHeader.jsx';
 import Icon from '../../components/Icon.jsx';
 import { ErrorText, Stat } from '../../components/ui.jsx';
 
@@ -42,14 +42,10 @@ export default function Collections() {
 
   return (
     <main className="page app-page wide-app">
-      <header className="app-greet">
-        <div>
-          <span className="greet-sub">{greeting()},</span>
-          <h1>Finance office</h1>
-          <span className="greet-meta"><Icon name="clock" size={14} /> {longDate()}</span>
-        </div>
-        <a className="bell" href="#/payments" aria-label="Payments"><Icon name="card" size={20} /></a>
-      </header>
+      <GreetHeader
+        title="Finance office"
+        right={<a className="bell" href="#/payments" aria-label="Payments"><Icon name="card" size={20} /></a>}
+      />
       <ErrorText>{loadError?.message ?? error}</ErrorText>
 
       <div className="app-grid">

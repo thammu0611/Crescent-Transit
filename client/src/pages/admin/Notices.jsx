@@ -88,7 +88,8 @@ export default function Notices() {
               </div>
             )}
             {sorted && sorted.length > LATEST && (
-              <button type="button" className="btn ghost inline" onClick={() => setShowAll((x) => !x)}>
+              <button type="button" className="btn ghost small show-more" onClick={() => setShowAll((x) => !x)}>
+                <Icon name={showAll ? 'up' : 'down'} size={14} />
                 {showAll ? `Show the ${LATEST} most recent` : `Show all ${sorted.length}`}
               </button>
             )}

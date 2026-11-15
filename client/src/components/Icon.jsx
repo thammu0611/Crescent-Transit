@@ -1,5 +1,11 @@
 // A small line-icon set (24 x 24, 2 px stroke), drawn inline so it needs no font or CDN.
 const PATHS = {
+  upload: 'M12 16V4M7 9l5-5 5 5M4 15v4a2 2 0 002 2h12a2 2 0 002-2v-4',
+  calendar: 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',
+  keypad: 'M5 4h.01M12 4h.01M19 4h.01M5 10h.01M12 10h.01M19 10h.01M5 16h.01M12 16h.01M19 16h.01M12 21h.01',
+  locate: 'M12 19a7 7 0 100-14 7 7 0 000 14zM12 15a3 3 0 100-6 3 3 0 000 6zM12 2v3M12 19v3M2 12h3M19 12h3',
+  sun: 'M12 17a5 5 0 100-10 5 5 0 000 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4',
+  tick: 'M5 12.5l4.5 4.5L19 7.5',
   home: 'M3 11l9-8 9 8M5 9.5V21h5v-6h4v6h5V9.5',
   map: 'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
   bus: 'M5 17V6a3 3 0 013-3h8a3 3 0 013 3v11M5 17h14M5 17v2h3v-2M16 17v2h3v-2M5 11h14M8 14h.01M16 14h.01',

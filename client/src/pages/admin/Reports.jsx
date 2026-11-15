@@ -71,15 +71,17 @@ function AccuracyUpload({ token }) {
 }
 
 
+// Every report: its name, what it answers, its icon and its colour in the menu.
 const SECTIONS = [
-  { value: 'register', label: 'Attendance register' },
-  { value: 'demand', label: 'Stop demand' },
-  { value: 'occupancy', label: 'Occupancy' },
-  { value: 'exceptions', label: 'Exceptions' },
-  { value: 'leakage', label: 'Leakage' },
-  { value: 'eta', label: 'ETA accuracy' },
-  { value: 'accuracy', label: 'Attendance accuracy' },
+  { value: 'register', label: 'Attendance register', desc: 'Who boarded, by bus and student', icon: 'list', c: 'navy' },
+  { value: 'demand', label: 'Stop demand', desc: 'Busiest stops and hours', icon: 'pin', c: 'teal' },
+  { value: 'occupancy', label: 'Occupancy', desc: 'How full each trip ran', icon: 'users', c: 'sky' },
+  { value: 'exceptions', label: 'Exceptions', desc: 'Flagged, overridden or unconfirmed records', icon: 'alert', c: 'rose' },
+  { value: 'leakage', label: 'Leakage', desc: 'Rides without a subscription', icon: 'card', c: 'gold' },
+  { value: 'eta', label: 'ETA accuracy', desc: 'How close arrival estimates were', icon: 'clock', c: 'violet' },
+  { value: 'accuracy', label: 'Attendance accuracy', desc: 'Compare with a manual register', icon: 'check', c: 'green' },
 ];
+const fmtDay = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 const PRESETS = [
   { value: '7', label: 'Last 7 days' },
   { value: '30', label: 'Last 30 days' },
@@ -181,6 +183,7 @@ export default function Reports() {
     if (p === 'month') setRange((r) => ({ ...r, from: `${thisMonth()}-01`, to: today() }));
   };
 
+  const current = SECTIONS.find((x) => x.value === tab) ?? SECTIONS[0];
   const reg = register.data;
   const regStats = useMemo(() => {
     if (!reg) return null;
@@ -222,24 +225,50 @@ export default function Reports() {
 
   return (
     <Page eyebrow="Transport office" title="Reports" subtitle="Registers, demand, occupancy, exceptions and accuracy for any period and route." wide>
-      <div className="kit-stack">
-        <Block title="Filters" caption={`${range.from} to ${range.to}${range.route ? ` · route ${range.route}` : ' · all routes'}`}>
-          <Chips value={preset} onChange={choosePreset} options={PRESETS} />
-          <div className="form-row">
-            {preset === 'custom' && <Field label="From"><input type="date" value={range.from} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))} /></Field>}
-            {preset === 'custom' && <Field label="To"><input type="date" value={range.to} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} /></Field>}
+      <div className="rep-layout">
+        {/* Left: the period and route, then the reports to choose from. */}
+        <aside className="rep-side">
+          <section className="rep-filters">
+            <h3>Period and route</h3>
+            <Chips value={preset} onChange={choosePreset} options={PRESETS} />
+            {preset === 'custom' && (
+              <div className="rep-dates">
+                <Field label="From"><input type="date" value={range.from} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))} /></Field>
+                <Field label="To"><input type="date" value={range.to} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} /></Field>
+              </div>
+            )}
             <Field label="Route">
               <select value={range.route} onChange={(e) => setRange((r) => ({ ...r, route: e.target.value }))}>
                 <option value="">All routes</option>
                 {(routes.data ?? []).map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
               </select>
             </Field>
-          </div>
-        </Block>
+          </section>
+          <nav className="rep-menu" aria-label="Reports">
+            <h3>Reports</h3>
+            {SECTIONS.map((x) => (
+              <button key={x.value} type="button" className={`rep-item${tab === x.value ? ' on' : ''}`} data-c={x.c} aria-current={tab === x.value ? 'page' : undefined} onClick={() => setTab(x.value)}>
+                <span className="rep-item-icon"><Icon name={x.icon} size={17} /></span>
+                <span className="rep-item-text"><b>{x.label}</b><small>{x.desc}</small></span>
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-        <h2 className="kit-section-title">Report</h2>
-        <Chips value={tab} onChange={setTab} options={SECTIONS} />
-        <ErrorText>{error ?? loadError}</ErrorText>
+        {/* Right: the chosen report. */}
+        <div className="kit-stack rep-main">
+          <header className="rep-head" data-c={current.c}>
+            <span className="rep-head-icon"><Icon name={current.icon} size={22} /></span>
+            <span className="rep-head-text">
+              <h2>{current.label}</h2>
+              <p>{current.desc}</p>
+            </span>
+            <span className="rep-head-chips">
+              <span className="rep-chip"><Icon name="clock" size={14} /> {fmtDay(range.from)} – {fmtDay(range.to)}</span>
+              <span className="rep-chip"><Icon name="route" size={14} /> {range.route ? `Route ${range.route}` : 'All routes'}</span>
+            </span>
+          </header>
+          <ErrorText>{error ?? loadError}</ErrorText>
 
         {tab === 'register' && (reg == null ? loading : (
           <>
@@ -253,8 +282,9 @@ export default function Reports() {
             <Block
               title="Attendance register by bus"
               caption={`${regBuses.length} bus${regBuses.length === 1 ? '' : 'es'} · ${reg.length} records · open a bus for its students and records`}
-              actions={<><SearchBox value={busQuery} onChange={setBusQuery} placeholder="Search bus or route" /><CsvButton title="CSV per trip" onClick={() => csv('/api/reports/attendance', 'attendance-register')} /><CsvButton title="CSV per student" onClick={() => csv('/api/reports/attendance', 'attendance-per-student', '&group=student')} /></>}
+              actions={<><CsvButton title="CSV per trip" onClick={() => csv('/api/reports/attendance', 'attendance-register')} /><CsvButton title="CSV per student" onClick={() => csv('/api/reports/attendance', 'attendance-per-student', '&group=student')} /></>}
             >
+              <SearchBox value={busQuery} onChange={setBusQuery} placeholder="Search bus or route" />
               {shownBuses.length === 0 ? <Empty>{busNeedle ? 'No buses match.' : 'No attendance in this period.'}</Empty> : (
                 <div className="kit-list cols-2">
                   {shownBuses.map((g) => (
@@ -359,6 +389,7 @@ export default function Reports() {
 
         {tab === 'eta' && <Block title="ETA accuracy (mean absolute error)"><EtaAccuracy token={token} q={q} /></Block>}
         {tab === 'accuracy' && <Block title="Attendance accuracy against a manual register"><AccuracyUpload token={token} /></Block>}
+        </div>
       </div>
 
       {openBus && (

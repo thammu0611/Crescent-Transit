@@ -1,11 +1,11 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useLayoutEffect, useMemo, useState } from 'react';
-import { Platform, Pressable, ScrollView, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import Icon from '../../components/Icon.js';
 import { Block, ColumnChart, HBars, Table } from '../../components/adminkit.js';
 import {
-  Badge, Button, DateField, ErrorText, KV, ListCard, Row, RouteCode, Screen, SearchBox, Segmented, Select, Sheet, Skeleton,
+  Badge, Button, DateField, ErrorText, IconBubble, KV, ListCard, Row, RouteCode, Screen, SearchBox, Segmented, Select, Sheet, Skeleton,
   Stat, StatGrid, Text, TextField, Txt, YesNo, DirectionBadge,
 } from '../../components/ui.js';
 import { api, download, pickTextFile } from '../../lib/api.js';
@@ -13,7 +13,7 @@ import { METHOD_TEXT, daysAgo, thisMonth, today } from '../../lib/format.js';
 import { useAction, useAsync } from '../../lib/hooks.js';
 import { DIRECTION_NAME } from '../../lib/rules.js';
 import { useSession } from '../../lib/session.js';
-import { C, F, R, shadow } from '../../theme.js';
+import { ACCENT, C, F, R, shadow } from '../../theme.js';
 
 const STATUS_TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISIONAL: 'delayed', PROMPTED: 'delayed', DISPUTED: 'delayed', ADJUSTED: 'offline', REJECTED: 'offline', VOID: 'danger' };
 const statusText = (s) => s.replace('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
@@ -23,14 +23,15 @@ export function Bars({ rows, value, label, max, unit = '' }) {
   return <HBars rows={rows} value={value} label={label} max={max} unit={unit} />;
 }
 
+// Every report: its name, what it answers, its icon and its colour (as on the website).
 const SECTIONS = [
-  { value: 'register', label: 'Attendance' },
-  { value: 'demand', label: 'Stop demand' },
-  { value: 'occupancy', label: 'Occupancy' },
-  { value: 'exceptions', label: 'Exceptions' },
-  { value: 'leakage', label: 'Leakage' },
-  { value: 'eta', label: 'ETA accuracy' },
-  { value: 'accuracy', label: 'Attendance accuracy' },
+  { value: 'register', label: 'Attendance register', desc: 'Who boarded, by bus and student', icon: 'list', accent: 'navy' },
+  { value: 'demand', label: 'Stop demand', desc: 'Busiest stops and hours', icon: 'pin', accent: 'sky' },
+  { value: 'occupancy', label: 'Occupancy', desc: 'How full each trip ran', icon: 'users', accent: 'violet' },
+  { value: 'exceptions', label: 'Exceptions', desc: 'Flagged, overridden or unconfirmed records', icon: 'alert', accent: 'rose' },
+  { value: 'leakage', label: 'Leakage', desc: 'Rides without a subscription', icon: 'card', accent: 'amber' },
+  { value: 'eta', label: 'ETA accuracy', desc: 'How close arrival estimates were', icon: 'clock', accent: 'indigo' },
+  { value: 'accuracy', label: 'Attendance accuracy', desc: 'Compare with a manual register', icon: 'check', accent: 'emerald' },
 ];
 
 const PRESETS = [
@@ -202,6 +203,7 @@ export default function Reports({ navigation }) {
   const [preset, setPreset] = useState('30');
   const [range, setRange] = useState({ from: daysAgo(29), to: today(), route: '' });
   const [tab, setTab] = useState('register');
+  const [picking, setPicking] = useState(false);
   const [row, setRow] = useState(null); // register row shown in the detail sheet
   const [busId, setBusId] = useState(null); // bus whose register is open
   const [busQuery, setBusQuery] = useState('');
@@ -307,17 +309,20 @@ export default function Reports({ navigation }) {
     });
   });
   const routeName = range.route ? `Route ${range.route}` : 'All routes';
+  const current = SECTIONS.find((x) => x.value === tab) ?? SECTIONS[0];
 
   return (
     <Screen>
-      <Segmented full value={preset} onChange={choosePreset} options={PRESETS} />
-      {preset === 'custom' && (
-        <Row gap={10} style={{ alignItems: 'flex-start' }}>
-          <View style={{ flex: 1 }}><DateField label="From" value={range.from} onChange={(v) => setRange((r) => ({ ...r, from: v }))} /></View>
-          <View style={{ flex: 1 }}><DateField label="To" value={range.to} onChange={(v) => setRange((r) => ({ ...r, to: v }))} /></View>
-        </Row>
-      )}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      {/* Period and route: one card. */}
+      <View style={[card, { padding: 14, gap: 12 }]}>
+        <Text style={{ fontSize: 12, ...F[700], color: C.muted, letterSpacing: 1, textTransform: 'uppercase' }}>Period and route</Text>
+        <Segmented full value={preset} onChange={choosePreset} options={PRESETS} />
+        {preset === 'custom' && (
+          <Row gap={10} style={{ alignItems: 'flex-start' }}>
+            <View style={{ flex: 1 }}><DateField label="From" value={range.from} onChange={(v) => setRange((r) => ({ ...r, from: v }))} /></View>
+            <View style={{ flex: 1 }}><DateField label="To" value={range.to} onChange={(v) => setRange((r) => ({ ...r, to: v }))} /></View>
+          </Row>
+        )}
         <Select
           label="Route"
           value={range.route}
@@ -326,26 +331,50 @@ export default function Reports({ navigation }) {
           options={[{ value: '', label: 'All routes' }, ...(routes.data ?? []).map((r) => ({ value: r.code, label: `${r.code} · ${r.name}` }))]}
           trigger={(open) => (
             <Pressable accessibilityRole="button" accessibilityLabel={`${routeName}, change route`} onPress={open}
-              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.raised }, pressed && { opacity: 0.85 }]}>
+              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.raised }, pressed && { opacity: 0.85 }]}>
               <Icon name="route" size={16} color={C.muted} />
-              <Text style={{ fontSize: 15, ...F[600], color: C.ink }}>{routeName}</Text>
+              <Text style={{ flex: 1, fontSize: 15, ...F[600], color: C.ink }} numberOfLines={1}>{routeName}</Text>
+              <Txt muted small>{rangeText(range.from, range.to)}</Txt>
               <Icon name="down" size={16} color={C.faint} />
             </Pressable>
           )}
         />
-        <Txt muted style={{ flex: 1 }} numberOfLines={1}>{rangeText(range.from, range.to)}</Txt>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 16 }} style={{ marginRight: -16 }}>
-        {SECTIONS.map((x) => {
-          const on = tab === x.value;
-          return (
-            <Pressable key={x.value} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => setTab(x.value)}
-              style={{ minHeight: 40, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1, borderColor: on ? C.navyFill : C.line, backgroundColor: on ? C.navyFill : C.card, justifyContent: 'center' }}>
-              <Text style={{ fontSize: 14, ...F[600], color: on ? '#fff' : C.ink }}>{x.label}</Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+
+      {/* The report: what it is, and a tap to choose another. */}
+      <Pressable accessibilityRole="button" accessibilityLabel={`${current.label}. Choose another report`} onPress={() => setPicking(true)}
+        style={({ pressed }) => [card, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderTopWidth: 3, borderTopColor: (ACCENT[current.accent] ?? ACCENT.navy)[1] }, pressed && { opacity: 0.85 }]}>
+        <IconBubble name={current.icon} accent={current.accent} size={44} iconSize={20} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Txt small muted>Report</Txt>
+          <Text style={{ fontSize: 18, lineHeight: 23, ...F[700], color: C.ink }}>{current.label}</Text>
+          <Txt muted small>{current.desc}</Txt>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Txt small style={{ color: C.navy, ...F[600] }}>Change</Txt>
+          <Icon name="down" size={16} color={C.navy} />
+        </View>
+      </Pressable>
+      {picking ? (
+        <Sheet title="Choose a report" onClose={() => setPicking(false)}>
+          <View style={{ gap: 6 }}>
+            {SECTIONS.map((x) => {
+              const on = tab === x.value;
+              return (
+                <Pressable key={x.value} accessibilityRole="button" accessibilityState={{ selected: on }} onPress={() => { setTab(x.value); setPicking(false); }}
+                  style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: on ? (ACCENT[x.accent] ?? ACCENT.navy)[1] : C.line2, backgroundColor: on ? C.navy50 : 'transparent' }, pressed && { opacity: 0.8 }]}>
+                  <IconBubble name={x.icon} accent={x.accent} size={38} iconSize={18} />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Txt bold>{x.label}</Txt>
+                    <Txt muted small>{x.desc}</Txt>
+                  </View>
+                  {on ? <Icon name="check" size={18} color={C.navy} /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Sheet>
+      ) : null}
       <ErrorText>{error ?? loadError}</ErrorText>
 
       {tab === 'register' && (reg == null ? loading : (
@@ -370,8 +399,8 @@ export default function Reports({ navigation }) {
               <ListCard
                 key={g.bus}
                 onPress={() => setBusId(g.bus)}
-                lead={<RouteCode code={g.route} />}
-                title={g.bus}
+                lead={<RouteCode code={g.route} small />}
+                title={String(g.bus).replace('BSACIST-', 'Bus ')}
                 lines={[`${g.students.length} student${g.students.length === 1 ? '' : 's'} · ${g.rows.length} record${g.rows.length === 1 ? '' : 's'}`]}
                 count={g.present}
                 countLabel="PRESENT"

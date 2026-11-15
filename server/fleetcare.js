@@ -8,7 +8,10 @@ import { localDate } from './clock.js';
 export const DOCUMENT_KINDS = ['INSURANCE', 'FITNESS', 'PERMIT', 'PUC'];
 const DOC_TEXT = { INSURANCE: 'Insurance', FITNESS: 'Fitness certificate', PERMIT: 'Permit', PUC: 'PUC' };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const REMIND_DAYS = [30, 7, 0];
+// Reminders before a document expires; once it has expired, every day until it is renewed.
+const REMIND_DAYS = [30, 15, 7, 3, 1, 0];
+// A GPS trip adds its distance to the odometer; gaps longer than this between fixes are skipped (signal lost).
+const MAX_HOP_M = 3000;
 const SERVICE_WARN_KM = 500;
 
 const daysUntil = (date, today) => Math.round((Date.parse(date) - Date.parse(today)) / 86400000);
@@ -26,6 +29,34 @@ export class FleetCareService {
     this.tracking = tracking;
     this.io = io;
     this.push = push;
+    // The odometer moves by itself: each finished trip adds the distance the bus GPS drove.
+    tracking?.on?.('tripEnded', ({ tripId, busId }) => this.addTripDistance(tripId, busId).catch(() => {}));
+  }
+
+  /** Adds a finished trip's GPS distance to the bus's odometer (when a reading exists to add to). */
+  async addTripDistance(tripId, busId) {
+    const { rows } = await this.db.query(
+      `SELECT lat, lng, accuracy_m FROM location_pings WHERE trip_id = $1 ORDER BY recorded_at`,
+      [tripId],
+    );
+    let metres = 0;
+    let prev = null;
+    for (const p of rows) {
+      if (p.accuracy_m != null && p.accuracy_m > 150) continue; // a poor fix would add zig-zags
+      if (prev) {
+        const hop = haversineMeters(prev, p);
+        if (hop <= MAX_HOP_M) metres += hop;
+      }
+      prev = p;
+    }
+    const km = Math.round(metres / 1000);
+    if (km < 1) return 0;
+    await this.db.query(
+      `UPDATE buses SET odometer_km = odometer_km + $2, odometer_gps_km = COALESCE(odometer_gps_km, 0) + $2
+        WHERE id = $1 AND odometer_km IS NOT NULL`,
+      [busId, km],
+    );
+    return km;
   }
 
   today() {
@@ -38,7 +69,7 @@ export class FleetCareService {
     const today = this.today();
     const [buses, docs] = await Promise.all([
       this.db.query(
-        `SELECT b.id, b.fleet_code, b.status, b.odometer_km, b.service_interval_km, b.last_service_km,
+        `SELECT b.id, b.fleet_code, b.status, b.odometer_km, b.odometer_gps_km, b.service_interval_km, b.last_service_km,
                 to_char(b.last_service_on, 'YYYY-MM-DD') AS last_service_on, r.code AS route_code
            FROM buses b LEFT JOIN routes r ON r.id = b.route_id ORDER BY b.fleet_code`,
       ),
@@ -59,6 +90,7 @@ export class FleetCareService {
         routeCode: b.route_code,
         status: b.status,
         odometerKm: b.odometer_km,
+        odometerGpsKm: b.odometer_gps_km ?? 0,
         serviceIntervalKm: b.service_interval_km,
         lastServiceKm: b.last_service_km,
         lastServiceOn: b.last_service_on,
@@ -86,7 +118,7 @@ export class FleetCareService {
     const sets = [];
     const vals = [busId];
     const add = (col, v) => { vals.push(v); sets.push(`${col} = $${vals.length}`); };
-    if (body.odometerKm !== undefined) add('odometer_km', whole(body.odometerKm, 'Odometer'));
+    if (body.odometerKm !== undefined) { add('odometer_km', whole(body.odometerKm, 'Odometer')); add('odometer_gps_km', 0); }
     if (body.serviceIntervalKm !== undefined) add('service_interval_km', whole(body.serviceIntervalKm, 'Service interval', 200000));
     if (body.lastServiceKm !== undefined) add('last_service_km', whole(body.lastServiceKm, 'Last service reading'));
     if (body.lastServiceOn !== undefined) {
@@ -112,20 +144,35 @@ export class FleetCareService {
     return true;
   }
 
-  /** 30 and 7 days before a document expires, on the day, and when service falls due. */
+  /**
+   * Reminders to the transport office, each sent once: 30, 15, 7, 3 and 1 days
+   * before a document expires and on the day; then every day while it stays
+   * expired. Service: once when it falls due soon, then every day while overdue.
+   */
   async sendReminders() {
     let sent = 0;
+    const today = this.today();
     for (const bus of await this.overview()) {
       for (const d of bus.documents) {
         if (d.daysLeft == null) continue;
-        const step = REMIND_DAYS.find((n) => d.daysLeft <= n && d.daysLeft > (REMIND_DAYS[REMIND_DAYS.indexOf(n) + 1] ?? -Infinity));
-        if (step === undefined) continue;
-        const when = d.daysLeft < 0 ? `expired on ${d.expiresOn}` : d.daysLeft === 0 ? 'expires today' : `expires in ${d.daysLeft} days (${d.expiresOn})`;
-        if (await this.remind(`doc:${bus.id}:${d.kind}:${d.expiresOn}:${step}`, bus.id, `${bus.fleetCode}: ${DOC_TEXT[d.kind]} ${when}.`)) sent += 1;
+        let key;
+        let message;
+        if (d.daysLeft < 0) {
+          key = `doc:${bus.id}:${d.kind}:${d.expiresOn}:expired:${today}`;
+          message = `${bus.fleetCode}: ${DOC_TEXT[d.kind]} EXPIRED ${-d.daysLeft} day${d.daysLeft === -1 ? '' : 's'} ago (${d.expiresOn}). Renew it - the bus should not run without it.`;
+        } else {
+          const i = REMIND_DAYS.findIndex((n, k) => d.daysLeft <= n && d.daysLeft > (REMIND_DAYS[k + 1] ?? -1));
+          if (i < 0) continue;
+          key = `doc:${bus.id}:${d.kind}:${d.expiresOn}:${REMIND_DAYS[i]}`;
+          message = `${bus.fleetCode}: ${DOC_TEXT[d.kind]} ${d.daysLeft === 0 ? 'expires TODAY' : `expires in ${d.daysLeft} day${d.daysLeft === 1 ? '' : 's'} (${d.expiresOn})`}.`;
+        }
+        if (await this.remind(key, bus.id, message)) sent += 1;
       }
-      if (bus.serviceState === 'SOON' || bus.serviceState === 'DUE') {
-        const text = bus.kmLeft <= 0 ? `service is overdue by ${-bus.kmLeft} km` : `service is due in ${bus.kmLeft} km`;
-        if (await this.remind(`service:${bus.id}:${bus.nextServiceKm}:${bus.serviceState}`, bus.id, `${bus.fleetCode}: ${text}.`)) sent += 1;
+      if (bus.serviceState === 'DUE') {
+        const key = `service:${bus.id}:${bus.nextServiceKm}:due:${today}`;
+        if (await this.remind(key, bus.id, `${bus.fleetCode}: service is OVERDUE by ${-bus.kmLeft} km (due at ${bus.nextServiceKm} km).`)) sent += 1;
+      } else if (bus.serviceState === 'SOON') {
+        if (await this.remind(`service:${bus.id}:${bus.nextServiceKm}:SOON`, bus.id, `${bus.fleetCode}: service is due in ${bus.kmLeft} km.`)) sent += 1;
       }
     }
     return { sent };
@@ -142,13 +189,14 @@ export class FleetCareService {
     const cost = Number(body.costRupees);
     if (!(litres > 0 && litres < 1000)) throw new HttpError(400, 'Litres must be between 0 and 1000');
     if (!(cost > 0 && cost < 1000000)) throw new HttpError(400, 'Enter the amount paid');
-    const bus = (await this.db.query('SELECT odometer_km FROM buses WHERE id = $1', [busId])).rows[0];
-    if (bus.odometer_km != null && odometer < bus.odometer_km) throw new HttpError(400, `The odometer cannot go backwards: it was ${bus.odometer_km} km`);
+    const bus = (await this.db.query('SELECT odometer_km, odometer_gps_km FROM buses WHERE id = $1', [busId])).rows[0];
+    const lastReading = bus.odometer_km == null ? null : bus.odometer_km - (bus.odometer_gps_km ?? 0);
+    if (lastReading != null && odometer < lastReading) throw new HttpError(400, `The odometer cannot go backwards: it was ${lastReading} km`);
     const { rows } = await this.db.query(
       `INSERT INTO fuel_logs (bus_id, entered_by, day, odometer_km, litres, cost_paise, note) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [busId, auth.userId, this.today(), odometer, litres, Math.round(cost * 100), body.note ? String(body.note).slice(0, 200) : null],
     );
-    await this.db.query('UPDATE buses SET odometer_km = $2 WHERE id = $1', [busId, odometer]);
+    await this.db.query('UPDATE buses SET odometer_km = $2, odometer_gps_km = 0 WHERE id = $1', [busId, odometer]);
     return rows[0];
   }
 

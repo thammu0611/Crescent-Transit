@@ -30,7 +30,7 @@ function MapButton({ icon, label, onPress, size = 44, color = C.ink, style }) {
 const Metric = ({ k, v }) => (
   <View style={{ flex: 1, minWidth: 0 }}>
     <Txt muted small style={{ fontSize: 12 }}>{k}</Txt>
-    <Text style={{ fontSize: 16, lineHeight: 22, ...F[700], color: C.ink, marginTop: 2 }} numberOfLines={1}>{v}</Text>
+    <Text style={{ fontSize: 16, lineHeight: 22, ...F[700], color: C.ink, marginTop: 2 }} numberOfLines={2}>{v}</Text>
   </View>
 );
 
@@ -364,8 +364,8 @@ export default function LiveMap({ navigation, route: screen }) {
                     <Text style={{ fontSize: 13, ...F.displayBold, color: C.ink }}>{b.routeCode}</Text>
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={{ fontSize: 14.5, ...F[600], color: C.ink }} numberOfLines={1}>{b.routeName ?? b.fleetCode}</Text>
-                    <Txt muted small numberOfLines={1}>{[b.driverName ?? b.fleetCode, OCCUPANCY[b.occupancy]?.label, b.freshness === 'offline' ? `last seen ${ageLabel(b.recordedAt, now)}` : `${Math.round(b.speedKmh ?? 0)} km/h`].filter(Boolean).join(' · ')}</Txt>
+                    <Text style={{ fontSize: 14.5, ...F[600], color: C.ink }} numberOfLines={2}>{b.routeName ?? b.fleetCode}</Text>
+                    <Txt muted small numberOfLines={2}>{[b.driverName ?? b.fleetCode, OCCUPANCY[b.occupancy]?.label, b.freshness === 'offline' ? `last seen ${ageLabel(b.recordedAt, now)}` : `${Math.round(b.speedKmh ?? 0)} km/h`].filter(Boolean).join(' · ')}</Txt>
                   </View>
                   <Badge style={{ alignSelf: 'center' }} tone={b.freshness}>{STATE_LABEL[b.freshness]}</Badge>
                 </Pressable>

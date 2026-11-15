@@ -64,7 +64,7 @@ function Steps({ steps }) {
             {i < steps.length - 1 ? <View style={{ flex: 1, height: 2, backgroundColor: s.state === 'done' ? C.live : C.line }} /> : null}
           </View>
           <View style={{ gap: 2, paddingRight: 8 }}>
-            <Text style={{ fontSize: 13.5, lineHeight: 18, ...F[600], color: s.state === 'next' ? C.muted : C.ink }} numberOfLines={2}>{s.label}</Text>
+            <Text style={{ fontSize: 13.5, lineHeight: 18, ...F[600], color: s.state === 'next' ? C.muted : C.ink }} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>{s.label}</Text>
             <Txt muted small>{s.note}</Txt>
           </View>
         </View>

@@ -31,8 +31,11 @@ function ParentAccess({ token }) {
           <small>Works once, until {dateTime(made.expiresAt)}</small>
         </div>
       ) : null}
-      <button type="button" className="btn primary inline" disabled={a.busy} onClick={make}><Icon name="plus" size={14} /> {t('Make a code')}</button>
+      <div className="parent-actions">
+        <button type="button" className="btn primary inline" disabled={a.busy} onClick={make}><Icon name="plus" size={14} /> {t('Make a code')}</button>
+      </div>
       <ErrorText>{a.error}</ErrorText>
+      {list.length > 0 && <h4 className="parent-list-title">{t('Linked parents')}</h4>}
       <div className="kit-list">
         {list.map((p) => (
           <ListCard key={p.id} lead={<Icon name="user" size={18} />} title={p.full_name} lines={[p.email, `Linked ${date(p.created_at)}`].filter(Boolean)} side={<button type="button" className="link danger" onClick={() => remove(p)}>Remove</button>} />

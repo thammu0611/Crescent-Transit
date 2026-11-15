@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import express from 'express';
 import { Server as SocketServer } from 'socket.io';
 import { parseWindows } from '../shared/colocation.js';
@@ -9,6 +10,7 @@ import { BusAlternativesService } from './alternatives.js';
 import { AutomationService } from './automation.js';
 import { CalendarService } from './calendar.js';
 import { FleetCareService } from './fleetcare.js';
+import { readUploadedDocument } from './docreader.js';
 import { GuardianService } from './guardians.js';
 import { BusPassService } from './pass.js';
 import { mountServices } from './routes/services.js';
@@ -34,6 +36,9 @@ import { adminRouter } from './routes/admin.js';
 import { financeRouter } from './routes/finance.js';
 import { TrackingService } from './tracking.js';
 import { audit, intParam, rateLimit, sendTable } from './util.js';
+
+// For finding files inside installed packages (the OCR engine).
+const require = createRequire(import.meta.url);
 
 const INCIDENT_TO_NOTICE = { BREAKDOWN: 'BREAKDOWN', DELAY: 'DELAY', EMERGENCY: 'EMERGENCY' };
 // Incidents urgent enough to push to the transport office's phones.
@@ -127,7 +132,8 @@ export async function createServer(db, config, { mailer = createMailer(config) }
     "object-src 'none'",
     "frame-ancestors 'self'",
     "form-action 'self'",
-    "script-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://checkout.razorpay.com",
+    // 'wasm-unsafe-eval': the document reader's OCR engine is WebAssembly, served from here (/ocr).
+    "script-src 'self' 'wasm-unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com https://checkout.razorpay.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: https:",
@@ -153,6 +159,10 @@ export async function createServer(db, config, { mailer = createMailer(config) }
 
   // Student lists and route circulars are larger than any other request.
   app.use('/api/admin/roster', adminOnly, express.json({ limit: '8mb' }));
+  // A bus document to read (the phone app sends the file; see server/docreader.js).
+  app.post('/api/admin/documents/read', adminOnly, rateLimit({ windowMs: 60000, max: 20 }), express.json({ limit: '12mb' }), async (req, res) => {
+    res.json(await readUploadedDocument(req.body));
+  });
 
   // Raw bytes are kept for the webhook: its signature covers the exact body.
   app.use(express.json({ limit: '200kb', verify: (req, _res, buf) => { req.rawBody = buf; } }));
@@ -786,6 +796,21 @@ export async function createServer(db, config, { mailer = createMailer(config) }
   app.use('/api/finance', financeOnly, financeRouter({ db, config, billing, gateway, jobs }));
 
   app.use('/api', (_req, _res, next) => next(new HttpError(404, 'Unknown API endpoint')));
+
+  // ---- Document reader (OCR) files ------------------------------------------
+  // Bus care reads uploaded papers in the browser. Its OCR engine, worker and
+  // English data are served from this server, so nothing loads from a CDN.
+  const ocrFile = (pkg, ...rest) => {
+    try { return path.join(path.dirname(require.resolve(`${pkg}/package.json`)), ...rest); } catch { return null; }
+  };
+  const ocrDirs = { core: ocrFile('tesseract.js-core'), lang: ocrFile('@tesseract.js-data/eng', '4.0.0_best_int') };
+  const ocrWorker = ocrFile('tesseract.js', 'dist', 'worker.min.js');
+  if (ocrDirs.core && ocrDirs.lang && ocrWorker) {
+    const longCache = { immutable: true, maxAge: '30d', index: false };
+    app.get('/ocr/worker.min.js', (_req, res) => res.sendFile(ocrWorker, { maxAge: '30d' }));
+    app.use('/ocr/core', express.static(ocrDirs.core, longCache));
+    app.use('/ocr/lang', express.static(ocrDirs.lang, longCache));
+  }
 
   // ---- React build (production) ------------------------------------------
 

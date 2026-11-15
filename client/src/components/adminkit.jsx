@@ -124,9 +124,13 @@ export function Figure({ value, label }) {
 }
 
 /** Initials in a circle. */
-export function Avatar({ name = '', size = 44 }) {
+export function Avatar({ name = '', size = 44, photo = null }) {
   const initials = name.replace(/^(Mr|Mrs|Ms|Dr)\.?\s*/i, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
-  return <span className="kit-avatar" style={{ width: size, height: size, fontSize: size * 0.36 }}>{initials}</span>;
+  return (
+    <span className={`kit-avatar${photo ? ' has-photo' : ''}`} style={{ width: size, height: size, fontSize: size * 0.36 }}>
+      {photo ? <img src={photo} alt="" /> : initials}
+    </span>
+  );
 }
 
 /** A large panel over the page, for drill-downs (driver history, a bus, a student). */

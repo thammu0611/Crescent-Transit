@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api, getSocket } from '../../lib/api.js';
 import { METHOD_TEXT, dateTime, time } from '../../lib/format.js';
-import { greeting, longDate } from '../../lib/schedule.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import { useLive } from '../../lib/useLive.js';
+import GreetHeader from '../../components/GreetHeader.jsx';
 import Icon from '../../components/Icon.jsx';
 import RouteMiniMap from '../../components/RouteMiniMap.jsx';
 import { Block, ColumnChart, Donut, Figure, HBars, SERIES, ViewCard, ViewList, dayLabel } from '../../components/adminkit.jsx';
@@ -13,9 +13,9 @@ import { Badge, Empty, ListCard, SearchBox, Segmented, Stat } from '../../compon
 // The four shortcuts, each in its own colour from the site's palette.
 const SHORTCUTS = [
   ['#/trips', 'clock', 'Trips', 'Drivers and trip history', 'navy'],
-  ['#/attendance', 'check', 'Attendance', 'Bus registers by date', 'green'],
-  ['#/reports', 'chart', 'Reports', 'Charts and exports', 'blue'],
-  ['#/notices', 'bell', 'Announce', 'Post an alert to riders', 'red'],
+  ['#/attendance', 'check', 'Attendance', 'Bus registers by date', 'sky'],
+  ['#/reports', 'chart', 'Reports', 'Charts and exports', 'indigo'],
+  ['#/notices', 'bell', 'Announce', 'Post an alert to riders', 'amber'],
 ];
 
 const titleCase = (k) => k.replaceAll('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
@@ -28,7 +28,13 @@ const ACTIVITY = {
 
 /** The transport office's home: fleet now, today's figures, trends, trips running and recent activity. */
 export default function Dashboard() {
-  const { token } = useSession();
+  const { token, user } = useSession();
+  // Expired papers and overdue service, to insist on at the top of the page.
+  const care = useAsync(() => api('/api/admin/fleet-care', { token }), [token]);
+  const careAlerts = (care.data ?? []).flatMap((b) => [
+    ...b.documents.filter((d) => d.state === 'EXPIRED').map((d) => `${b.fleetCode} ${({ INSURANCE: 'insurance', FITNESS: 'fitness', PERMIT: 'permit', PUC: 'PUC' })[d.kind]} expired`),
+    ...(b.serviceState === 'DUE' ? [`${b.fleetCode} service overdue`] : []),
+  ]);
   const kpis = useAsync(() => api('/api/admin/kpis', { token }), [token]);
   const overview = useAsync(() => api('/api/admin/overview?days=7', { token }), [token]);
   const trips = useAsync(() => api('/api/admin/trips?status=active', { token }), [token]);
@@ -63,17 +69,25 @@ export default function Dashboard() {
 
   return (
     <main className="page app-page wide-app">
-      <header className="app-greet">
-        <div>
-          <span className="greet-sub">{greeting()},</span>
-          <h1>Transport office</h1>
-          <span className="greet-meta"><Icon name="clock" size={14} /> {longDate()}</span>
-        </div>
-        <a className="bell" href="#/notices" aria-label="Alerts and incidents">
-          <Icon name="bell" size={20} />
-          {k.openIncidents > 0 && <span className="dot-count">{k.openIncidents}</span>}
+      <GreetHeader
+        title="Transport office"
+        right={(
+          <a className="bell" href="#/notices" aria-label="Alerts and incidents">
+            <Icon name="bell" size={20} />
+            {k.openIncidents > 0 && <span className="dot-count">{k.openIncidents}</span>}
+          </a>
+        )}
+      />
+      {careAlerts.length > 0 && (
+        <a className="care-alarm" href="#/care" role="alert">
+          <span className="care-alarm-icon"><Icon name="alert" size={20} /></span>
+          <span className="care-alarm-text">
+            <b>{careAlerts.length} bus{careAlerts.length === 1 ? ' needs' : 'es need'} attention now</b>
+            <small>{careAlerts.slice(0, 3).join(' · ')}{careAlerts.length > 3 ? ` · and ${careAlerts.length - 3} more` : ''}</small>
+          </span>
+          <span className="care-alarm-go">Open Bus care <Icon name="arrow" size={15} /></span>
         </a>
-      </header>
+      )}
 
       <div className="kit-stack">
         <div className="kit-grid-3">
@@ -101,19 +115,19 @@ export default function Dashboard() {
 
           <div className="kit-stack">
             <div className="kit-stats two">
-              <Stat icon="users" label="Present today · Inbound / Outbound" value={`${k.presentUpToday} / ${k.presentDownToday}`} tone="live" />
-              <Stat icon="card" label="Active passes" value={tot.subscribers} />
-              <Stat icon="alert" label="Open incidents" value={k.openIncidents} tone={k.openIncidents ? 'danger' : ''} />
-              <Stat icon="check" label="Awaiting review" value={k.awaitingReview} tone={k.awaitingReview ? 'delayed' : ''} />
-              <Stat icon="sparkle" label="Trip rating, 30 days" value={quality.data ? (quality.data.rating == null ? '—' : `${quality.data.rating} / 5`) : null} tone="live" />
-              <Stat icon="alert" label="Open complaints" value={quality.data?.open_complaints} tone={quality.data?.open_complaints ? 'danger' : ''} />
+              <Stat icon="users" label="Present today · Inbound / Outbound" value={`${k.presentUpToday} / ${k.presentDownToday}`} tone="live" color="green" />
+              <Stat icon="card" label="Active passes" value={tot.subscribers} color="gold" />
+              <Stat icon="alert" label="Open incidents" value={k.openIncidents} tone={k.openIncidents ? 'danger' : ''} color="red" />
+              <Stat icon="check" label="Awaiting review" value={k.awaitingReview} tone={k.awaitingReview ? 'delayed' : ''} color="violet" />
+              <Stat icon="sparkle" label="Trip rating, 30 days" value={quality.data ? (quality.data.rating == null ? '—' : `${quality.data.rating} / 5`) : null} tone="live" color="teal" />
+              <Stat icon="alert" label="Open complaints" value={quality.data?.open_complaints} tone={quality.data?.open_complaints ? 'danger' : ''} color="rose" />
             </div>
           </div>
         </div>
 
         <nav className="kit-shortcuts" aria-label="Shortcuts">
           {SHORTCUTS.map(([href, icon, label, hint, tone]) => (
-            <a key={href} className={`kit-shortcut tone-${tone}`} href={href}>
+            <a key={href} className={`kit-shortcut tone-${tone}`} data-c={tone} href={href}>
               <span className="ks-icon"><Icon name={icon} size={20} /></span>
               <span className="ks-text"><b>{label}</b><small>{hint}</small></span>
               <span className="ks-go"><Icon name="arrow" size={15} /></span>
@@ -168,10 +182,10 @@ export default function Dashboard() {
 
         <h2 className="kit-section-title">Operations</h2>
         <div className="kit-stats">
-          <Stat icon="signal" label="Avg update delay" value={k.avgUpdateDelayS == null ? '—' : `${k.avgUpdateDelayS}s`} hint="Device time to server time, last hour" />
-          <Stat icon="shield" label="GPS rejects today" value={k.gpsFailuresToday} tone={k.gpsFailuresToday ? 'delayed' : ''} />
-          <Stat icon="user" label="Active drivers" value={tot.drivers} />
-          <Stat icon="route" label="Active routes" value={tot.routes} />
+          <Stat icon="signal" label="Avg update delay" value={k.avgUpdateDelayS == null ? '—' : `${k.avgUpdateDelayS}s`} hint="Device time to server time, last hour" color="teal" />
+          <Stat icon="shield" label="GPS rejects today" value={k.gpsFailuresToday} tone={k.gpsFailuresToday ? 'delayed' : ''} color="amber" />
+          <Stat icon="user" label="Active drivers" value={tot.drivers} color="violet" />
+          <Stat icon="route" label="Active routes" value={tot.routes} color="navy" />
         </div>
 
         <ViewList label="Live operations">

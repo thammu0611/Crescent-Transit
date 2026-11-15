@@ -6,6 +6,7 @@ import { api, ApiError } from '../lib/api.js';
 import { OCCUPANCY, time } from '../lib/format.js';
 import { useServerInfo } from '../lib/serverInfo.js';
 import { useSession } from '../lib/session.jsx';
+import GreetHeader from '../components/GreetHeader.jsx';
 import Icon from '../components/Icon.jsx';
 import { Badge, ErrorText, Modal, Notice, SearchBox } from '../components/ui.jsx';
 import { ViewCard, ViewList } from '../components/adminkit.jsx';
@@ -531,6 +532,7 @@ export default function DriverApp() {
 
   return (
     <main className="driver-layout">
+      <div className="driver-greet"><GreetHeader title={t('My trip')} /></div>
       <section className="driver-controls">
         <section className="route-card drive-card">
           <div className="route-pick static">

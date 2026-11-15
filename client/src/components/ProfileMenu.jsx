@@ -1,20 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
 import { useT } from '../lib/i18n.js';
-import { PHOTO_CHANGED, squarePhoto } from '../lib/photo.js';
+import { PHOTO_CHANGED, readPhoto, useMyPhoto } from '../lib/photo.js';
 import { useSession } from '../lib/session.jsx';
 import { savedTheme, saveTheme } from '../lib/theme.js';
 import { LANGUAGES } from '../../../shared/i18n.js';
 import Icon from './Icon.jsx';
+import PhotoCropper from './PhotoCropper.jsx';
 
-const initials = (name = '') => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+const initials = (name = '') => name.replace(/^(Mr|Mrs|Ms|Dr)\.?\s*/i, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
 /** The signed-in person in the top bar: their picture, and a menu for their account. */
 export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealth = null }) {
   const { user, token, signOut, refresh } = useSession();
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [photo, setPhoto] = useState(null);
+  const photo = useMyPhoto();
+  const [picked, setPicked] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [theme, setTheme] = useState(savedTheme);
@@ -24,16 +26,6 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
   };
   const root = useRef(null);
   const file = useRef(null);
-
-  const load = useCallback(() => {
-    api('/api/me/photo', { token }).then((r) => setPhoto(r.photo)).catch(() => {});
-  }, [token]);
-
-  useEffect(() => {
-    load();
-    window.addEventListener(PHOTO_CHANGED, load);
-    return () => window.removeEventListener(PHOTO_CHANGED, load);
-  }, [load]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -52,8 +44,8 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
     setError(null);
     try {
       await api('/api/me/photo', { token, method: 'PUT', body: { photo: next } });
-      setPhoto(next);
       window.dispatchEvent(new Event(PHOTO_CHANGED));
+      setPicked(null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -61,11 +53,12 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
     }
   };
   const choose = async (e) => {
-    const picked = e.target.files[0];
+    const chosen = e.target.files[0];
     e.target.value = '';
-    if (!picked) return;
+    if (!chosen) return;
+    setError(null);
     try {
-      await save(await squarePhoto(picked));
+      setPicked(await readPhoto(chosen)); // placed in the round frame before saving
     } catch (err) {
       setError(err.message || 'That picture could not be read');
     }
@@ -105,7 +98,7 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
           <input ref={file} type="file" accept="image/*" hidden onChange={choose} />
           {error && <p className="profile-error" role="alert">{error}</p>}
           <div className="profile-language">
-              <span><Icon name="sparkle" size={16} /> {t('Language')}</span>
+              <span><span className="pref-icon"><Icon name="edit" size={15} /></span> {t('Language')}</span>
               <span className="profile-switch">
                 {LANGUAGES.map((l) => (
                   <button key={l.value} type="button" aria-pressed={user.language === l.value} className={user.language === l.value ? 'on' : ''} onClick={() => setLanguage(l.value)}>{l.label}</button>
@@ -113,7 +106,7 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
               </span>
             </div>
           <div className="profile-language">
-            <span><Icon name="eye" size={16} /> {t('Theme')}</span>
+            <span><span className="pref-icon"><Icon name="sun" size={15} /></span> {t('Theme')}</span>
             <span className="profile-switch" role="group" aria-label={t('Theme')}>
               {[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([value, label]) => (
                 <button key={value} type="button" aria-pressed={theme === value} className={theme === value ? 'on' : ''} onClick={() => chooseTheme(value)}>{t(label)}</button>
@@ -125,6 +118,8 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
           <button type="button" role="menuitem" className="profile-item danger" onClick={() => { signOut(); window.location.hash = '#/'; }}><Icon name="logout" size={16} /> {t('Sign out')}</button>
         </div>
       )}
+      {/* Kept outside the menu: clicking in the dialog closes the menu, not the dialog. */}
+      {picked && <PhotoCropper bitmap={picked} busy={busy} error={error} onSave={save} onCancel={() => { setPicked(null); setError(null); }} />}
     </div>
   );
 }

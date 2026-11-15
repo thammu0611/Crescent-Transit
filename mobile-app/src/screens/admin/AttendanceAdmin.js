@@ -258,8 +258,8 @@ function BusStudents({ token, bus, onClose, onUnbind }) {
         <Row gap={12}>
           <RouteCode code={bus.route_code} />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 17, ...F[700], color: C.ink }} numberOfLines={1}>{bus.route_name}</Text>
-            <Txt small muted numberOfLines={1}>{bus.driver_name ? `Driver ${bus.driver_name}` : 'No driver assigned'}{bus.registration_number ? ` · ${bus.registration_number}` : ''}</Txt>
+            <Text style={{ fontSize: 17, ...F[700], color: C.ink }} numberOfLines={2}>{bus.route_name}</Text>
+            <Txt small muted numberOfLines={2}>{bus.driver_name ? `Driver ${bus.driver_name}` : 'No driver assigned'}{bus.registration_number ? ` · ${bus.registration_number}` : ''}</Txt>
           </View>
           {bus.live ? <Badge tone="live">On trip</Badge> : null}
         </Row>
@@ -330,14 +330,14 @@ function BusesTab({ buses, onOpen }) {
                 </Row>
                 <View>
                   <Txt bold numberOfLines={1}>{b.fleet_code}</Txt>
-                  <Txt small muted numberOfLines={1}>{b.route_name ?? '—'}</Txt>
+                  <Txt small muted numberOfLines={2}>{b.route_name ?? '—'}</Txt>
                 </View>
                 <Row gap={6}>
                   <Icon name="users" size={13} color={C.navy} />
                   <Txt small bold>{b.students ?? 0}</Txt>
                   <Txt small muted style={{ flex: 1 }} numberOfLines={1}>students</Txt>
                 </Row>
-                <Txt small muted numberOfLines={1}>{b.driver_name ?? 'No driver'}</Txt>
+                <Txt small muted numberOfLines={2} style={{ marginTop: 'auto' }}>{b.driver_name ?? 'No driver'}</Txt>
               </Pressable>
             );
           })}

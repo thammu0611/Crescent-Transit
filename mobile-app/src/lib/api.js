@@ -87,6 +87,31 @@ export async function download(path, token, name) {
   }
 }
 
+/**
+ * Let the user pick a PDF or a photo of a document and return it for the
+ * server to read: { data (base64), mimeType, name }, or null if cancelled.
+ */
+export async function pickDocumentFile() {
+  const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true, multiple: false });
+  if (result.canceled || !result.assets?.length) return null;
+  const asset = result.assets[0];
+  const mimeType = asset.mimeType ?? (asset.name?.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+  let data;
+  if (Platform.OS === 'web' && asset.file) {
+    // The browser hands over a File: read it as base64 there.
+    data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).replace(/^data:[^,]*,/, ''));
+      reader.onerror = () => reject(new Error('That file could not be read'));
+      reader.readAsDataURL(asset.file);
+    });
+  } else {
+    data = await new File(asset.uri).base64();
+  }
+  if (data.length > 11_000_000) throw new Error('That file is larger than 8 MB. Use a smaller photo or PDF.');
+  return { data, mimeType, name: asset.name ?? 'document' };
+}
+
 /** Let the user pick a CSV file and return its text, or null if cancelled. */
 export async function pickTextFile() {
   const result = await DocumentPicker.getDocumentAsync({ type: ['text/csv', 'text/comma-separated-values', 'text/plain', 'application/vnd.ms-excel', '*/*'], copyToCacheDirectory: true });

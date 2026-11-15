@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, Vibration, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChangePasswordSheet } from '../components/ChangePassword.js';
-import { ViewCard } from '../components/adminkit.js';
+import { ViewCard, ViewList } from '../components/adminkit.js';
 import Appearance from '../components/Appearance.js';
 import DayBanner from '../components/DayBanner.js';
 import { FoundItem, FuelEntry, PassScanner, PreTripCheck } from '../components/DriverTools.js';
@@ -819,7 +819,8 @@ export default function DriverApp() {
 
         <DayBanner />
 
-        {/* Location source and the rest of the driver's tools. */}
+        {/* The driver's tools, grouped: the bus, the riders, and the rest. */}
+        <ViewList label="Bus">
         <ViewCard
           icon="signal"
           title={t('Location source')}
@@ -871,11 +872,14 @@ export default function DriverApp() {
           ) : null}
         </ViewCard>
         <PreTripCheck token={token} />
+        <FuelEntry token={token} />
+        </ViewList>
+        <ViewList label="Students">
         <PassScanner token={token} tripRunning={Boolean(trip)} />
         <StudentList token={token} tripId={trip?.id ?? null} />
         {trip && <BoardedList token={token} tripId={trip.id} />}
-        <FuelEntry token={token} />
         <FoundItem token={token} />
+        </ViewList>
         <Appearance />
 
         {demo && trip && (

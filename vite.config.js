@@ -13,6 +13,7 @@ export default defineConfig({
     fs: { allow: ['..'] }, // the client imports ../shared (geo + freshness)
     proxy: {
       '/api': API,
+      '/ocr': API, // the document reader's OCR engine (server/app.js)
       '/socket.io': { target: API, ws: true },
     },
   },

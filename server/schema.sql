@@ -632,6 +632,8 @@ CREATE TABLE IF NOT EXISTS special_days (
 
 -- Bus documents, service by distance, fuel (server/fleetcare.js).
 ALTER TABLE buses ADD COLUMN IF NOT EXISTS odometer_km         INT;
+-- km added from GPS trips since the last real reading (fuel entry or the form).
+ALTER TABLE buses ADD COLUMN IF NOT EXISTS odometer_gps_km     INT NOT NULL DEFAULT 0;
 ALTER TABLE buses ADD COLUMN IF NOT EXISTS service_interval_km INT NOT NULL DEFAULT 10000;
 ALTER TABLE buses ADD COLUMN IF NOT EXISTS last_service_km     INT;
 ALTER TABLE buses ADD COLUMN IF NOT EXISTS last_service_on     DATE;

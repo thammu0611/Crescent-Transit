@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from './Icon.jsx';
 import { DIRECTION_TEXT } from '../../../shared/direction.js';
@@ -62,10 +62,35 @@ export function ListCard({ lead, title, lines = [], count, countLabel, side, ton
   );
 }
 
-export function Stat({ label, value, tone, hint, icon }) {
+// Each stat card has its own colour: its state when it has one (live, late, danger),
+// otherwise the colour of what it counts, so a row of cards reads at a look.
+const STATE_COLOUR = { live: 'green', delayed: 'amber', danger: 'red', info: 'sky' };
+const ICON_COLOUR = {
+  bus: 'navy', route: 'navy', pin: 'navy', shield: 'navy', map: 'navy',
+  signal: 'teal', chart: 'teal', users: 'sky', user: 'sky',
+  card: 'gold', sparkle: 'gold', clock: 'gold', wallet: 'gold',
+  check: 'green', list: 'teal', edit: 'slate', alert: 'rose', bell: 'violet',
+};
+export const statColour = (tone, icon) => STATE_COLOUR[tone] ?? ICON_COLOUR[icon] ?? 'navy';
+
+// Colours a card may switch to when its neighbour already has its colour.
+const SPARE_COLOURS = ['navy', 'teal', 'gold', 'sky', 'violet', 'indigo', 'rose', 'slate'];
+
+export function Stat({ label, value, tone, hint, icon, color }) {
   const t = useT();
+  const own = color ?? statColour(tone, icon);
+  const ref = useRef(null);
+  // No two cards in a row share a colour: a card without a state of its own (live, late,
+  // danger) moves to the first colour no earlier card in the row is using.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || color || STATE_COLOUR[tone]) { if (el) el.dataset.c = own; return; }
+    const before = [];
+    for (let n = el.parentElement?.firstElementChild; n && n !== el; n = n.nextElementSibling) if (n.dataset?.c) before.push(n.dataset.c);
+    el.dataset.c = before.includes(own) ? SPARE_COLOURS.find((c) => !before.includes(c)) ?? own : own;
+  });
   return (
-    <div className={`stat ${tone ?? ''}${icon ? ' with-icon' : ''}`} title={hint}>
+    <div ref={ref} className={`stat ${tone ?? ''}${icon ? ' with-icon' : ''}`} data-c={own} title={hint}>
       {icon && <span className="stat-icon"><Icon name={icon} size={18} /></span>}
       <b>{value ?? '—'}</b>
       <span>{t(label)}</span>

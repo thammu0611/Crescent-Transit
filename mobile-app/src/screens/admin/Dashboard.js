@@ -4,15 +4,16 @@ import { Block, ColumnChart, Donut, HBars, SERIES, dayLabel, ViewCard } from '..
 import Icon from '../../components/Icon.js';
 import { MiniMap } from '../../components/maps';
 import {
-  Avatar, Badge, Button, HeaderIconButton, IconBubble, LinkButton, ListCard, RouteCode, Row, Screen, SearchBox, SectionTitle,
+  alpha, Avatar, Badge, Button, CardTint, HeaderIconButton, IconBubble, LinkButton, ListCard, RouteCode, Row, Screen, SearchBox, SectionTitle,
   Segmented, Skeleton, Stat, StatGrid, Text, Txt,
 } from '../../components/ui.js';
 import { api, getSocket } from '../../lib/api.js';
-import { METHOD_TEXT, dateTime, longDate, time } from '../../lib/format.js';
+import { METHOD_TEXT, dateTime, time } from '../../lib/format.js';
 import { useAsync, useLive, useRefresh } from '../../lib/hooks.js';
 import { greeting } from '../../lib/schedule.js';
 import { useSession } from '../../lib/session.js';
-import { C, F, shadow } from '../../theme.js';
+import { ACCENT, C, F, shadow } from '../../theme.js';
+import MyAvatar from '../../components/MyAvatar.js';
 
 const titleCase = (k) => k.replaceAll('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
@@ -34,9 +35,9 @@ export function Card({ title, icon, onSeeAll, seeAll = 'See all', children, righ
 export function GreetHeader({ title, right, name }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 4 }}>
-      <Avatar name={name ?? title} size={46} />
+      <MyAvatar size={46} />
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Txt muted small numberOfLines={1}>{greeting()} · {longDate()}</Txt>
+        <Txt muted small numberOfLines={1}>{greeting()} · {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</Txt>
         <Text style={{ color: C.ink, fontSize: 24, lineHeight: 30, ...F.displayBold }} numberOfLines={1}>{title}</Text>
       </View>
       {right}
@@ -46,15 +47,18 @@ export function GreetHeader({ title, right, name }) {
 
 /** One key figure: an icon, its name, a big number and a short note. Opens its module. */
 function Kpi({ icon, accent, label, value, note, tone, onPress }) {
+  // Each tile in its own colour: its state when it has one, else its accent.
+  const color = tone ?? (C.dark && accent === 'navy' ? C.gold : (ACCENT[accent] ?? ACCENT.navy)[1]);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}: ${value ?? '—'}`} style={({ pressed }) => [{ flexBasis: '47%', flexGrow: 1, minHeight: 98, padding: 14, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line2, justifyContent: 'space-between' }, pressed && { opacity: 0.85 }]}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}: ${value ?? '—'}`} style={({ pressed }) => [{ flexBasis: '47%', flexGrow: 1, minHeight: 98, padding: 14, borderRadius: 18, backgroundColor: C.card, borderWidth: 1, borderColor: alpha(color, 0.25), justifyContent: 'space-between', overflow: 'hidden' }, pressed && { opacity: 0.85 }]}>
+      <CardTint color={color} />
       <Row gap={8}>
         <IconBubble name={icon} accent={accent} size={28} iconSize={15} />
         <Text style={{ fontSize: 12.5, ...F[500], color: C.muted, flex: 1 }} numberOfLines={1}>{label}</Text>
       </Row>
       <Row gap={6} style={{ alignItems: 'flex-end' }}>
         <Text style={{ fontSize: 26, lineHeight: 32, ...F.displayBold, color: tone ?? C.ink, fontVariant: ['tabular-nums'] }}>{value ?? '—'}</Text>
-        {note ? <Txt muted small style={{ paddingBottom: 4, flexShrink: 1 }} numberOfLines={1}>{note}</Txt> : null}
+        {note ? <Txt muted small style={{ paddingBottom: 4, flexShrink: 1 }} numberOfLines={2}>{note}</Txt> : null}
       </Row>
     </Pressable>
   );

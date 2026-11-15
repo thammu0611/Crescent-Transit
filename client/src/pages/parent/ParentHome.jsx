@@ -7,10 +7,11 @@ import { useSession } from '../../lib/session.jsx';
 import { useAction, useAsync } from '../../lib/useAsync.js';
 import { CHILD_STATUS_TEXT } from '../../../../shared/service.js';
 import { DIRECTION_TEXT } from '../../../../shared/direction.js';
+import GreetHeader from '../../components/GreetHeader.jsx';
 import Icon from '../../components/Icon.jsx';
 import { Avatar, ViewList } from '../../components/adminkit.jsx';
 import DayBanner from '../../components/DayBanner.jsx';
-import { Badge, Empty, ErrorText, Field, ListCard, Page, Panel } from '../../components/ui.jsx';
+import { Badge, Empty, ErrorText, Field, ListCard, Panel } from '../../components/ui.jsx';
 
 const STATE_TONE = { NOT_YET: 'offline', ON_BOARD: 'info', REACHED: 'live', WAITING: 'delayed' };
 
@@ -72,7 +73,8 @@ export default function ParentHome() {
   const list = children.data;
   const alerts = useAsync(() => api('/api/parent/alerts', { token }), [token]);
   return (
-    <Page eyebrow={user.name} title={t('My children')}>
+    <main className="page app-page">
+      <GreetHeader title={t('My children')} />
       <ErrorText>{children.error?.message}</ErrorText>
       <DayBanner />
       {list == null ? <div className="skeleton-block" /> : list.length === 0 ? <Empty>No student is linked yet. Ask your child for a code from Services in their app.</Empty> : (
@@ -94,6 +96,6 @@ export default function ParentHome() {
       </Panel>
       <p className="fine-print">You see the bus and today's trips, never your child's phone location.</p>
       <ViewList label="Account"><YourData /></ViewList>
-    </Page>
+    </main>
   );
 }

@@ -2,6 +2,25 @@
 // screens, messages, empty states and help text. Merged into the main list in
 // i18n.js (entries there win). The English text is the key.
 export const TA_MORE = {
+  'Linked parents': 'இணைக்கப்பட்ட பெற்றோர்',
+  'Place your photo': 'உங்கள் புகைப்படத்தை அமைக்கவும்',
+  'Drag to move it, and zoom so your face fits the circle.': 'நகர்த்த இழுக்கவும், உங்கள் முகம் வட்டத்துக்குள் பொருந்தும்படி பெரிதாக்கவும்.',
+  'Photo position. Use the arrow keys to move it.': 'புகைப்பட நிலை. நகர்த்த அம்புக்குறி விசைகளைப் பயன்படுத்தவும்.',
+  'Zoom': 'பெரிதாக்கு',
+  'Reset': 'மீட்டமை',
+  'Save photo': 'புகைப்படத்தைச் சேமி',
+  'Cancel': 'ரத்து செய்',
+  'Route and stop': 'வழி மற்றும் நிறுத்தம்',
+  'Preferences': 'விருப்பங்கள்',
+  'Follows your phone unless you pick one.': 'நீங்கள் தேர்வு செய்யாவிட்டால் உங்கள் தொலைபேசியைப் பின்பற்றும்.',
+  'Close and reopen the app to see the change.': 'மாற்றத்தைப் பார்க்க செயலியை மூடி மீண்டும் திறக்கவும்.',
+  'How your trips are recorded': 'உங்கள் பயணங்கள் எவ்வாறு பதிவு செய்யப்படுகின்றன',
+  'Parent access, route change, lost and found': 'பெற்றோர் அணுகல், வழி மாற்றம், தொலைந்தவை',
+  'Phone notifications': 'தொலைபேசி அறிவிப்புகள்',
+  'Always on': 'எப்போதும் இயக்கத்தில்',
+  'Alerts arrive even when the app is closed.': 'செயலி மூடியிருந்தாலும் எச்சரிக்கைகள் வரும்.',
+  'Not available in this build.': 'இந்தப் பதிப்பில் கிடைக்காது.',
+  'Unavailable': 'கிடைக்கவில்லை',
   '· drivers': '· ஓட்டுநர்கள்',
   '· From college': '· கல்லூரியிலிருந்து',
   '· renewed until': '· வரை புதுப்பிக்கப்பட்டது',
@@ -1041,6 +1060,9 @@ function dateText(s) {
 
 /** Lines with numbers or names in them: [pattern, Tamil]. Tried after an exact match fails. */
 export const TA_PATTERNS = [
+  [/^Asks "Did you board\?" when your bus leaves (.+)\.$/, '$1-இலிருந்து பேருந்து புறப்படும்போது "நீங்கள் ஏறினீர்களா?" என்று கேட்கும்.'],
+  [/^About 5 minutes before the bus reaches (.+)\.$/, 'பேருந்து $1-ஐ அடைவதற்கு சுமார் 5 நிமிடங்களுக்கு முன்.'],
+  [/^Delays and changes for Route (.+)\.$/, 'வழி $1-க்கான தாமதங்கள் மற்றும் மாற்றங்கள்.'],
   [/^\+(\d+) min$/, '+$1 நிமி'],
   [/^(\d+)[–-](\d+) min$/, '$1–$2 நிமி'],
   [/^(\d+) min$/, '$1 நிமி'],

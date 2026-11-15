@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Linking, Pressable, Switch, View } from 'react-native';
-import { ViewCard } from '../../components/adminkit.js';
+import { ListRow, ViewCard, ViewList } from '../../components/adminkit.js';
 import { ChangePasswordSheet } from '../../components/ChangePassword.js';
 import Icon from '../../components/Icon.js';
 import {
-  Avatar, Badge, Button, Collapsible, confirm, ErrorText, IconBubble, KV, Notice, PageHead, Screen, SectionTitle, Select, Text, TextField, Txt,
+  Avatar, Badge, Button, Collapsible, confirm, ErrorText, IconBubble, KV, Notice, PageHead, Screen, Select, Text, TextField, Txt,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
 import { useAsync } from '../../lib/hooks.js';
 import { notificationsAvailable, pushRegistered, registerForPush } from '../../lib/notify.js';
 import { refreshPlan } from '../../lib/sampler.js';
-import Appearance from '../../components/Appearance.js';
 import YourData from '../../components/YourData.js';
 import { useSession } from '../../lib/session.js';
+import { useT } from '../../lib/offline.js';
+import Appearance from '../../components/Appearance.js';
 import { C, F, G, R, shadow } from '../../theme.js';
 import { call } from '../PublicHome.js';
+import MyAvatar from '../../components/MyAvatar.js';
 
 // Bus fees are paid on the university's DigiiCampus portal. Fee status and
 // sign-in checks need API access from Digii; until then the app links there.
@@ -102,8 +104,9 @@ function Method({ icon, title, hint, tone, state }) {
   );
 }
 
-export default function Settings() {
+export default function Settings({ navigation }) {
   const { token, user, entitlement, refresh, signOut } = useSession();
+  const t = useT();
   const routes = useAsync(() => api('/api/routes'), []);
   const contacts = useAsync(() => api('/api/contacts'), []);
   const plan = useAsync(() => (token ? api('/api/attendance/plan', { token }) : Promise.resolve(null)), [token, user?.locationConsent, user?.travelWindows]);
@@ -170,11 +173,11 @@ export default function Settings() {
 
   return (
     <Screen safeTop>
-      <PageHead icon="settings" colors={G.navy} eyebrow="Student" title="Settings" subtitle="Your account, your bus, reminders and privacy." />
+      <PageHead title="Settings" />
 
-      <View style={{ backgroundColor: C.navyFill, borderRadius: R.lg, padding: 16, gap: 12, ...shadow }}>
+      <View style={{ backgroundColor: C.navyFill, borderRadius: R.lg, padding: 16, gap: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', ...shadow }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar name={user.name} size={58} light />
+          <MyAvatar size={58} light />
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={{ color: '#fff', fontSize: 18, ...F[700] }}>{user.name}</Text>
             <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>@{user.username}{user.registerNo ? ` · ${user.registerNo}` : ''}{user.department ? ` · ${user.department}` : ''}</Text>
@@ -184,18 +187,16 @@ export default function Settings() {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {chip('route', user.homeRouteCode ? `Route ${user.homeRouteCode}` : 'No route', false)}
           {chip('pin', stop?.name ?? 'No stop chosen', false)}
-          {chip('bell', `Boarding check ${user.boardingReminders ? 'on' : 'off'}`, user.boardingReminders)}
-          {chip('shield', user.locationConsent ? 'Location consent given' : 'No location consent', user.locationConsent)}
         </View>
       </View>
 
       <Notice>{message}</Notice>
       <ErrorText>{error}</ErrorText>
 
-      {/* The three settings groups fold; each shows its current state while closed. */}
+      <ViewList label="Travel">
       <ViewCard
         icon="route"
-        title="Travel"
+        title="Route and stop"
         summary={route.data ? `Route ${route.data.code}${stop ? ` · ${stop.name}` : ' · choose your stop'}` : 'Choose your route and stop'}
       >
         <Txt muted small>Sets your home screen, arrival times and the boarding check.</Txt>
@@ -242,54 +243,32 @@ export default function Settings() {
             keyboardType="numbers-and-punctuation"
           />
         ) : null}
-        <Select
-          label="Language"
-          value={form.language}
-          onChange={set('language')}
-          options={[{ value: 'en', label: 'English' }, { value: 'ta', label: 'தமிழ் (Tamil)' }]}
-        />
         <Button title="Save travel details" busy={busy} onPress={saveTravel} />
       </ViewCard>
+      <BusFee />
+      </ViewList>
 
       <Appearance />
 
-      <ViewCard
-        icon="bell"
-        title="Reminders and notifications"
-        summary={`Boarding check ${user.boardingReminders ? 'on' : 'off'} · notifications ${pushOn ? 'on' : 'off'}`}
-      >
-        <SettingRow
-          first
-          icon="bus"
-          accent={user.boardingReminders ? 'emerald' : 'navy'}
-          title="Boarding check"
-          control={<Toggle value={user.boardingReminders} disabled={busy} label="Boarding check" onChange={(v) => save({ boardingReminders: v }, v ? 'Boarding check is on.' : 'Boarding check is off.')} />}
-        >
-          <Txt muted small>Asks "Did you board?" when your bus leaves {stop?.name ?? 'your stop'}, every 10 minutes until you answer.</Txt>
-        </SettingRow>
-        <SettingRow
-          icon="clock"
-          accent={user.arrivalAlerts ? 'emerald' : 'navy'}
-          title="Bus is almost here"
-          control={<Toggle value={user.arrivalAlerts} disabled={busy} label="Bus is almost here" onChange={(v) => save({ arrivalAlerts: v }, v ? 'You will be told when the bus is near.' : 'Bus alerts are off.')} />}
-        >
-          <Txt muted small>A message about 5 minutes before the bus reaches {stop?.name ?? 'your stop'}.</Txt>
-        </SettingRow>
-        <SettingRow
-          icon="bell"
-          title="Phone notifications"
-          control={pushOn ? <Badge tone="live">On</Badge> : notificationsAvailable ? <Button small variant="ghost" title="Turn on" onPress={turnOnPush} /> : <Badge>Unavailable</Badge>}
-        >
-          <Txt muted small>{notificationsAvailable ? 'Reminders and alerts arrive even when the app is closed.' : 'Not available in this build; questions show while the app is open.'}</Txt>
-        </SettingRow>
-        <SettingRow icon="alert" accent="red" title="Route alerts">
-          <Txt muted small>Delays and changes for Route {user.homeRouteCode ?? '—'}. Always on.</Txt>
-        </SettingRow>
-      </ViewCard>
+      <ViewList label="Reminders and notifications">
+        <ListRow icon="bus" accent={user.boardingReminders ? 'emerald' : 'navy'} title="Boarding check"
+          summary={`Asks "Did you board?" when your bus leaves ${stop?.name ?? 'your stop'}.`}
+          right={<Toggle value={user.boardingReminders} disabled={busy} label="Boarding check" onChange={(v) => save({ boardingReminders: v }, v ? 'Boarding check is on.' : 'Boarding check is off.')} />} />
+        <ListRow icon="clock" accent={user.arrivalAlerts ? 'emerald' : 'navy'} title="Bus is almost here"
+          summary={`About 5 minutes before the bus reaches ${stop?.name ?? 'your stop'}.`}
+          right={<Toggle value={user.arrivalAlerts} disabled={busy} label="Bus is almost here" onChange={(v) => save({ arrivalAlerts: v }, v ? 'You will be told when the bus is near.' : 'Bus alerts are off.')} />} />
+        <ListRow icon="bell" title="Phone notifications"
+          summary={notificationsAvailable ? 'Alerts arrive even when the app is closed.' : 'Not available in this build.'}
+          right={pushOn ? <Badge tone="live">On</Badge> : notificationsAvailable ? <Button small variant="ghost" title="Turn on" onPress={turnOnPush} /> : <Badge>Unavailable</Badge>} />
+        <ListRow icon="alert" accent="red" title="Route alerts" summary={`Delays and changes for Route ${user.homeRouteCode ?? '—'}.`} right={<Badge tone="info">Always on</Badge>} />
+      </ViewList>
 
+      <ViewList label="Attendance and privacy">
+        <ListRow icon="pin" title="Use my location for attendance" summary="Optional. Readings are compared with the bus and thrown away."
+          right={<Toggle value={user.locationConsent} disabled={busy} label="Location consent" onChange={(v) => save({ locationConsent: v }, v ? 'Thank you - phone GPS attendance is on.' : 'Consent withdrawn. Your location is no longer used.')} />} />
       <ViewCard
         icon="shield"
-        title="Attendance and privacy"
+        title="How your trips are recorded"
         summary={`Phone GPS ${user.locationConsent ? (p?.shouldSample ? 'active' : 'allowed') : 'off'} · bus QR always`}
       >
         <View style={{ gap: 8 }}>
@@ -300,19 +279,12 @@ export default function Settings() {
         {p && user.locationConsent && !p.shouldSample ? (
           <Txt muted small>Phone GPS is paused: {!p.deviceBound ? 'this phone is not bound yet (open Attendance).' : !p.inTravelWindow ? `outside your travel window (${p.travelWindows}).` : 'waiting for the next check.'}</Txt>
         ) : null}
-        <SettingRow
-          icon="pin"
-          title="Use my location for attendance"
-          control={<Toggle value={user.locationConsent} disabled={busy} label="Location consent" onChange={(v) => save({ locationConsent: v }, v ? 'Thank you - phone GPS attendance is on.' : 'Consent withdrawn. Your location is no longer used.')} />}
-        >
-          <Txt muted small>Optional. Readings are compared with the bus and thrown away.</Txt>
-        </SettingRow>
         <Collapsible title="Read the privacy notice"><PrivacyNotice /></Collapsible>
       </ViewCard>
+      </ViewList>
 
-      <BusFee />
-
-      <SectionTitle title="More" />
+      <ViewList label="More">
+      <ListRow icon="sparkle" title="Services" summary="Parent access, route change, lost and found" onPress={() => navigation.navigate('Services')} />
       <ViewCard icon="lock" title="Account and security" summary={`@${user.username}${user.registerNo ? ` · ${user.registerNo}` : ''}`}>
         <View style={{ gap: 6 }}>
           <KV k="Username" v={`@${user.username}`} />
@@ -351,6 +323,7 @@ export default function Settings() {
           <KV k="Access" v={entitlement?.required ? 'Monthly subscription' : 'Included for every student'} />
         </View>
       </ViewCard>
+      </ViewList>
 
       <Button
         title="Sign out"

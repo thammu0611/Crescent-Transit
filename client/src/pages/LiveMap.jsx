@@ -152,10 +152,10 @@ export default function LiveMap() {
             <span className={`conn ${connected ? 'on' : 'off'}`}>{connected ? 'Connected' : 'Reconnecting…'}</span>
           </div>
           <div className="stat-row">
-            <div className="stat"><b>{list.length}</b><span>on trip</span></div>
-            <div className="stat live"><b>{counts.live ?? 0}</b><span>live</span></div>
-            <div className="stat delayed"><b>{counts.delayed ?? 0}</b><span>delayed</span></div>
-            <div className="stat offline"><b>{counts.offline ?? 0}</b><span>offline</span></div>
+            <div className="stat" data-c="navy"><b>{list.length}</b><span>on trip</span></div>
+            <div className="stat live" data-c="green"><b>{counts.live ?? 0}</b><span>live</span></div>
+            <div className="stat delayed" data-c="amber"><b>{counts.delayed ?? 0}</b><span>delayed</span></div>
+            <div className="stat offline" data-c="slate"><b>{counts.offline ?? 0}</b><span>offline</span></div>
           </div>
           <label className="field">
             <span>Route</span>

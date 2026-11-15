@@ -2,11 +2,12 @@ import DayBanner from '../../components/DayBanner.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { date, etaText, OCCUPANCY, thisMonth, time } from '../../lib/format.js';
-import { dailyRuns, formatMinutes, greeting, longDate } from '../../lib/schedule.js';
+import { dailyRuns, formatMinutes, longDate } from '../../lib/schedule.js';
 import { useT } from '../../lib/i18n.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import { useLive } from '../../lib/useLive.js';
+import GreetHeader from '../../components/GreetHeader.jsx';
 import Icon from '../../components/Icon.jsx';
 import RouteMiniMap from '../../components/RouteMiniMap.jsx';
 import SelectRoute from '../../components/SelectRoute.jsx';
@@ -16,45 +17,9 @@ import { DIRECTION_TEXT } from '../../../../shared/direction.js';
 import { estimateArrival, LEAVE_ALERT_M, leavePlan } from '../../../../shared/eta.js';
 import { ageLabel } from '../../../../shared/freshness.js';
 
-/** The emerald route card: which route, the two daily runs, and the live bus. */
-function RouteCard({ routes, route, routeCode, setRouteCode, stopSeq, bus, eta, entitled, loading }) {
-  const runs = dailyRuns(route, stopSeq);
-  return (
-    <section className="route-card">
-      <label className="route-pick">
-        <Icon name="bus" size={20} />
-        <select value={routeCode} onChange={(e) => setRouteCode(e.target.value)} aria-label="Route">
-          {routes.map((r) => <option key={r.code} value={r.code}>Route no. {r.code} · {r.name}</option>)}
-        </select>
-        <Icon name="down" size={18} />
-      </label>
-      <span className="route-card-label">Next bus time</span>
-      <ul className="runs">
-        {!route && [0, 1].map((i) => <li key={i}><span className="line-skeleton" /><span className="line-skeleton short" /></li>)}
-        {runs.map((r) => (
-          <li key={r.key} className={r.next ? 'next' : r.done ? 'done' : ''}>
-            <span>{r.label}</span>
-            <b className="tabular">{formatMinutes(r.minutes)}</b>
-          </li>
-        ))}
-      </ul>
-      <div className="route-live">
-        {loading ? (
-          <><span className="pulse offline" /> Checking live status…</>
-        ) : !entitled ? (
-          <><Icon name="shield" size={15} /> Live position and arrival estimate come with the ₹60 subscription.</>
-        ) : bus ? (
-          <>
-            <span className={`pulse ${bus.freshness}`} />
-            <span>{bus.fleetCode} · {bus.freshness === 'offline' ? 'offline' : eta?.passed ? 'passed your stop' : `arrives in ${etaText(eta)}`}</span>
-          </>
-        ) : (
-          <><Icon name="clock" size={15} /> No bus running on this route right now.</>
-        )}
-      </div>
-    </section>
-  );
-}
+/** Metres as "1.2 km" or "350 m", as in the phone app. */
+const km = (m) => (m == null ? '—' : m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`);
+const leaveHeadline = (plan) => (plan.leaveInMin <= 0 ? 'Leave now' : `Leave by ${time(plan.leaveAt)}`);
 
 /** Map preview with "Tap to track" (live tracking opens the full map). */
 function MapPreview({ route, buses, stopSeq, entitled, loading }) {
@@ -76,11 +41,11 @@ function MapPreview({ route, buses, stopSeq, entitled, loading }) {
  * attendance and where their stop sits on the route.
  */
 /** One tile of the home page: what it is, the answer, one line of detail. Opens the page behind it. */
-function GlanceCard({ href, tone, icon, label, value, detail, progress }) {
+function GlanceCard({ href, tone, icon, label, value, detail, progress, live }) {
   return (
     <a className={`glance-card ${tone}`} href={href}>
       <span className="glance-top">
-        <span className="glance-label">{label}</span>
+        <span className="glance-label">{live && <i className="glance-live" aria-hidden="true" />}{label}</span>
         <span className="glance-icon"><Icon name={icon} size={18} /></span>
       </span>
       <b className="glance-value tabular">{value}</b>
@@ -119,15 +84,16 @@ function Glance({ route, stopSeq, bus, eta, entitled, loading, month, day }) {
       />
       <GlanceCard
         href={entitled ? '#/map' : '#/pay'}
-        tone={reporting ? 'green' : 'slate'}
+        tone={reporting ? (bus.freshness === 'delayed' ? 'amber' : 'green') : eta?.passed ? 'navy' : 'slate'}
         icon="bus"
+        live={reporting}
         label={t('Your bus')}
         value={live}
         detail={reporting ? `${busName} · ${t('sharing live')}` : busName}
       />
       <GlanceCard
         href={entitled ? '#/attendance' : '#/pay'}
-        tone="green"
+        tone="teal"
         icon="check"
         label={t('This month')}
         value={entitled ? (present == null ? '…' : `${present} ${t(present === 1 ? 'trip' : 'trips')}`) : '—'}
@@ -328,6 +294,46 @@ function ReportProblem({ token, user, onClose }) {
   );
 }
 
+/** The emerald route card: which route, the two daily runs, and the live bus. */
+function RouteCard({ routes, route, routeCode, setRouteCode, stopSeq, bus, eta, entitled, loading }) {
+  const runs = dailyRuns(route, stopSeq);
+  return (
+    <section className="route-card">
+      <label className="route-pick">
+        <Icon name="bus" size={20} />
+        <select value={routeCode} onChange={(e) => setRouteCode(e.target.value)} aria-label="Route">
+          {routes.map((r) => <option key={r.code} value={r.code}>Route no. {r.code} · {r.name}</option>)}
+        </select>
+        <Icon name="down" size={18} />
+      </label>
+      <span className="route-card-label">Next bus time</span>
+      <ul className="runs">
+        {!route && [0, 1].map((i) => <li key={i}><span className="line-skeleton" /><span className="line-skeleton short" /></li>)}
+        {runs.map((r) => (
+          <li key={r.key} className={r.next ? 'next' : r.done ? 'done' : ''}>
+            <span>{r.label}</span>
+            <b className="tabular">{formatMinutes(r.minutes)}</b>
+          </li>
+        ))}
+      </ul>
+      <div className="route-live">
+        {loading ? (
+          <><span className="pulse offline" /> Checking live status…</>
+        ) : !entitled ? (
+          <><Icon name="shield" size={15} /> Live position and arrival estimate come with the ₹60 subscription.</>
+        ) : bus ? (
+          <>
+            <span className={`pulse ${bus.freshness}`} />
+            <span>{bus.fleetCode} · {bus.freshness === 'offline' ? 'offline' : eta?.passed ? 'passed your stop' : `arrives in ${etaText(eta)}`}</span>
+          </>
+        ) : (
+          <><Icon name="clock" size={15} /> No bus running on this route right now.</>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function StudentHome() {
   const { token, user, entitlement } = useSession();
   const routes = useAsync(() => api('/api/routes'), []);
@@ -389,18 +395,16 @@ export default function StudentHome() {
 
   return (
     <main className="page app-page">
-      <header className="app-greet">
-        <div>
-          <span className="greet-sub">{greeting()},</span>
-          <h1>{first}</h1>
-          <span className="greet-metas">
+      <GreetHeader
+        nameInTitle
+        title={first}
+        right={<a className="bell" href="#/alerts" aria-label="Notifications"><Icon name="bell" size={20} /></a>}
+        metas={<>
             <span className="greet-meta"><Icon name="pin" size={14} /> {stop ? `${stop.name} · Route ${route.data.code}` : route.data ? 'Choose your stop in Settings' : `Route ${user.homeRouteCode} · ${user.homeRouteName ?? ''}`}</span>
             <span className="greet-meta"><Icon name="clock" size={14} /> {longDate()}</span>
             {entitled && bus?.direction && <span className="greet-meta"><Icon name="bus" size={14} /> {t(DIRECTION_TEXT[bus.direction])}</span>}
-          </span>
-        </div>
-        <a className="bell" href="#/alerts" aria-label="Notifications"><Icon name="bell" size={20} /></a>
-      </header>
+        </>}
+      />
 
       {entitlement && !entitled && (
         <a className="upsell" href="#/pay">

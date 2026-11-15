@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { date } from '../../lib/format.js';
 import { useT } from '../../lib/i18n.js';
-import { PHOTO_CHANGED, squarePhoto } from '../../lib/photo.js';
+import { PHOTO_CHANGED, readPhoto } from '../../lib/photo.js';
+import PhotoCropper from '../../components/PhotoCropper.jsx';
 import { useSession } from '../../lib/session.jsx';
 import { useNow } from '../../lib/useNow.js';
 import BrandMark from '../../components/BrandMark.jsx';
@@ -52,17 +53,27 @@ export default function BusPass() {
     return () => clearTimeout(id);
   }, [pass, load]);
 
+  // A chosen picture is placed in the round frame first, then saved.
+  const [picked, setPicked] = useState(null);
+  const [saving, setSaving] = useState(false);
   const choose = async (e) => {
-    const picked = e.target.files[0];
+    const file = e.target.files[0];
     e.target.value = '';
-    if (!picked) return;
+    if (!file) return;
+    try { setError(null); setPicked(await readPhoto(file)); } catch (err) { setError(err.message); }
+  };
+  const savePhoto = async (photo) => {
+    setSaving(true);
     try {
-      await api('/api/pass/photo', { token, method: 'PUT', body: { photo: await squarePhoto(picked) } });
+      await api('/api/pass/photo', { token, method: 'PUT', body: { photo } });
+      setPicked(null);
       setMessage('Photo saved.');
       window.dispatchEvent(new Event(PHOTO_CHANGED));
       load();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSaving(false);
     }
   };
   const remove = async () => {
@@ -77,6 +88,7 @@ export default function BusPass() {
     <Page eyebrow="Student" title={t('Bus pass')}>
       <ErrorText>{error}</ErrorText>
       <Notice>{message}</Notice>
+      {picked && <PhotoCropper bitmap={picked} busy={saving} error={error} onSave={savePhoto} onCancel={() => setPicked(null)} />}
       {pass == null ? <div className="skeleton-block" /> : (
         <div className="pass-layout">
           <section className="pass-card" aria-label="Digital bus pass">

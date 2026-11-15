@@ -73,7 +73,7 @@ export default function Schedule() {
   const bus = isToday && dir === 'up' ? buses.find((b) => b.freshness !== 'offline' && b.routeCode === code) : null;
   const here = bus?.nearestStop?.seq;
   const mine = code === user?.homeRouteCode ? user?.homeStopSeq : null;
-  const stops = r?.stops ?? [];
+  const stops = (r?.stops ?? []).filter((s) => String(s.name).trim().toLowerCase() !== String(r?.end_point ?? '').trim().toLowerCase());
   const eta = bus && mine && r ? estimateArrival(stops, bus, mine, r.segmentMinutes, { now, segmentSource: r.segmentsLearned ? 'segment-history' : 'timetable' }) : null;
   const arrive = r ? formatMinutes((parseTime(r.departure_time) ?? 0) + (r.duration_minutes ?? 0) + (special?.morning_shift ?? 0)) : '—';
   const morning = moved(r?.departure_time, special?.morning_shift);

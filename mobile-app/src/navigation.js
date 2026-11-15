@@ -50,6 +50,7 @@ import Settings from './screens/student/Settings.js';
 import StudentHome from './screens/student/StudentHome.js';
 import Subscription from './screens/student/Subscription.js';
 import { C, F, G, shadow } from './theme.js';
+import MyAvatar from './components/MyAvatar.js';
 
 const Stack = createNativeStackNavigator();
 // Lets a tapped notification open a screen from outside the navigators (App.js passes it in).
@@ -78,7 +79,7 @@ const AccountButtons = () => <><ChangePasswordButton /><SignOutButton /></>;
 /** The signed-in user's initials, as the profile tab's icon. */
 function ProfileTabIcon() {
   const { user } = useSession();
-  return <Avatar name={user?.name} size={27} light={C.dark} />;
+  return <MyAvatar size={27} light={C.dark} />;
 }
 
 /**
@@ -204,7 +205,7 @@ function MoreMenu({ navigation }) {
     <Screen>
       <GradientCard colors={G.navy}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar name={user?.name} size={56} light />
+          <MyAvatar size={56} light />
           <View style={{ flex: 1 }}>
             <Text style={{ color: '#fff', fontSize: 22, ...F.display }}>{user?.name}</Text>
             <Text style={{ color: C.gold, ...F[700], marginTop: 4, fontSize: 11, letterSpacing: 1.8 }}>{ROLE_LABEL[user?.role]?.toUpperCase()}</Text>
@@ -215,7 +216,7 @@ function MoreMenu({ navigation }) {
       <SectionTitle title="Transport office" />
       <View style={{ backgroundColor: C.glass, borderRadius: 22, padding: 6, borderWidth: 1, borderColor: C.glassEdge, ...shadow }}>
         {ADMIN_MORE.map(([name, title, icon, hint, accent], i) => (
-          <Pressable accessibilityRole="button" key={name} onPress={() => navigation.navigate(name)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 16, backgroundColor: pressed ? C.surface : 'transparent', borderTopWidth: i ? 1 : 0, borderTopColor: C.line2 })}>
+          <Pressable accessibilityRole="button" key={name} onPress={() => navigation.navigate(name)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: pressed ? 16 : 0, backgroundColor: pressed ? C.surface : 'transparent', borderTopWidth: i ? 1 : 0, borderTopColor: C.line2 })}>
             <IconBubble name={icon} accent={accent} size={44} />
             <View style={{ flex: 1 }}><Txt bold>{title}</Txt><Txt muted small>{hint}</Txt></View>
             <Icon name="arrow" size={16} color={C.faint} />

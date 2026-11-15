@@ -131,16 +131,19 @@ function TripCard({ t, selected, onToggle, onPress }) {
         <Text style={{ color: '#fff', fontSize: 14, ...F.displayBold }}>{t.route_code}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-        <Text style={{ fontSize: 15.5, lineHeight: 20, ...F[700], color: C.ink }} numberOfLines={1}>{t.route_name}</Text>
+        <Text style={{ fontSize: 15.5, lineHeight: 20, ...F[700], color: C.ink }} numberOfLines={2}>{t.route_name}</Text>
         <Txt small muted numberOfLines={2}>{sub}</Txt>
-        {t.flagged ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Icon name="alert" size={12} color={C.danger} />
-            <Text style={{ fontSize: 12, ...F[600], color: C.danger }} numberOfLines={1}>{String(t.flag_reason ?? 'Flagged').replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase())}</Text>
-          </View>
-        ) : null}
+        {/* Status under the text, so the route name and times get the whole width on a narrow phone. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+          <TripChip t={t} />
+          {t.flagged ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Icon name="alert" size={12} color={C.danger} />
+              <Text style={{ fontSize: 12, ...F[600], color: C.danger }} numberOfLines={1}>{String(t.flag_reason ?? 'Flagged').replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase())}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
-      <TripChip t={t} />
     </Pressable>
   );
 }
@@ -152,8 +155,8 @@ function TripRow({ t, onPress, showDriver }) {
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, backgroundColor: C.glass, borderRadius: 16, borderWidth: 1, borderColor: C.glassEdge }, pressed && { opacity: 0.8 }]}>
       <RouteCode code={t.route_code} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Txt bold numberOfLines={1}>{t.route_name}</Txt>
-        <Txt small muted numberOfLines={1}>{DIRECTION_TEXT[t.direction]} · {t.fleet_code}{showDriver ? ` · ${t.driver_name ?? 'No driver'}` : ''}{t.started_by === 'tracker' ? ' · GPS tracker' : ''}</Txt>
+        <Txt bold numberOfLines={2}>{t.route_name}</Txt>
+        <Txt small muted numberOfLines={2}>{DIRECTION_TEXT[t.direction]} · {t.fleet_code}{showDriver ? ` · ${t.driver_name ?? 'No driver'}` : ''}{t.started_by === 'tracker' ? ' · GPS tracker' : ''}</Txt>
         <Row gap={6}>
           <Icon name="clock" size={12} color={C.faint} />
           <Txt small muted style={{ fontVariant: ['tabular-nums'] }}>

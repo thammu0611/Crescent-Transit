@@ -380,6 +380,78 @@ test('documents remind at 30 and 7 days, service by distance, and fuel gives a c
   assert.equal(row.kmPerLitre, 8);
 });
 
+test('an expired paper and overdue service are insisted on every day', async () => {
+  const busId = (await t.db.query(`SELECT id FROM buses WHERE fleet_code = 'BSACIST-117'`)).rows[0].id;
+  const inDays = (n) => new Date(Date.now() + 5.5 * 3600000 + n * 86400000).toISOString().slice(0, 10);
+  await t.call(`/api/admin/buses/${busId}/documents/PERMIT`, { token: admin, method: 'PUT', body: { number: 'EIB/1', expiresOn: inDays(-3) } });
+  await t.call(`/api/admin/buses/${busId}/service`, { token: admin, method: 'PUT', body: { odometerKm: 12500, lastServiceKm: 0, serviceIntervalKm: 10000 } });
+  const before = (await t.db.query(`SELECT count(*)::int AS n FROM incidents WHERE bus_id = $1`, [busId])).rows[0].n;
+  await t.fleetCare.sendReminders();
+  const sent = (await t.db.query(`SELECT message FROM incidents WHERE bus_id = $1 ORDER BY id DESC LIMIT 2`, [busId])).rows.map((r) => r.message).join(' | ');
+  assert.match(sent, /Permit EXPIRED 3 days ago/);
+  assert.match(sent, /service is OVERDUE by 2500 km/);
+  await t.fleetCare.sendReminders();
+  const after = (await t.db.query(`SELECT count(*)::int AS n FROM incidents WHERE bus_id = $1`, [busId])).rows[0].n;
+  assert.equal(after - before, 2, 'once a day, not every minute');
+  // Tomorrow's keys are new, so the reminders come back until it is fixed.
+  const keys = (await t.db.query(`SELECT key FROM care_reminders WHERE key LIKE $1`, [`%:${busId}:%`])).rows.map((r) => r.key);
+  assert.ok(keys.some((k) => k.includes(':expired:')) && keys.some((k) => k.includes(':due:')), 'keys carry the day');
+});
+
+test('the odometer moves by itself with each GPS trip, and a real reading resets it', async () => {
+  const bus = (await t.db.query(`SELECT b.id, b.route_id, u.id AS driver_id FROM buses b JOIN users u ON u.bus_id = b.id AND u.role = 'driver' WHERE b.fleet_code = 'BSACIST-118'`)).rows[0];
+  await t.call(`/api/admin/buses/${bus.id}/service`, { token: admin, method: 'PUT', body: { odometerKm: 50000 } });
+  const trip = (await t.db.query(`INSERT INTO trips (bus_id, route_id, driver_id, status, ended_at) VALUES ($1, $2, $3, 'completed', now()) RETURNING id`, [bus.id, bus.route_id, bus.driver_id])).rows[0].id;
+  // About 11 km north in 0.01-degree hops (~1.1 km each), one poor fix, and one 20 km jump (signal lost).
+  const pts = Array.from({ length: 11 }, (_, i) => [12.9 + i * 0.01, 80.2, 10]);
+  pts.splice(5, 0, [13.5, 80.9, 900]);
+  pts.push([13.2, 80.2, 10]);
+  for (const [i, [lat, lng, acc]] of pts.entries()) {
+    await t.db.query(`INSERT INTO location_pings (trip_id, bus_id, lat, lng, accuracy_m, recorded_at) VALUES ($1, $2, $3, $4, $5, now() - make_interval(secs => $6))`, [trip, bus.id, lat, lng, acc, (pts.length - i) * 60]);
+  }
+  const km = await t.fleetCare.addTripDistance(trip, bus.id);
+  assert.equal(km, 11, 'the poor fix and the jump are left out');
+  let card = (await t.call('/api/admin/fleet-care', { token: admin })).body.find((b) => b.id === bus.id);
+  assert.equal(card.odometerKm, 50011);
+  assert.equal(card.odometerGpsKm, 11);
+  // A fuel entry a little under the GPS estimate is the true reading, not "going backwards".
+  const driver = await t.login('drv118');
+  assert.equal((await t.call('/api/fuel', { token: driver, body: { odometerKm: 50009, litres: 30, costRupees: 2700 } })).status, 201);
+  card = (await t.call('/api/admin/fleet-care', { token: admin })).body.find((b) => b.id === bus.id);
+  assert.equal(card.odometerKm, 50009);
+  assert.equal(card.odometerGpsKm, 0);
+});
+
+/** A one-page PDF with these lines of text (enough for a text layer to read). */
+function tinyPdf(lines) {
+  const stream = `BT /F1 12 Tf 50 750 Td 16 TL ${lines.map((l) => `(${l.replace(/[()\\]/g, '')}) Tj T*`).join(' ')} ET`;
+  const objs = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets = objs.map((o, i) => { const at = pdf.length; pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; return at; });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offsets.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('')}`;
+  pdf += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return Buffer.from(pdf, 'latin1').toString('base64');
+}
+
+test('the phone app can send a bus document for the server to read', async () => {
+  const data = tinyPdf(['Motor Insurance - Package Policy', 'Policy No: 71110031260100009999', 'Registration No: TN 22 AB 4521', 'Period of Insurance: From 01/06/2026 To 31/05/2027']);
+  const r = await t.call('/api/admin/documents/read', { token: admin, body: { data, mimeType: 'application/pdf', name: 'policy.pdf' } });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.kind, 'INSURANCE');
+  assert.equal(r.body.number, '71110031260100009999');
+  assert.equal(r.body.expiresOn, '2027-05-31');
+  assert.equal((await t.call('/api/admin/documents/read', { token: admin, body: { data: Buffer.from('hello').toString('base64'), mimeType: 'text/plain', name: 'a.txt' } })).status, 400);
+  const driver = await t.login('drv119');
+  assert.equal((await t.call('/api/admin/documents/read', { token: driver, body: { data } })).status, 403, 'office staff only');
+});
+
 test('a driver scorecard adds up ratings, speeding and failed checks', async () => {
   const s = await student('116', 3);
   const bus = await drive('116');

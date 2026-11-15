@@ -401,12 +401,14 @@ export function IconBubble({ name, accent = 'indigo', size = 40, iconSize, solid
   return <View style={{ width: size, height: size, borderRadius: size * 0.36, alignItems: 'center', justifyContent: 'center', backgroundColor: solid ? fg : bg }}>{inner}</View>;
 }
 
-/** Initials in a circle. */
-export function Avatar({ name = '', size = 44, light }) {
+/** Initials in a circle, or the person's photo filling it when there is one. */
+export function Avatar({ name = '', size = 44, light, photo }) {
   const initials = name.replace(/^(Mr|Mrs|Ms|Dr)\.?\s*/i, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: light ? 'rgba(255,255,255,0.10)' : C.navy50, borderWidth: 1.5, borderColor: light ? C.gold : C.navy100, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: light ? '#fff' : C.navy, ...F[600], fontSize: size * 0.36 }}>{initials}</Text>
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: light ? 'rgba(255,255,255,0.10)' : C.navy50, borderWidth: 1.5, borderColor: light || photo ? C.gold : C.navy100, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      {photo
+        ? <Image source={{ uri: photo }} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
+        : <Text style={{ color: light ? '#fff' : C.navy, ...F[600], fontSize: size * 0.36 }}>{initials}</Text>}
     </View>
   );
 }
@@ -492,7 +494,7 @@ export function ListCard({ lead, title, lines = [], count, countLabel, tone, rig
     <Wrap onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} style={onPress ? ({ pressed }) => [look, pressed && { opacity: 0.8 }] : look}>
       {lead}
       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-        <Txt bold numberOfLines={1}>{title}</Txt>
+        <Txt bold numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{title}</Txt>
         {lines.filter(Boolean).map((l, i) => <Txt key={i} small muted numberOfLines={2}>{l}</Txt>)}
       </View>
       {right}
@@ -508,19 +510,39 @@ export function ListCard({ lead, title, lines = [], count, countLabel, tone, rig
 }
 
 const STAT_ACCENT = { live: 'emerald', delayed: 'amber', danger: 'danger', offline: 'navy' };
+// Without a state, a stat takes the colour of what it counts (as on the website).
+const ICON_ACCENT = { bus: 'navy', route: 'navy', pin: 'navy', shield: 'navy', signal: 'sky', chart: 'sky', users: 'violet', user: 'violet', card: 'amber', sparkle: 'amber', clock: 'amber', wallet: 'amber', check: 'emerald' };
 
-export function Stat({ label: name, value, tone, icon }) {
+/** A hex colour with transparency: alpha('#1C315E', 0.12). */
+export const alpha = (hex, a) => {
+  const h = String(hex).replace('#', '');
+  if (h.length !== 6) return hex;
+  return `rgba(${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}, ${a})`;
+};
+
+/** A card's own colour: a soft wash from the top corner and a 3 px top edge. Put it first inside the card. */
+export function CardTint({ color, radius = 18 }) {
+  return (
+    <>
+      <LinearGradient pointerEvents="none" colors={[alpha(color, C.dark ? 0.2 : 0.11), alpha(color, 0)]} start={{ x: 0, y: 0 }} end={{ x: 0.85, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />
+      <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: color }} />
+    </>
+  );
+}
+
+export function Stat({ label: name, value, tone, icon, small }) {
   const label = useT()(name);
   const t = TONE[tone];
+  const accent = STAT_ACCENT[tone] ?? ICON_ACCENT[icon] ?? 'navy';
+  const color = t?.fg ?? (ACCENT[accent] ?? ACCENT.navy)[1];
   return (
-    <View style={[s.stat, icon && s.statRow]}>
-      <Sheen />
-      {icon ? <IconBubble name={icon} accent={STAT_ACCENT[tone] ?? 'indigo'} size={38} /> : null}
+    <View style={[s.stat, icon && s.statRow, { borderColor: alpha(color, 0.25) }]}>
+      <CardTint color={C.dark && accent === 'navy' ? C.gold : color} />
+      {icon ? <IconBubble name={icon} accent={accent} size={38} /> : null}
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[s.statValue, t && { color: t.fg }]} numberOfLines={1} adjustsFontSizeToFit>{value ?? '—'}</Text>
+        <Text style={[s.statValue, small && { fontSize: 17, lineHeight: 22 }, t && { color: t.fg }]} numberOfLines={small ? 2 : 1} adjustsFontSizeToFit={!small}>{value ?? '—'}</Text>
         <Text style={s.statLabel} numberOfLines={2}>{label}</Text>
       </View>
-      {t && !icon ? <View style={[s.statBar, { backgroundColor: t.fg }]} /> : null}
     </View>
   );
 }
@@ -648,7 +670,8 @@ export function Field({ label: name, hint, children, style }) {
   );
 }
 
-export function Input({ icon, style, multiline, onFocus, onBlur, ref: outerRef, ...props }) {
+// `highlight`: a gold edge on the box itself, for a value filled in for the person to check.
+export function Input({ icon, style, multiline, onFocus, onBlur, ref: outerRef, highlight, ...props }) {
   const [focused, setFocused] = useState(false);
   const inputRef = useRef(null);
   const retried = useRef(false);
@@ -674,7 +697,7 @@ export function Input({ icon, style, multiline, onFocus, onBlur, ref: outerRef, 
   };
   return (
     // The wrapper keeps the same native view on focus: only its border colour changes.
-    <View collapsable={false} style={[s.inputWrap, focused && s.inputFocused, multiline && { alignItems: 'flex-start' }, props.editable === false && { backgroundColor: C.line2 }]}>
+    <View collapsable={false} style={[s.inputWrap, highlight && s.inputHighlight, focused && s.inputFocused, multiline && { alignItems: 'flex-start' }, props.editable === false && { backgroundColor: C.line2 }]}>
       {icon ? <View style={{ paddingTop: multiline ? 12 : 0 }}><Icon name={icon} size={17} color={focused ? C.navy : C.faint} /></View> : null}
       <TextInput
         ref={setRef}
@@ -909,7 +932,7 @@ export const KV = ({ k, v }) => (
 );
 
 export const RouteCode = ({ code, small }) => (
-  <View style={[s.routeCode, small && { minWidth: 34, paddingVertical: 2, borderRadius: 7 }]}>
+  <View style={[s.routeCode, small && { minWidth: 48, paddingVertical: 2, borderRadius: 7 }]}>
     <Text style={[s.routeCodeText, small && { fontSize: 12 }]}>{code}</Text>
   </View>
 );
@@ -936,14 +959,14 @@ const toLocal = (d) => `${toDay(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`
  * Date or date-and-time field (the web's <input type="date"> / "datetime-local").
  * value: "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm" in phone-local time; "" for none.
  */
-export function DateField({ label, value, onChange, mode = 'date', clearable }) {
+export function DateField({ label, value, onChange, mode = 'date', clearable, highlight }) {
   const [iosOpen, setIosOpen] = useState(false);
   const [draft, setDraft] = useState(new Date());
   const current = value ? new Date(mode === 'date' ? `${value}T00:00` : value) : new Date();
   const fmt = (d) => (mode === 'date' ? toDay(d) : toLocal(d));
   if (Platform.OS === 'web') {
     // Browser preview: plain text entry.
-    return <TextField label={label} value={value} onChangeText={onChange} placeholder={mode === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DDTHH:mm'} />;
+    return <TextField label={label} value={value} onChangeText={onChange} highlight={highlight} placeholder={mode === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DDTHH:mm'} />;
   }
   const open = () => {
     if (Platform.OS === 'android') {
@@ -973,7 +996,7 @@ export function DateField({ label, value, onChange, mode = 'date', clearable }) 
   return (
     <Field label={label}>
       <View style={[s.row, { gap: 8 }]}>
-        <Pressable onPress={open} style={[s.inputWrap, { flex: 1 }]} accessibilityRole="button" accessibilityLabel={label}>
+        <Pressable onPress={open} style={[s.inputWrap, highlight && s.inputHighlight, { flex: 1 }]} accessibilityRole="button" accessibilityLabel={label}>
           <Icon name="clock" size={16} color={C.faint} />
           <Text style={[s.input, { paddingVertical: 13 }, !value && { color: C.faint }]}>{shown}</Text>
         </Pressable>
@@ -1056,6 +1079,7 @@ export const s = StyleSheet.create({
   hint: { fontSize: 12, color: C.muted, lineHeight: 17 },
   inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: C.line, borderRadius: R.md, backgroundColor: C.card, paddingHorizontal: 14, minHeight: 52 },
   // Focus changes the border only: no shadow or elevation that could rebuild the native view.
+  inputHighlight: { borderColor: '#E0A51F', borderWidth: 1.5, backgroundColor: 'rgba(247,188,49,0.12)' },
   inputFocused: { borderColor: C.navy },
   input: { flex: 1, fontSize: 15, color: C.ink, ...F[400], paddingVertical: Platform.OS === 'ios' ? 14 : 10 },
   selectCompact: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.card, borderWidth: 1, borderColor: C.line2, borderRadius: R.pill, paddingHorizontal: 14, minHeight: 40 },
@@ -1077,7 +1101,7 @@ export const s = StyleSheet.create({
   itemBar: { position: 'absolute', left: 0, top: 14, bottom: 14, width: 3, borderTopRightRadius: 3, borderBottomRightRadius: 3 },
   itemTitle: { fontSize: 15, ...F[700], color: C.ink },
   itemBody: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line2, gap: 7 },
-  routeCode: { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6, minWidth: 44, alignItems: 'center', backgroundColor: C.navyFill },
+  routeCode: { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6, minWidth: 58, alignItems: 'center', backgroundColor: C.navyFill }, // wide enough for '104A', so names beside it line up
   routeCodeText: { color: '#fff', ...F.displayBold, fontSize: 14 },
   monthBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.raised, alignItems: 'center', justifyContent: 'center' },
   wordmark: { color: ON_PILL, ...F.brand, fontSize: 19, lineHeight: 23 },

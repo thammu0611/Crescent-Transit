@@ -3,7 +3,7 @@
 // table, filter chips and a full-screen detail view. They sit on top of
 // ui.js and the theme, so they look like the rest of the app.
 import { useT } from '../lib/offline.js';
-import { useState } from 'react';
+import { Children, createContext, useContext, useState } from 'react';
 import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
@@ -40,13 +40,13 @@ export function ColumnChart({ data, height = 140, color = C.navy, highlightLast 
 }
 
 /** A ring split into segments, with a figure in the middle and the legend beside it. */
-export function Donut({ segments, size = 128, thickness = 16, center, caption }) {
+export function Donut({ segments, size = 116, thickness = 15, center, caption }) {
   const total = segments.reduce((n, s) => n + s.value, 0);
   const r = (size - thickness) / 2;
   const circ = 2 * Math.PI * r;
   let offset = 0;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
       <View style={{ width: size, height: size }}>
         <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
           <Circle cx={size / 2} cy={size / 2} r={r} stroke={C.line2} strokeWidth={thickness} fill="none" />
@@ -85,7 +85,7 @@ export function Legend({ items, total }) {
       {items.map((s) => (
         <View key={s.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: s.color }} />
-          <Txt small style={{ flex: 1 }} numberOfLines={1}>{s.label}</Txt>
+          <Txt small style={{ flex: 1 }} numberOfLines={2}>{s.label}</Txt>
           <Txt small bold style={{ fontVariant: ['tabular-nums'] }}>{s.value}</Txt>
           {total ? <Txt small muted style={{ width: 38, textAlign: 'right', fontVariant: ['tabular-nums'] }}>{Math.round((s.value / total) * 100)}%</Txt> : null}
         </View>
@@ -217,18 +217,22 @@ export function DetailModal({ title, subtitle, onClose, children, refreshing, on
  */
 export function ViewCard({ title: name, icon, summary, badge, children }) {
   const title = useT()(name);
+  const inList = useContext(InList);
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   return (
     <>
-      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={title} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: R.lg, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassEdge, overflow: 'hidden', ...shadow }, pressed && { opacity: 0.85 }]}>
-        <Sheen />
-        {icon ? <IconBubble name={icon} colors={G.navy} size={36} iconSize={18} /> : null}
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Txt bold numberOfLines={1}>{title}</Txt>
-          {summary ? <Txt muted small numberOfLines={1}>{summary}</Txt> : null}
+      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={title} style={({ pressed }) => [inList ? listRow : { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: R.lg, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassEdge, overflow: 'hidden', ...shadow }, pressed && { opacity: 0.85, backgroundColor: inList ? C.navy50 : undefined }]}>
+        {inList ? null : <Sheen />}
+        {icon ? (inList ? <IconBubble name={icon} accent={rowAccent(inList)} size={36} iconSize={18} /> : <IconBubble name={icon} colors={G.navy} size={36} iconSize={18} />) : null}
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+          {/* The badge sits beside the title, so the summary gets the full width. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Txt bold numberOfLines={2} style={{ flexShrink: 1 }}>{title}</Txt>
+            {badge}
+          </View>
+          {summary ? <Txt muted small numberOfLines={2}>{summary}</Txt> : null}
         </View>
-        {badge}
         <Icon name="arrow" size={16} color={C.faint} />
       </Pressable>
       {open ? (
@@ -237,6 +241,62 @@ export function ViewCard({ title: name, icon, summary, badge, children }) {
         </DetailModal>
       ) : null}
     </>
+  );
+}
+
+// Inside a ViewList, ViewCards and ListRows are rows of one card, split by hairlines.
+const InList = createContext(false);
+// Each row of a list in its own colour, in turn, so a list reads at a look.
+const ROW_ACCENTS = ['navy', 'sky', 'amber', 'emerald', 'violet'];
+const rowAccent = (inList) => ROW_ACCENTS[(inList?.i ?? 0) % ROW_ACCENTS.length];
+const listRow = { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: C.line2 };
+
+/**
+ * A group of rows shown as one card (Settings, Services, the driver's tools):
+ * one rounded glass card, a row per item, divided by hairlines. An optional
+ * small label sits above it.
+ */
+export function ViewList({ label, children, style }) {
+  const t = useT();
+  return (
+    <View style={[{ gap: 8 }, style]}>
+      {label ? <Text style={{ fontSize: 13, ...F[600], color: C.muted, paddingHorizontal: 4 }}>{t(label)}</Text> : null}
+      <View style={{ borderRadius: R.lg, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassEdge, overflow: 'hidden', ...shadow }}>
+        {/* The first row's top hairline is pulled up under the card's edge. */}
+        <View style={{ marginTop: -1 }}>
+          {Children.toArray(children).filter(Boolean).map((child, i) => (
+            <InList.Provider key={child.key ?? i} value={{ i }}>{child}</InList.Provider>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * One row of a ViewList: icon, title, a short line, and on the right a control
+ * (switch, badge) or, when it opens something, a chevron. `below` puts a wider
+ * control (a segmented switch) under the text.
+ */
+export function ListRow({ icon, accent: given, title: name, summary, right, below, onPress, danger }) {
+  const inList = useContext(InList);
+  const accent = given ?? (inList ? rowAccent(inList) : 'navy');
+  const t = useT();
+  const title = t(name);
+  const Wrap = onPress ? Pressable : View;
+  return (
+    <Wrap
+      {...(onPress ? { onPress, accessibilityRole: 'button', accessibilityLabel: title } : {})}
+      style={onPress ? ({ pressed }) => [listRow, below && { flexWrap: 'wrap' }, pressed && { backgroundColor: C.navy50 }] : [listRow, below && { flexWrap: 'wrap' }]}
+    >
+      {icon ? <IconBubble name={icon} accent={danger ? 'danger' : accent} size={36} iconSize={18} /> : null}
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        <Txt bold style={danger ? { color: C.danger } : null}>{title}</Txt>
+        {summary ? <Txt muted small>{typeof summary === 'string' ? t(summary) : summary}</Txt> : null}
+      </View>
+      {right ?? (onPress ? <Icon name="arrow" size={16} color={C.faint} /> : null)}
+      {below ? <View style={{ flexBasis: '100%', paddingLeft: icon ? 48 : 0, paddingTop: 4 }}>{below}</View> : null}
+    </Wrap>
   );
 }
 

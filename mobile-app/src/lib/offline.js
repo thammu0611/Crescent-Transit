@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { translate } from '../../../shared/i18n.js';
+import { translate, translatePageText } from '../../../shared/i18n.js';
 import { api } from './api.js';
 import { useSession } from './session.js';
 import { getJSON, setJSON } from './storage.js';
@@ -26,5 +26,5 @@ export async function routeData(path) {
 export function useT() {
   const { user } = useSession();
   const language = user?.language ?? 'en';
-  return useCallback((english) => translate(language, english), [language]);
+  return useCallback((english) => { const out = translate(language, english); return out !== english || language === 'en' || typeof english !== 'string' ? out : translatePageText(language, english) ?? english; }, [language]);
 }

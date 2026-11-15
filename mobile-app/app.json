@@ -3,7 +3,7 @@
     "name": "Crescent Transit",
     "slug": "crescent-transit",
     "scheme": "crescenttransit",
-    "version": "1.0.15",
+    "version": "1.0.16",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -37,7 +37,7 @@
         "CAMERA",
         "VIBRATE"
       ],
-      "versionCode": 16
+      "versionCode": 17
     },
     "web": {
       "favicon": "./assets/favicon.png"
