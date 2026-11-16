@@ -4,7 +4,7 @@ import { Platform, Pressable, ScrollView, Share, TextInput, useWindowDimensions,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '../components/Icon.js';
 import { BusPin, CampusPin, MapBox, RouteLayer } from '../components/maps';
-import { Badge, Button, ErrorText, Frost, Select, Skeleton, Text, Txt, useTabBarSpace } from '../components/ui.js';
+import { Badge, Button, ErrorText, Frost, Select, Skeleton, Text, translated, Txt, useLanguage, useTabBarSpace } from '../components/ui.js';
 import { api, getSocket } from '../lib/api.js';
 import { etaText, OCCUPANCY } from '../lib/format.js';
 import { useNow } from '../lib/hooks.js';
@@ -36,6 +36,7 @@ const Metric = ({ k, v }) => (
 
 /** Student "Track" tab and the admin's fleet map: live buses over the socket. */
 export default function LiveMap({ navigation, route: screen }) {
+  const language = useLanguage();
   const { token, user } = useSession();
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -208,7 +209,7 @@ export default function LiveMap({ navigation, route: screen }) {
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, height: 48, paddingHorizontal: 14, borderRadius: 24, backgroundColor: C.surface, borderWidth: 1, borderColor: query ? C.navy : C.line2, ...shadowLg }}>
               <Icon name="search" size={18} color={C.muted} />
-              <TextInput value={query} onChangeText={setQuery} placeholder="Search bus, route or driver" placeholderTextColor={C.faint} accessibilityLabel="Search buses" autoCorrect={false}
+              <TextInput value={query} onChangeText={setQuery} placeholder={translated(language, 'Search bus, route or driver')} placeholderTextColor={C.faint} accessibilityLabel={translated(language, 'Search buses')} autoCorrect={false}
                 style={[{ flex: 1, color: C.ink, fontSize: 15, ...F[500], paddingVertical: 0 }, Platform.OS === 'web' && { outlineStyle: 'none' }]} />
               {query ? <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => setQuery('')} hitSlop={8}><Icon name="x" size={16} color={C.muted} /></Pressable> : null}
             </View>

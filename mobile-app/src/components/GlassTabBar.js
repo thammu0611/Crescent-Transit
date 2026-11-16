@@ -9,12 +9,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tickSelect } from '../lib/haptics.js';
 import { C, F } from '../theme.js';
 import Icon from './Icon.js';
-import { Frost } from './ui.js';
+import { Frost, translated, useLanguage } from './ui.js';
 
 const PAD = 8;
 const ICON_ON = C.navy;
 const ICON_OFF = C.muted;
 // Tamil words run wider than the same length in English.
+// Shorter tab names where the full Tamil would not fit five tabs across.
+const SHORT = { ta: { 'Dashboard': 'முகப்பு', 'Fleet map': 'வரைபடம்', 'Live map': 'வரைபடம்' } };
+const tabLabel = (language, english) => SHORT[language]?.[english] ?? translated(language, english);
+
 const LONG_SCRIPT = /[஀-௿]/;
 
 // The label's size from the room each tab really has, so no label is cut or spills
@@ -41,7 +45,10 @@ function Badge({ value }) {
 }
 
 /** One tab: an accent pill behind the icon when current; the icon springs up a little. */
-function Tab({ focused, label, icon, badge, size, onPress, onLongPress, a11yLabel }) {
+function Tab({ focused, label: english, icon, badge, size, onPress, onLongPress, a11yLabel: a11yEnglish }) {
+  const language = useLanguage();
+  const label = tabLabel(language, english);
+  const a11yLabel = translated(language, a11yEnglish);
   const [pop] = useState(() => new Animated.Value(focused ? 1 : 0));
   useEffect(() => {
     if (reduceMotion) { pop.setValue(focused ? 1 : 0); return; }
@@ -91,7 +98,8 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
   const reportHeight = useContext(BottomTabBarHeightCallbackContext);
   const screen = useWindowDimensions().width;
   const tabW = (screen - PAD * 2) / state.routes.length;
-  const labelOf = (route) => { const o = descriptors[route.key].options; return o.tabBarLabel ?? o.title ?? route.name; };
+  const language = useLanguage();
+  const labelOf = (route) => { const o = descriptors[route.key].options; return tabLabel(language, o.tabBarLabel ?? o.title ?? route.name); };
   // One size for the whole bar, set by the label that needs the most room.
   const size = Math.min(...state.routes.map((r) => labelSize(labelOf(r), tabW, state.routes.length)));
 

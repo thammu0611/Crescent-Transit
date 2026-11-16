@@ -199,6 +199,9 @@ export async function registerParent(db, config, body, guardians) {
 export function verifyToken(config, token) {
   try {
     const claims = jwt.verify(token, config.jwtSecret);
+    // Sign-in tokens only: other signed codes (the bus pass QR) carry a `typ`
+    // and no role, and must never stand in for a login.
+    if (claims.typ || !ROLES.includes(claims.role)) return null;
     return { userId: claims.sub, role: claims.role, busId: claims.busId, issuedAt: claims.iat };
   } catch {
     return null;

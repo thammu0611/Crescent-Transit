@@ -54,7 +54,7 @@ function Kpi({ icon, accent, label, value, note, tone, onPress }) {
       <CardTint color={color} />
       <Row gap={8}>
         <IconBubble name={icon} accent={accent} size={28} iconSize={15} />
-        <Text style={{ fontSize: 12.5, ...F[500], color: C.muted, flex: 1 }} numberOfLines={1}>{label}</Text>
+        <Text style={{ fontSize: 12.5, ...F[500], color: C.muted, flex: 1 }} numberOfLines={2}>{label}</Text>
       </Row>
       <Row gap={6} style={{ alignItems: 'flex-end' }}>
         <Text style={{ fontSize: 26, lineHeight: 32, ...F.displayBold, color: tone ?? C.ink, fontVariant: ['tabular-nums'] }}>{value ?? '—'}</Text>

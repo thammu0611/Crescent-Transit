@@ -1,4 +1,7 @@
 import { TA_MORE, translateLine } from './i18n-ta.js';
+import { TA_NAMES } from './i18n-ta-names.js';
+import { TA_PHONE } from './i18n-ta-phone.js';
+import { hasLatin, isNameLike, translitLine } from './translit-ta.js';
 // Tamil for the screens students and parents use every day. The English text is
 // the key: anything not listed here simply stays in English.
 const TA = {
@@ -293,14 +296,43 @@ const TA = {
 };
 
 // The office, driver and setup screens' Tamil lives in i18n-ta.js; entries here win.
-const TEXT = { ta: { ...TA_MORE, ...TA } };
+const TEXT = { ta: { ...TA_NAMES, ...TA_PHONE, ...TA_MORE, ...TA } };
+
+// Known names inside a sentence ("Bus 118 arrives at Madipakkam Axis Bank"), longest first.
+const NAME_LIST = Object.keys(TA_NAMES).sort((a, b) => b.length - a.length);
+const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const NAME_RE = new RegExp(`(^|[^A-Za-z0-9])(${NAME_LIST.map(esc).join('|')})(?=$|[^A-Za-z0-9])`, 'g');
+const withNames = (line) => line.replace(NAME_RE, (_m, pre, name) => pre + TA_NAMES[name]);
 
 /** The text in this language, or the English if there is no translation. */
 export const translate = (language, english) => TEXT[language]?.[english] ?? english;
 /** Every translation for a language, English text to translated text (for translating the page itself). */
 export const dictionary = (language) => TEXT[language] ?? null;
 /** A whole line of page text in this language (exact, pattern, date, or part by part), or null. */
-export const translatePageText = (language, line) => (TEXT[language] ? translateLine(TEXT[language], line) : null);
+// The same words in other capitals ("TRANSPORT ADMIN", "Transport Admin").
+const LOWER = {};
+function caseless(language, line) {
+  const key = String(line).trim().toLowerCase();
+  if (!/[a-z]/.test(key)) return null;
+  LOWER[language] ??= Object.fromEntries(Object.entries(TEXT[language]).map(([k, v]) => [k.toLowerCase(), v]));
+  return LOWER[language][key] ?? null;
+}
+
+export function translatePageText(language, line) {
+  if (!TEXT[language]) return null;
+  let out = translateLine(TEXT[language], line) ?? caseless(language, line) ?? line;
+  if (language === 'ta') {
+    // Units after numbers: km/h, km, m.
+    out = out.replace(/(\d)\s?km\/h\b/g, '$1 கி.மீ./மணி').replace(/(\d)\s?km\b/g, '$1 கி.மீ.').replace(/(\d) m\b(?![A-Za-z])/g, '$1 மீ').replace(/(\d+)h (\d+)m\b/g, '$1 ம $2 நி').replace(/(\d+)h\b/g, '$1 ம').replace(/(\d+)m\b/g, '$1 நி').replace(/(\d+) s\b/g, '$1 வி');
+  }
+  if (language === 'ta' && hasLatin(out)) {
+    // Then names inside it, and last, any English word left is written in Tamil letters.
+    out = withNames(out);
+    // What is left is written in Tamil letters only when it is a name, never an English sentence.
+    if (hasLatin(out) && isNameLike(out.replace(/[஀-௿]+/g, ''))) out = translitLine(out);
+  }
+  return out === line ? null : out;
+}
 export const LANGUAGES = [
   { value: 'en', label: 'English' },
   { value: 'ta', label: 'தமிழ்' },

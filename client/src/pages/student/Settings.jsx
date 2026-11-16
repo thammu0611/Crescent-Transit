@@ -188,7 +188,7 @@ export default function Settings() {
             {stop && (
               <p className="setting-summary">
                 <Icon name="clock" size={14} />
-                <span>Bus {route.data.code} reaches <b>{stop.name}</b>{stop.scheduled_time ? <> at <b>{stop.scheduled_time}</b></> : ''} and arrives at {campus?.name ?? 'campus'}{campus?.scheduled_time ? ` at ${campus.scheduled_time}` : ''}.</span>
+                <span>{`Bus ${route.data.code} reaches ${stop.name}${stop.scheduled_time ? ` at ${stop.scheduled_time}` : ''} and arrives at ${campus?.name ?? 'campus'}${campus?.scheduled_time ? ` at ${campus.scheduled_time}` : ''}.`}</span>
               </p>
             )}
             <Field label="When you travel" hint="The boarding check and phone attendance only work inside these hours.">

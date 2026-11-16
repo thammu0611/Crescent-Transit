@@ -1798,3 +1798,21 @@ html *, html[data-theme='dark'] * { scrollbar-width: auto !important; scrollbar-
 ::-webkit-scrollbar-corner { background: transparent; }
 html[data-theme='dark'] ::-webkit-scrollbar-thumb { background: rgba(247, 188, 49, 0.40); background-clip: padding-box; }
 html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover { background: rgba(247, 188, 49, 0.65); background-clip: padding-box; }
+
+/* ---- Reports on desktop: an app screen. Title, filters and menu stay; only the report scrolls. */
+@media (min-width: 981px) and (min-height: 600px) {
+  .page:has(> .rep-layout) { overflow: hidden !important; display: flex !important; flex-direction: column !important; padding-bottom: 0 !important; }
+  .page:has(> .rep-layout) > .page-head { flex: 0 0 auto; }
+  .page:has(> .rep-layout) > .rep-layout { flex: 1 1 auto; min-height: 0; height: auto; align-items: stretch !important; margin-bottom: 0 !important; }
+  .rep-layout > .rep-side { position: static !important; top: auto !important; max-height: 100% !important; overflow-y: auto !important; overscroll-behavior: contain; padding-bottom: 16px; }
+  .rep-layout > .rep-main { overflow-y: auto !important; max-height: 100%; min-height: 0; overscroll-behavior: contain; padding: 0 8px 24px 2px; scroll-padding-top: 12px; }
+}
+@media (min-width: 981px) {
+  .rep-filters { padding: 14px 16px !important; gap: 8px !important; }
+  .rep-menu .rep-item { padding: 7px 10px !important; }
+  .rep-menu .rep-item-icon { width: 32px; height: 32px; }
+  .page:has(> .rep-layout) > .page-head { margin-bottom: 4px !important; }
+}
+/* Reports: the columns scroll with the wheel or trackpad, without a visible scrollbar line. */
+.rep-layout > .rep-main, .rep-layout > .rep-side { scrollbar-width: none !important; -ms-overflow-style: none; }
+.rep-layout > .rep-main::-webkit-scrollbar, .rep-layout > .rep-side::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }

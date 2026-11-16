@@ -3,7 +3,7 @@ import { api, download } from '../lib/api.js';
 import { useT } from '../lib/i18n.js';
 import { useSession } from '../lib/session.jsx';
 import { ViewCard } from './adminkit.jsx';
-import { ErrorText, Field, Modal } from './ui.jsx';
+import { ErrorText, Field, PasswordInput, Modal } from './ui.jsx';
 
 /** Download everything held about you, or delete your account (DPDP Act). */
 export default function YourData() {
@@ -51,7 +51,7 @@ export default function YourData() {
           <form onSubmit={remove}>
             <p className="muted">{t('This cannot be undone. Enter your password to confirm.')}</p>
             <Field label="Password" icon="lock">
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+              <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
             </Field>
             <ErrorText>{error}</ErrorText>
             <button className="btn danger" disabled={busy || !password}>{busy ? t('Please wait…') : t('Delete my account')}</button>

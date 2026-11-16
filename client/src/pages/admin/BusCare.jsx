@@ -365,7 +365,7 @@ function Scorecards({ token }) {
           ))}
         </div>
       )}
-      {list.data && rows.length > scored.length && <p className="fine-print">{rows.length - scored.length} driver{rows.length - scored.length === 1 ? ' has' : 's have'} no trips in this period.</p>}
+      {list.data && rows.length > scored.length && <p className="fine-print">{`${rows.length - scored.length} driver${rows.length - scored.length === 1 ? ' has' : 's have'} no trips in this period.`}</p>}
     </Panel>
   );
 }

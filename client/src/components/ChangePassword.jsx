@@ -2,7 +2,7 @@ import { passwordProblem } from '../../../shared/password.js';
 import { useState } from 'react';
 import { api } from '../lib/api.js';
 import { useSession } from '../lib/session.jsx';
-import { ErrorText, Field, Modal, Notice, Panel } from './ui.jsx';
+import { ErrorText, Field, PasswordInput, Modal, Notice, Panel } from './ui.jsx';
 
 /**
  * Change your own password (every role). The server signs out every other
@@ -43,9 +43,9 @@ export default function ChangePassword({ onClose }) {
         </>
       ) : (
         <form onSubmit={submit}>
-          <Field label="Current password" icon="lock"><input type="password" value={f.current} onChange={set('current')} autoComplete="current-password" required /></Field>
-          <Field label="New password (10+ characters)" icon="lock"><input type="password" value={f.next} onChange={set('next')} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
-          <Field label="Confirm new password" icon="lock"><input type="password" value={f.confirm} onChange={set('confirm')} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
+          <Field label="Current password" icon="lock"><PasswordInput value={f.current} onChange={set('current')} autoComplete="current-password" required /></Field>
+          <Field label="New password (10+ characters)" icon="lock"><PasswordInput value={f.next} onChange={set('next')} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
+          <Field label="Confirm new password" icon="lock"><PasswordInput value={f.confirm} onChange={set('confirm')} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
           <ErrorText>{error}</ErrorText>
           <button className="btn primary" disabled={busy}>{busy ? 'Please wait…' : 'Change password'}</button>
         </form>
@@ -86,9 +86,9 @@ export function ChoosePassword() {
       <Panel title="Choose your own password" icon="lock">
         <p className="muted">You signed in with a temporary password from the transport office. Pick a new one only you know.</p>
         <form onSubmit={submit}>
-          <Field label="Temporary password" icon="lock"><input type="password" value={f.current} onChange={set('current')} autoComplete="current-password" required /></Field>
-          <Field label="New password (10+ characters)" icon="lock"><input type="password" value={f.next} onChange={set('next')} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
-          <Field label="Confirm new password" icon="lock"><input type="password" value={f.confirm} onChange={set('confirm')} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
+          <Field label="Temporary password" icon="lock"><PasswordInput value={f.current} onChange={set('current')} autoComplete="current-password" required /></Field>
+          <Field label="New password (10+ characters)" icon="lock"><PasswordInput value={f.next} onChange={set('next')} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
+          <Field label="Confirm new password" icon="lock"><PasswordInput value={f.confirm} onChange={set('confirm')} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
           <ErrorText>{error}</ErrorText>
           <button className="btn primary" disabled={busy}>{busy ? 'Please wait…' : 'Save password'}</button>
         </form>

@@ -50,7 +50,7 @@ const card = { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 1, bord
 function Kpi({ label, value, note, tone }) {
   return (
     <View style={[card, { flexBasis: '47%', flexGrow: 1, padding: 14, gap: 4, shadowOpacity: 0 }]}>
-      <Text style={{ fontSize: 13, ...F[500], color: C.muted }} numberOfLines={1}>{label}</Text>
+      <Text style={{ fontSize: 13, ...F[500], color: C.muted }} numberOfLines={2}>{label}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, flexWrap: 'wrap' }}>
         <Text style={{ fontSize: 26, lineHeight: 32, ...F.displayBold, color: tone ?? C.ink, fontVariant: ['tabular-nums'] }}>{value ?? '—'}</Text>
         {note ? <Text style={{ fontSize: 12.5, ...F[500], color: C.muted, paddingBottom: 5 }} numberOfLines={1}>{note}</Text> : null}

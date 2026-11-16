@@ -219,7 +219,7 @@ export function loadConfig(overrides = {}) {
     // Set TRUST_PROXY when the server sits behind a proxy (Render, Nginx): the number
     // of proxy hops (usually 1), or an Express "trust proxy" value. Off by default.
     trustProxy: parseTrustProxy(env.TRUST_PROXY),
-    otp: { ttlMinutes: 10, maxAttempts: 5, resendSeconds: 60, showInResponse: env.NODE_ENV !== 'production' },
+    otp: { ttlMinutes: 10, maxAttempts: 5, resendSeconds: 60, showInResponse: demoMode && env.NODE_ENV !== 'production' },
     passwordReset: { codeTtlMinutes: 15, maxAttempts: 5, resendSeconds: 60 },
 
     // The college this copy of the app serves. Another college runs its own copy

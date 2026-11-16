@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken';
 import { CHECKLIST_ITEMS } from '../shared/service.js';
 import { haversineMeters } from '../shared/geo.js';
 import { secondsAgo, startTestServer } from './helpers.js';
+import { verifyToken } from '../server/auth.js';
+import { loadConfig } from '../server/config.js';
 
 let t;
 let admin;
@@ -120,6 +122,32 @@ test('the bus pass: the driver scans it, the student is recorded, and an old or 
   assert.equal((await t.call('/api/driver/pass-scan', { token: bus.token, body: { code: forged } })).status, 400);
   assert.equal((await t.call('/api/driver/pass-scan', { token: bus.token, body: { code: 'UBTS-BOARD:1' } })).status, 400);
   await bus.end();
+});
+
+test('a bus pass code is never accepted as a sign-in token (API or live updates)', async () => {
+  const s = await student('119', 4);
+  const { body: pass } = await t.call('/api/pass', { token: s.token });
+  const jwtPart = pass.code.slice(pass.code.indexOf(':') + 1);
+  assert.equal(verifyToken(t.config, jwtPart), null);
+  assert.equal((await t.call('/api/me', { token: jwtPart })).status, 401);
+  assert.ok(verifyToken(t.config, s.token));
+  // A signed token without a known role is refused too.
+  assert.equal(verifyToken(t.config, jwt.sign({ sub: String(s.id) }, t.config.jwtSecret)), null);
+});
+
+test('codes are returned in responses only in demo mode', () => {
+  const saved = { DEMO_MODE: process.env.DEMO_MODE, NODE_ENV: process.env.NODE_ENV };
+  try {
+    delete process.env.NODE_ENV;
+    process.env.DEMO_MODE = '0';
+    assert.equal(loadConfig().otp.showInResponse, false);
+    process.env.DEMO_MODE = '1';
+    assert.equal(loadConfig().otp.showInResponse, true);
+    process.env.NODE_ENV = 'production';
+    assert.equal(loadConfig().otp.showInResponse, false);
+  } finally {
+    for (const [k, v] of Object.entries(saved)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+  }
 });
 
 test('a pass with no subscription is shown as expired and records nobody, when one is required', async () => {

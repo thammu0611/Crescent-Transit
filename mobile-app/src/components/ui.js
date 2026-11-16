@@ -17,6 +17,8 @@ import Svg, { Circle, Defs, G as SvgG, Path, RadialGradient, Rect, Stop } from '
 import { monthName, shiftMonth, thisMonth } from '../lib/format.js';
 import { tickPress, tickSelect } from '../lib/haptics.js';
 import { useT } from '../lib/offline.js';
+import { useSession } from '../lib/session.js';
+import { translate, translatePageText } from '../../../shared/i18n.js';
 import { DIRECTION_TEXT } from '../lib/rules.js';
 import { ACCENT, C, F, G, HAIRLINE, R, TONE, glass, glow, interFor, shadow, shadowLg } from '../theme.js';
 import Icon from './Icon.js';
@@ -29,13 +31,45 @@ const InsideText = createContext(false);
  * font), and a plain fontWeight picks the matching Inter weight - Android
  * cannot bold a custom font by itself. Nested text inherits its parent's font.
  */
-export const Text = forwardRef(function Text({ style, children, ...rest }, ref) {
+// Interface language: every Text translates its own words, so a screen needs
+// no t() call for Tamil to cover it. Results are kept per language.
+const CACHE = new Map();
+export function translated(language, line) {
+  if (!language || language === 'en' || typeof line !== 'string' || !/[A-Za-z]/.test(line)) return line;
+  const key = `${language}|${line}`;
+  if (CACHE.has(key)) return CACHE.get(key);
+  const lead = line.match(/^\s*/)[0];
+  const tail = line.match(/\s*$/)[0];
+  const core = line.trim();
+  let out = translate(language, core);
+  if (out === core) out = translatePageText(language, core) ?? core;
+  out = lead + out + tail;
+  if (CACHE.size > 5000) CACHE.clear();
+  CACHE.set(key, out);
+  return out;
+}
+
+/** The signed-in person's interface language ('en' before sign-in). */
+let lastLanguage = 'en';
+export const useLanguage = () => { lastLanguage = useSession()?.user?.language ?? 'en'; return lastLanguage; };
+
+function translateChildren(language, children) {
+  if (language === 'en' || children == null) return children;
+  const list = Array.isArray(children) ? children.flat(Infinity) : [children];
+  // Words and numbers only: translate the whole line at once ("3 stops left").
+  if (list.every((c) => typeof c === 'string' || typeof c === 'number')) return translated(language, list.join(''));
+  return list.map((c) => (typeof c === 'string' ? translated(language, c) : c));
+}
+
+export const Text = forwardRef(function Text({ style, children, noTranslate, ...rest }, ref) {
   const nested = useContext(InsideText);
+  const language = useLanguage();
   const flat = StyleSheet.flatten(style) ?? {};
   const font = !flat.fontFamily && (!nested || flat.fontWeight) ? { fontFamily: interFor(flat.fontWeight), fontWeight: 'normal' } : null;
+  const shown = noTranslate ? children : translateChildren(language, children);
   return (
     <RNText ref={ref} style={font ? [style, font] : style} {...rest}>
-      <InsideText.Provider value>{children}</InsideText.Provider>
+      <InsideText.Provider value>{shown}</InsideText.Provider>
     </RNText>
   );
 });
@@ -268,11 +302,11 @@ const ON_PILL = C.ink;
 /** The logo's wordmark: "Crescent" over a spaced capital "TRANSIT". */
 export const Wordmark = ({ style, dark }) => (
   <View style={[{ justifyContent: 'center' }, style]} accessibilityRole="header" accessibilityLabel="Crescent Transit">
-    <Text style={[s.wordmark, dark && { color: C.navy }]} numberOfLines={1}>Crescent</Text>
+    <Text style={[s.wordmark, dark && { color: C.navy }]} numberOfLines={1} noTranslate>Crescent</Text>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       {/* A short line in the logo's crescent gold leads into "TRANSIT". */}
       <View style={{ width: 14, height: 1.5, borderRadius: 1, backgroundColor: '#beaf8e' }} />
-      <Text style={[s.wordmarkSub, dark && { color: C.navy }]} numberOfLines={1}>TRANSIT</Text>
+      <Text style={[s.wordmarkSub, dark && { color: C.navy }]} numberOfLines={1} noTranslate>TRANSIT</Text>
     </View>
   </View>
 );
@@ -316,7 +350,7 @@ function PillTitle({ title }) {
     >
       <View style={s.pillEyebrowRow}>
         <View style={s.pillEyebrowDot} />
-        <Text style={s.pillEyebrow} numberOfLines={1}>CRESCENT TRANSIT</Text>
+        <Text style={s.pillEyebrow} numberOfLines={1} noTranslate>CRESCENT TRANSIT</Text>
       </View>
       <Text style={s.pillTitle} numberOfLines={1}>{title}</Text>
     </Animated.View>
@@ -408,7 +442,7 @@ export function Avatar({ name = '', size = 44, light, photo }) {
     <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: light ? 'rgba(255,255,255,0.10)' : C.navy50, borderWidth: 1.5, borderColor: light || photo ? C.gold : C.navy100, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
       {photo
         ? <Image source={{ uri: photo }} style={{ width: '100%', height: '100%' }} resizeMode="cover" accessibilityIgnoresInvertColors />
-        : <Text style={{ color: light ? '#fff' : C.navy, ...F[600], fontSize: size * 0.36 }}>{initials}</Text>}
+        : <Text style={{ color: light ? '#fff' : C.navy, ...F[600], fontSize: size * 0.36 }} noTranslate>{initials}</Text>}
     </View>
   );
 }
@@ -672,7 +706,10 @@ export function Field({ label: name, hint, children, style }) {
 
 // `highlight`: a gold edge on the box itself, for a value filled in for the person to check.
 export function Input({ icon, style, multiline, onFocus, onBlur, ref: outerRef, highlight, ...props }) {
+  const language = useLanguage();
   const [focused, setFocused] = useState(false);
+  const [reveal, setReveal] = useState(false);
+  const secret = !!props.secureTextEntry;
   const inputRef = useRef(null);
   const retried = useRef(false);
   // One ref for this component and one passed in (React 19 passes `ref` as a prop).
@@ -711,9 +748,16 @@ export function Input({ icon, style, multiline, onFocus, onBlur, ref: outerRef, 
         onFocus={(e) => { setFocused(true); ensureKeyboard(); onFocus?.(e); }}
         onBlur={(e) => { setFocused(false); onBlur?.(e); }}
         {...props}
+        placeholder={translated(language, props.placeholder)}
         // Android: no autofill hints either, or the pop-up comes back (iOS keeps them).
         autoComplete={Platform.OS === 'android' ? 'off' : props.autoComplete}
+        secureTextEntry={secret && !reveal}
       />
+      {secret ? (
+        <Pressable onPress={() => setReveal((x) => !x)} hitSlop={10} accessibilityRole="button" accessibilityState={{ checked: reveal }} accessibilityLabel={translated(language, reveal ? 'Hide password' : 'Show password')} style={{ padding: 6, marginRight: -4 }}>
+          <Icon name={reveal ? 'eye-off' : 'eye'} size={19} color={reveal ? C.navy : C.faint} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -786,10 +830,11 @@ export function Segmented({ value, onChange, options: list, full }) {
 }
 
 export function SearchBox({ value, onChange, placeholder = 'Search' }) {
+  const language = useLanguage();
   return (
     <View style={[s.inputWrap, { marginBottom: 10, backgroundColor: C.surface, borderColor: C.line2 }]}>
       <Icon name="search" size={16} color={C.faint} />
-      <TextInput importantForAutofill="no" value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={C.faint} style={[s.input, Platform.OS === 'web' && { outlineStyle: 'none' }]} autoCapitalize="none" autoCorrect={false} accessibilityLabel={placeholder} />
+      <TextInput importantForAutofill="no" value={value} onChangeText={onChange} placeholder={translated(language, placeholder)} placeholderTextColor={C.faint} style={[s.input, Platform.OS === 'web' && { outlineStyle: 'none' }]} autoCapitalize="none" autoCorrect={false} accessibilityLabel={translated(language, placeholder)} />
       {value ? <Pressable accessibilityRole="button" onPress={() => onChange('')} hitSlop={8} accessibilityLabel="Clear search"><Icon name="x" size={16} color={C.faint} /></Pressable> : null}
     </View>
   );
@@ -822,10 +867,12 @@ export function Sheet({ visible = true, title, onClose, children, scroll = true 
 
 /** Yes/No confirmation (window.confirm). */
 export const confirm = (title, message, okLabel = 'OK', destructive = false) => {
+  const tr = (x) => translated(lastLanguage, x);
+  [title, message, okLabel] = [tr(title), tr(message), tr(okLabel)];
   if (Platform.OS === 'web') return Promise.resolve(window.confirm(`${title}${message ? `\n\n${message}` : ''}`));
   return new Promise((resolve) =>
     Alert.alert(title, message, [
-      { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+      { text: tr('Cancel'), style: 'cancel', onPress: () => resolve(false) },
       { text: okLabel, style: destructive ? 'destructive' : 'default', onPress: () => resolve(true) },
     ], { cancelable: true, onDismiss: () => resolve(false) }),
   );

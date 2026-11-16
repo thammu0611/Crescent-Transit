@@ -281,3 +281,12 @@ html { scroll-behavior: smooth; }
 .contact-list a { font-weight: 700; color: var(--red-600); text-decoration: none; white-space: nowrap; }
 @media (max-width: 900px) {
 }
+
+/* Password boxes: an eye button inside the right edge shows or hides the password. */
+.control-wrap > input:has(+ .pw-eye) { padding-right: 46px !important; }
+.control-wrap > .pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; padding: 0; }
+.control-wrap > .pw-eye:hover { color: var(--indigo); background: rgba(58, 83, 144, 0.08); }
+.control-wrap > .pw-eye:focus-visible { outline: 2px solid var(--indigo); outline-offset: 1px; }
+.control-wrap > .pw-eye .icon { position: static; transform: none; }
+/* Edge draws its own reveal button; ours replaces it. */
+input::-ms-reveal, input::-ms-clear { display: none; }

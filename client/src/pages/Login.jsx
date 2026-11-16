@@ -4,7 +4,7 @@ import { api } from '../lib/api.js';
 import { useServerInfo } from '../lib/serverInfo.js';
 import { useSession } from '../lib/session.jsx';
 import Icon from '../components/Icon.jsx';
-import { ErrorText, Field, Segmented } from '../components/ui.jsx';
+import { ErrorText, Field, PasswordInput, Segmented } from '../components/ui.jsx';
 
 /** Sign in for every role; self-registration for students. */
 export default function Login() {
@@ -78,7 +78,7 @@ export default function Login() {
           <>
             <p className="muted">Students, drivers and the transport office all sign in here.</p>
             <Field label="Username or email" icon="user"><input value={form.username} onChange={set('username')} autoComplete="username" required /></Field>
-            <Field label="Password" icon="lock"><input type="password" value={form.password} onChange={set('password')} autoComplete="current-password" required /></Field>
+            <Field label="Password" icon="lock"><PasswordInput value={form.password} onChange={set('password')} autoComplete="current-password" required /></Field>
             <button type="button" className="link-btn forgot-link" onClick={() => { setError(null); setMode('forgot'); }}>Forgot password?</button>
             {info?.demoMode && (
             <details className="demo-accounts">
@@ -103,7 +103,7 @@ export default function Login() {
               <Field label="Email" icon="mail"><input type="email" value={form.email} onChange={set('email')} required /></Field>
               <Field label="Phone" icon="phone"><input type="tel" value={form.phone ?? ''} onChange={set('phone')} /></Field>
             </div>
-            <Field label="Password (10+ characters)" icon="lock"><input type="password" value={form.password} onChange={set('password')} minLength={10} required autoComplete="new-password" /></Field>
+            <Field label="Password (10+ characters)" icon="lock"><PasswordInput value={form.password} onChange={set('password')} minLength={10} required autoComplete="new-password" /></Field>
           </>
         ) : (
           <>
@@ -117,7 +117,7 @@ export default function Login() {
               <Field label="University email" icon="mail" hint="The one you use on DigiiCampus"><input type="email" value={form.email} onChange={set('email')} autoComplete="email" required /></Field>
             </div>
             <div className="grid2">
-              <Field label="Password (10+ characters)" icon="lock"><input type="password" value={form.password} onChange={set('password')} minLength={10} required autoComplete="new-password" /></Field>
+              <Field label="Password (10+ characters)" icon="lock"><PasswordInput value={form.password} onChange={set('password')} minLength={10} required autoComplete="new-password" /></Field>
               <Field label="Department" icon="users"><input value={form.department} onChange={set('department')} placeholder="e.g. CA, CSE" /></Field>
             </div>
             <div className="grid2">
@@ -199,8 +199,8 @@ function ForgotPassword({ initial, onBack }) {
           <Field label="6-digit code" icon="lock">
             <input value={f.code} onChange={(e) => setF((x) => ({ ...x, code: e.target.value.replace(/\D/g, '').slice(0, 6) }))} inputMode="numeric" autoComplete="one-time-code" required />
           </Field>
-          <Field label="New password (10+ characters)" icon="lock"><input type="password" value={f.next} onChange={(e) => setF((x) => ({ ...x, next: e.target.value }))} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
-          <Field label="Confirm new password" icon="lock"><input type="password" value={f.confirm} onChange={(e) => setF((x) => ({ ...x, confirm: e.target.value }))} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
+          <Field label="New password (10+ characters)" icon="lock"><PasswordInput value={f.next} onChange={(e) => setF((x) => ({ ...x, next: e.target.value }))} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
+          <Field label="Confirm new password" icon="lock"><PasswordInput value={f.confirm} onChange={(e) => setF((x) => ({ ...x, confirm: e.target.value }))} autoComplete="new-password" minLength={10} maxLength={72} required /></Field>
         </>
       )}
       <ErrorText>{error}</ErrorText>

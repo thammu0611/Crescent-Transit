@@ -6,7 +6,7 @@ import { useSession } from '../../lib/session.jsx';
 import { useAction, useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
 import TrackersTab from './Trackers.jsx';
-import { Badge, ErrorText, Field, Modal, Notice, Page, Panel, RowActions, SearchBox, Segmented, Table } from '../../components/ui.jsx';
+import { Badge, ErrorText, Field, PasswordInput, Modal, Notice, Page, Panel, RowActions, SearchBox, Segmented, Table } from '../../components/ui.jsx';
 
 function BusForm({ token, bus, routes, onClose, onSaved }) {
   const [f, setF] = useState({
@@ -75,7 +75,7 @@ function DriverForm({ token, driver, buses, onClose, onSaved }) {
               {buses.map((b) => <option key={b.id} value={b.fleet_code}>{b.fleet_code}{b.driver_username && b.driver_username !== driver?.username ? ` (${b.driver_username})` : ''}</option>)}
             </select>
           </Field>
-          <Field label={driver ? 'Reset to a temporary password (optional)' : 'Temporary password'} hint="The driver chooses their own at first sign-in"><input type="password" value={f.password} onChange={set('password')} minLength={8} required={!driver} autoComplete="new-password" /></Field>
+          <Field label={driver ? 'Reset to a temporary password (optional)' : 'Temporary password'} hint="The driver chooses their own at first sign-in" icon="lock"><PasswordInput value={f.password} onChange={set('password')} minLength={8} required={!driver} autoComplete="new-password" /></Field>
           {driver && (
             <Field label="Status">
               <select value={f.status} onChange={set('status')}><option value="active">Active</option><option value="suspended">Suspended</option></select>

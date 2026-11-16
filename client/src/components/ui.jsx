@@ -193,6 +193,20 @@ export function Modal({ title, onClose, children, width = 440 }) {
   );
 }
 
+/** A password box with an eye button that shows or hides what was typed. */
+export function PasswordInput(props) {
+  const t = useT();
+  const [show, setShow] = useState(false);
+  return (
+    <>
+      <input {...props} type={show ? 'text' : 'password'} />
+      <button type="button" className="pw-eye" onClick={() => setShow((x) => !x)} aria-label={t(show ? 'Hide password' : 'Show password')} aria-pressed={show} title={t(show ? 'Hide password' : 'Show password')}>
+        <Icon name={show ? 'eye-off' : 'eye'} size={18} />
+      </button>
+    </>
+  );
+}
+
 export function Field({ label, children, hint, icon }) {
   const t = useT();
   return (

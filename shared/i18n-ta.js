@@ -1,7 +1,63 @@
 // Tamil for the rest of the interface: the office, driver, finance and setup
 // screens, messages, empty states and help text. Merged into the main list in
 // i18n.js (entries there win). The English text is the key.
+import { TA_COUNT_PATTERN, TA_PHONE_PATTERNS } from './i18n-ta-phone.js';
+
 export const TA_MORE = {
+  'Route no.': 'வழித்தடம் எண்',
+  'routes': 'வழித்தடங்கள்',
+  'route': 'வழித்தடம்',
+  '(auto)': '(தானியங்கி)',
+  'auto': 'தானியங்கி',
+  'running': 'இயங்குகிறது',
+  "The trip appears in the driver's app; their Start Trip runs it.": 'பயணம் ஓட்டுநரின் செயலியில் தோன்றும்; அவர் "பயணத்தைத் தொடங்கு" அழுத்தினால் இயங்கும்.',
+  'Automatic trips': 'தானியங்கிப் பயணங்கள்',
+  'off': 'அணைக்கப்பட்டது',
+  'on': 'இயக்கத்தில்',
+  'webhook': 'வெப்ஹூக்',
+  "No GPS trackers yet. Add one with its IMEI; until then each bus is tracked by its driver's phone.": 'இன்னும் ஜி.பி.எஸ். கருவிகள் இல்லை. அதன் ஐ.எம்.இ.ஐ. எண்ணுடன் ஒன்றைச் சேர்க்கவும்; அதுவரை ஒவ்வொரு பேருந்தும் அதன் ஓட்டுநரின் தொலைபேசி மூலம் கண்காணிக்கப்படும்.',
+  '(no buses)': '(பேருந்துகள் இல்லை)',
+  'Near full (> 85%)': 'கிட்டத்தட்ட நிரம்பியது (> 85%)',
+  'Attendance conflict': 'வருகை முரண்பாடு',
+  'min': 'நிமி',
+  'Each minute the server logs its prediction for the next three stops; when the bus reaches the stop the error is |actual − predicted|.': 'ஒவ்வொரு நிமிடமும் சர்வர் அடுத்த மூன்று நிறுத்தங்களுக்கான கணிப்பைப் பதிவு செய்கிறது; பேருந்து நிறுத்தத்தை அடையும்போது பிழை = |உண்மை − கணிப்பு|.',
+  'campus': 'வளாகம்',
+  'BSACIST': 'BSACIST',
+  'Tracker offline': 'கருவி இணைப்பில் இல்லை',
+  'Evening trip': 'மாலைப் பயணம்',
+  'Morning trip': 'காலைப் பயணம்',
+  'Already checked in': 'ஏற்கனவே பதிவு செய்யப்பட்டது',
+  'Enter code': 'குறியீட்டை உள்ளிடு',
+  'Scan QR': 'க்யூ.ஆர். ஸ்கேன்',
+  'Auto (GPS)': 'தானியங்கி (ஜி.பி.எஸ்.)',
+  'Scanning works in the phone app, or on Chrome for Android': 'ஸ்கேன் செய்வது தொலைபேசி செயலியில் அல்லது ஆண்ட்ராய்டு குரோமில் வேலை செய்யும்',
+  'No camera? Enter the 6-digit code': 'கேமரா இல்லையா? 6 இலக்கக் குறியீட்டை உள்ளிடுங்கள்',
+  'You were': 'நீங்கள்',
+  'Period and route': 'காலம் & வழித்தடம்',
+  'Reports': 'அறிக்கைகள்',
+  'Who boarded, by bus and student': 'யார் ஏறினார்கள், பேருந்து & மாணவர் வாரியாக',
+  'Busiest stops and hours': 'அதிக கூட்டமான நிறுத்தங்கள் & நேரங்கள்',
+  'How full each trip ran': 'ஒவ்வொரு பயணமும் எவ்வளவு நிரம்பியிருந்தது',
+  'Flagged, overridden or unconfirmed records': 'குறிக்கப்பட்ட, மாற்றப்பட்ட அல்லது உறுதிசெய்யப்படாத பதிவுகள்',
+  'Rides without a subscription': 'சந்தா இல்லாத பயணங்கள்',
+  'How close arrival estimates were': 'வருகை மதிப்பீடுகள் எவ்வளவு சரியாக இருந்தன',
+  'Compare with a manual register': 'கைப் பதிவேட்டுடன் ஒப்பிடு',
+  'Occupancy': 'இருக்கை நிரம்பல்',
+  'Exceptions': 'விதிவிலக்குகள்',
+  'Leakage': 'கசிவு',
+  'mark one by hand': 'கையால் ஒருவரைக் குறிக்கவும்',
+  'Transport Administrator': 'போக்குவரத்து நிர்வாகி',
+  'Finance Officer': 'நிதி அலுவலர்',
+  'Demo Parent': 'டெமோ பெற்றோர்',
+  'Fill in from a document': 'ஆவணத்திலிருந்து நிரப்பு',
+  'Upload a document to fill this in': 'இதை நிரப்ப ஓர் ஆவணத்தைப் பதிவேற்றவும்',
+  'Documents': 'ஆவணங்கள்',
+  'Service and odometer': 'சர்வீஸ் & ஓடோமீட்டர்',
+  'Save documents and service': 'ஆவணங்கள் & சர்வீஸைச் சேமி',
+  'Choose another report': 'வேறு அறிக்கையைத் தேர்ந்தெடு',
+  'Choose a report': 'அறிக்கையைத் தேர்ந்தெடு',
+  'Change': 'மாற்று',
+  'Report': 'அறிக்கை',
   'Linked parents': 'இணைக்கப்பட்ட பெற்றோர்',
   'Place your photo': 'உங்கள் புகைப்படத்தை அமைக்கவும்',
   'Drag to move it, and zoom so your face fits the circle.': 'நகர்த்த இழுக்கவும், உங்கள் முகம் வட்டத்துக்குள் பொருந்தும்படி பெரிதாக்கவும்.',
@@ -1060,6 +1116,36 @@ function dateText(s) {
 
 /** Lines with numbers or names in them: [pattern, Tamil]. Tried after an exact match fails. */
 export const TA_PATTERNS = [
+  ...TA_PHONE_PATTERNS,
+  [/^Location: .+$/, 'இருப்பிடம்: அனுமதி மறுக்கப்பட்டது'],
+  [/^(\d+) trips run this week$/, 'இந்த வாரம் $1 பயணங்கள்'],
+  [/^(\d+) students boarded this week$/, 'இந்த வாரம் $1 மாணவர்கள் ஏறினர்'],
+  [/^Since (.+)$/, '$1 முதல்'],
+  [/^ended (.+)$/, '$1-க்கு முடிந்தது'],
+  [/^Review queue \((\d+)\)$/, 'சரிபார்ப்பு வரிசை ($1)'],
+  [/^(\d+) incidents?$/, '$1 சம்பவங்கள்'],
+  [/^On time (.+)$/, 'சரியான நேரம் $1'],
+  [/^Rating (.+)$/, 'மதிப்பீடு $1'],
+  [/^Speeding (\d+)$/, 'அதிவேகம் $1'],
+  [/^Failed checks (\d+)$/, 'தோல்வியான சோதனைகள் $1'],
+  [/^(\d+) drivers? (?:has|have) no trips in this period\.$/, 'இந்தக் காலத்தில் $1 ஓட்டுநர்களுக்குப் பயணங்கள் இல்லை.'],
+  [/^driver (\d+): marked on board$/, 'ஓட்டுநர் $1: பேருந்தில் இருப்பதாகக் குறித்தார்'],
+  [/^Matched bus (\S+) while recorded on trip (\d+); refused$/, 'பயணம் $2-இல் பதிவாகியிருக்கும்போது பேருந்து $1-உடன் பொருந்தியது; நிராகரிக்கப்பட்டது'],
+  [/^([\d.]+) min$/, '$1 நிமி'],
+  [/^< ([\d.]+) min$/, '< $1 நிமி'],
+  [/^(.+?) min ahead \((\d+)\)$/, '$1 நிமி முன்பு ($2)'],
+  [/^segment-history \((\d+)\)$/, 'பகுதி வரலாறு ($1)'],
+  [/^timetable \((\d+)\)$/, 'கால அட்டவணை ($1)'],
+  [/^Bus (\S+) reaches (.+?)(?: at ([\d.:]+ ?[AP]M))? and arrives at (.+?)(?: at ([\d.:]+ ?[AP]M))?\.$/, (_m, bus, stop, t1, camp, t2) => `பேருந்து ${bus}, ${stop}-ஐ${t1 ? ` ${t1} மணிக்கு` : ''} அடைந்து, ${camp === 'campus' ? 'வளாகத்தை' : `${camp}-ஐ`}${t2 ? ` ${t2} மணிக்குச்` : 'ச்'} சேரும்.`.replace(/\s?AM\b/g, ' முப').replace(/\s?PM\b/g, ' பிப')],
+  [/^(.+) checked in on (.+) at (.+?)\. There's nothing else to do\.$/, '$1 — $2-இல் $3 மணிக்குப் பதிவு செய்யப்பட்டது. வேறு எதுவும் செய்ய வேண்டியதில்லை.'],
+  [/^(\d+) stops? left$/, '$1 நிறுத்தங்கள் மீதம்'],
+  [/^(\d+) students? on board$/, 'பேருந்தில் $1 மாணவர்கள்'],
+  [/^Bus (\S+) has passed (.+)$/, 'பேருந்து $1, $2-ஐக் கடந்துவிட்டது'],
+  [/^Bus (\S+) arrives at (.+)$/, 'பேருந்து $1, $2-ஐ அடையும்'],
+  [/^Near ([A-Z].*?) \((\d+) m\)$/, '$1 அருகில் ($2 மீ)'],
+  [/^Near ([A-Z].*)$/, '$1 அருகில்'],
+  [/^Last seen near (.+?) \((\d+) m\)$/, 'கடைசியாக $1 அருகில் ($2 மீ)'],
+  [/^Last seen near (.+)$/, 'கடைசியாக $1 அருகில்'],
   [/^Asks "Did you board\?" when your bus leaves (.+)\.$/, '$1-இலிருந்து பேருந்து புறப்படும்போது "நீங்கள் ஏறினீர்களா?" என்று கேட்கும்.'],
   [/^About 5 minutes before the bus reaches (.+)\.$/, 'பேருந்து $1-ஐ அடைவதற்கு சுமார் 5 நிமிடங்களுக்கு முன்.'],
   [/^Delays and changes for Route (.+)\.$/, 'வழி $1-க்கான தாமதங்கள் மற்றும் மாற்றங்கள்.'],
@@ -1124,6 +1210,8 @@ export const TA_PATTERNS = [
  * Tamil for a whole line: an exact match, then the patterns, then a date or
  * time, then each part of a "part · part" line on its own. Null when nothing applies.
  */
+TA_PATTERNS.push(TA_COUNT_PATTERN);
+
 export function translateLine(dict, line) {
   if (dict[line]) return dict[line];
   // "· 2 updates": a part that follows a separator in another element.
@@ -1131,7 +1219,11 @@ export function translateLine(dict, line) {
     const rest = translateLine(dict, line.slice(2).trim());
     return rest ? `· ${rest}` : null;
   }
-  for (const [re, to] of TA_PATTERNS) if (re.test(line)) return line.replace(re, to);
+  for (const [re, to] of TA_PATTERNS) {
+    const m = line.match(re);
+    if (m && typeof to === 'function') return line.replace(re, to);
+    if (m) return to.replace(/\$(\d)/g, (_x, i) => { const g = (m[Number(i)] ?? '').trim(); return dict[g] ?? (g && translateLine(dict, g)) ?? g; });
+  }
   const date = dateText(line);
   if (date && date !== line) return date;
   if (line.includes(' · ')) {

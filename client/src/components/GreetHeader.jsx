@@ -22,9 +22,9 @@ export default function GreetHeader({ title, metas, right, nameInTitle = false }
         <Avatar name={name || '?'} size={56} photo={photo} />
         <div>
           <span className="greet-sub">
-            {t(greeting())},{nameInTitle ? null : <> <b className="greet-name" data-no-translate>{name}</b></>}
+            {t(greeting())},{nameInTitle ? null : <> <b className="greet-name">{name}</b></>}
           </span>
-          <h1 data-no-translate={nameInTitle || undefined}>{title}</h1>
+          <h1>{title}</h1>
           <span className="greet-metas">
             {metas ?? <span className="greet-meta"><Icon name="clock" size={14} /> {longDate()}</span>}
           </span>
