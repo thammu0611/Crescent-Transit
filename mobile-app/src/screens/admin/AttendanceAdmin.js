@@ -335,7 +335,7 @@ function BusesTab({ buses, onOpen }) {
                 <Row gap={6}>
                   <Icon name="users" size={13} color={C.navy} />
                   <Txt small bold>{b.students ?? 0}</Txt>
-                  <Txt small muted style={{ flex: 1 }} numberOfLines={1}>students</Txt>
+                  <Txt small muted style={{ flex: 1 }} numberOfLines={1}>{(b.students ?? 0) === 1 ? 'student' : 'students'}</Txt>
                 </Row>
                 <Txt small muted numberOfLines={2} style={{ marginTop: 'auto' }}>{b.driver_name ?? 'No driver'}</Txt>
               </Pressable>

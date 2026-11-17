@@ -144,7 +144,7 @@ export default function Settings() {
   return (
     <Page eyebrow="Student" title="Settings" subtitle="Your account, your bus, reminders and privacy - in one place.">
       <section className="settings-hero">
-        <span className="settings-avatar" aria-hidden="true">{initials(user.name)}</span>
+        <span className="settings-avatar" aria-hidden="true" data-no-translate="">{initials(user.name)}</span>
         <div className="settings-who">
           <h2>{user.name}</h2>
           <p>@{user.username}{user.registerNo ? ` · ${user.registerNo}` : ''}{user.department ? ` · ${user.department}` : ''}</p>

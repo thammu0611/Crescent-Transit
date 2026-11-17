@@ -18,7 +18,7 @@ export function dayText(d) {
 export default function DayBanner() {
   const cal = useAsync(() => api('/api/calendar'), []);
   const today = cal.data?.today;
-  const soon = cal.data?.upcoming?.find((d) => d.day !== today?.day && Date.parse(d.day) - Date.now() < 7 * 86400000);
+  const soon = cal.data?.upcoming?.find((d) => !d.weekly && d.day !== today?.day && Date.parse(d.day) - Date.now() < 7 * 86400000);
   const d = today ?? soon;
   if (!d) return null;
   return (

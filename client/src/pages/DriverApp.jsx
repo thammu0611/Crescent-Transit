@@ -235,6 +235,11 @@ export default function DriverApp() {
   // The bus's own GPS tracker is the main source; the phone's GPS is an optional backup.
   const [source, setSource] = useState('tracker'); // 'tracker' | 'gps' | 'simulate'
   const [busGps, setBusGps] = useState(null);
+  const choseSource = useRef(false);
+  const pickSource = (value) => { choseSource.current = true; setSource(value); };
+  useEffect(() => {
+    if (busGps && !busGps.tracker && source === 'tracker' && !choseSource.current) setSource('gps');
+  }, [busGps, source]);
   useEffect(() => {
     if (!token) return undefined;
     let timer;
@@ -310,6 +315,48 @@ export default function DriverApp() {
     if (route) walkerRef.current = new PathWalker(travelOrder(route.stops, trip?.direction).map((s) => ({ lat: s.lat, lng: s.lng })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route, trip?.direction]);
+
+  // Phone-only bus (no tracker), no trip yet: send where this device is every 10 s
+  // while the page is open. When the bus leaves the depot in trip hours the
+  // server starts the trip by itself (server/autostart.js).
+  const phoneOnly = Boolean(busGps && !busGps.tracker);
+  const [autoWait, setAutoWait] = useState(null);
+  useEffect(() => {
+    if (trip || !phoneOnly || !token || !('geolocation' in navigator)) { setAutoWait(null); return undefined; }
+    const pending = [];
+    let watch = null;
+    let cancelled = false;
+    // Only with permission already given: waiting must not pop up a prompt.
+    const begin = () => {
+      watch = navigator.geolocation.watchPosition((p) => {
+        pending.push({
+          lat: p.coords.latitude,
+          lng: p.coords.longitude,
+          speedKmh: p.coords.speed == null ? undefined : Math.round(p.coords.speed * 36) / 10,
+          recordedAt: new Date(p.timestamp).toISOString(),
+        });
+        if (pending.length > 24) pending.splice(0, pending.length - 24);
+      }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+    };
+    (navigator.permissions?.query({ name: 'geolocation' }) ?? Promise.resolve({ state: 'prompt' }))
+      .then((s) => { if (!cancelled && s.state === 'granted') begin(); })
+      .catch(() => {});
+    const timer = setInterval(async () => {
+      if (!pending.length) return;
+      const fixes = pending.splice(0);
+      try {
+        const r = await api('/api/driver/standby', { token, body: { fixes } });
+        if (r.trip) {
+          setSource('gps');
+          setTrip(r.trip);
+          setOccupancy(r.trip.occupancy ?? null);
+        } else setAutoWait(r.waiting ?? null);
+      } catch {
+        // No signal: the next batch tries again.
+      }
+    }, 10000);
+    return () => { cancelled = true; if (watch != null) navigator.geolocation.clearWatch(watch); clearInterval(timer); };
+  }, [trip, phoneOnly, token]);
 
   // Phone GPS: keep the most recent fix; the send loop picks it up.
   useEffect(() => {
@@ -516,7 +563,7 @@ export default function DriverApp() {
   if (!trip) statusText = useTracker ? t('The bus GPS tracker shares the location while a trip is running.') : t('Location is shared only while a trip is running.');
   else if (useTracker) {
     if (trackerReporting) statusText = t('Bus GPS tracker is sharing live location');
-    else if (!tracker) statusText = t('No GPS tracker is fitted on this bus. Switch Location to phone GPS.');
+    else if (!tracker) statusText = t('No GPS tracker on this bus. Choose phone GPS under Location.');
     else statusText = `Bus GPS tracker is not reporting (last heard ${ago(tracker.lastSeenAt)}). Switch Location to phone GPS.`;
   } else if (standby) statusText = t('The bus GPS tracker is sharing the location. This phone stands by and takes over if the tracker stops.');
   else if (buffered > 0) statusText = `No network · ${buffered} fix(es) saved, will send when back`;
@@ -528,7 +575,7 @@ export default function DriverApp() {
   const nextStop = proj ? ordered[nextIndex] : null;
   const stopsLeft = route ? ordered.length - 1 - nextIndex : 0;
   const mins = trip ? Math.max(0, Math.floor((now - new Date(trip.started_at).getTime()) / 60000)) : 0;
-  const elapsed = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+  const elapsed = mins >= 1440 ? `${Math.floor(mins / 1440)}d ${Math.floor((mins % 1440) / 60)}h` : mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
 
   return (
     <main className="driver-layout">
@@ -572,12 +619,12 @@ export default function DriverApp() {
           </div>
           {trip?.started_by === 'tracker' && <p className="muted">{t('This trip was started automatically by the bus GPS tracker.')}</p>}
 
-          <div className="tracker-line">
+          <div className={`tracker-line${busGps && !tracker ? ' none' : ''}`}>
             <span><Icon name="signal" size={14} /> {t('Bus GPS tracker')}</span>
             {!busGps ? <Badge tone="offline">Checking…</Badge> : !tracker ? <Badge tone="danger">{t('Not fitted')}</Badge> : !tracker.active ? <Badge tone="danger">Disabled</Badge> : trackerReporting ? <Badge tone="live">{t('Reporting')}</Badge> : tracker.online ? <Badge tone="delayed">{t('Online, no fix')}</Badge> : <Badge tone="delayed">Offline</Badge>}
-            <small>{tracker ? `${tracker.label ?? tracker.uniqueId} · last heard ${ago(tracker.lastSeenAt)}` : busGps ? t('Ask the transport office to fit and register a tracker. Until then use phone GPS.') : ''}</small>
+            <small>{tracker ? `${tracker.label ?? tracker.uniqueId} · last heard ${ago(tracker.lastSeenAt)}` : busGps ? (useTracker ? t('Ask the transport office to fit one.') : t('This phone shares the location instead.')) : ''}</small>
           </div>
-          {useTracker && trip && !trackerReporting && <button type="button" className="btn light inline" onClick={() => setSource('gps')}><Icon name="phone" size={14} /> {t('Use phone GPS as backup')}</button>}
+          {useTracker && trip && !trackerReporting && <button type="button" className="btn light inline" onClick={() => pickSource('gps')}><Icon name="phone" size={14} /> {t('Use phone GPS as backup')}</button>}
           <div className="drive-settings">
             {!trip && (
               <label>
@@ -589,9 +636,9 @@ export default function DriverApp() {
             )}
             <label>
               <span>{t('Location')}</span>
-              <select value={source} onChange={(e) => setSource(e.target.value)}>
+              <select value={source} onChange={(e) => pickSource(e.target.value)}>
                 <option value="tracker">{t('Bus GPS tracker')}</option>
-                <option value="gps">This phone's GPS (backup)</option>
+                <option value="gps">{tracker ? t('Phone GPS (backup)') : t('Phone GPS')}</option>
                 {demo && <option value="simulate">Simulate along route</option>}
               </select>
             </label>
@@ -610,8 +657,12 @@ export default function DriverApp() {
           {trip ? (
             <button className="btn end-trip" onClick={endTrip}><Icon name="x" size={18} /> {t('End trip')}</button>
           ) : (
-            <button className="btn start-trip" onClick={startTrip} disabled={!route}><Icon name="arrow" size={18} /> {t('Start trip')}</button>
+            <>
+              <button className="btn start-trip" onClick={startTrip} disabled={!route}><Icon name="arrow" size={18} /> {t('Start trip')}</button>
+              {phoneOnly && <p className="muted small auto-start-hint">{t('Forgot to press Start? The trip starts by itself when the bus leaves the depot.')}{autoWait ? ` (${t(autoWait)})` : ''}</p>}
+            </>
           )}
+          {trip?.started_by === 'auto' && <p className="muted small">{t('This trip started by itself when the bus left the depot.')}</p>}
         </section>
 
         {trip && (

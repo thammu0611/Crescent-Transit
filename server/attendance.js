@@ -8,6 +8,7 @@
 // thrown away. Only the resulting attendance event is stored.
 import crypto from 'node:crypto';
 import { haversineMeters } from '../shared/geo.js';
+import { flagMessage } from '../shared/incidents.js';
 import {
   advanceCandidate,
   confidenceScore,
@@ -827,7 +828,7 @@ export class AttendanceService {
     if (this.flaggedTrips.has(`${reason}:${tripId}`)) return;
     this.flaggedTrips.add(`${reason}:${tripId}`);
     await this.db.query('UPDATE trips SET flagged = TRUE, flag_reason = $2 WHERE id = $1', [tripId, reason]);
-    await this.raiseIncident({ kind: reason, tripId, busId: where.busId, routeId: where.routeId, lat: where.lat, lng: where.lng, message: `Trip ${tripId} flagged: ${reason}` });
+    await this.raiseIncident({ kind: reason, tripId, busId: where.busId, routeId: where.routeId, lat: where.lat, lng: where.lng, message: flagMessage(tripId, reason) });
   }
 
   /** More students on board than seats: flagged (doc 9.8). */

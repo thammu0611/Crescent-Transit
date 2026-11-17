@@ -9,7 +9,7 @@ import Icon from '../../components/Icon.js';
 import { MiniMap } from '../../components/maps';
 import YourData from '../../components/YourData.js';
 import {
-  Avatar, Badge, Button, confirm, ErrorText, HeaderIconButton, IconBubble, Screen, Sheet, Skeleton, Text, TextField, Txt,
+  accentColour, alpha, Avatar, Badge, Button, CardTint, confirm, RowTint, ErrorText, HeaderIconButton, IconBubble, Screen, Sheet, Skeleton, Text, TextField, Txt,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
 import { dateTime, time } from '../../lib/format.js';
@@ -21,6 +21,8 @@ import { C, F, R, shadow } from '../../theme.js';
 
 const OFFICE_PHONE = '+91 44 2275 1347';
 const card = { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 1, borderColor: C.line2, ...shadow };
+// A coloured card's border and clipping (the wash and edge come from CardTint / RowTint).
+const tinted = (colour) => ({ borderColor: alpha(colour, 0.25), overflow: 'hidden' });
 const busName = (fleet) => String(fleet ?? '').replace('BSACIST-', 'Bus ');
 const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
 const lateOf = (a) => Number(String(a.body ?? a.title).match(/(\d+)\s*min/)?.[1]) || null;
@@ -92,7 +94,8 @@ function ChildCard({ child, onMap }) {
     { label: down ? 'Home stop' : 'Campus', note: mins != null ? `~${formatMinutes(nowMin() + mins)}` : '—', state: 'next' },
   ] : null;
   return (
-    <View style={[card, { padding: 18, gap: 14 }]}>
+    <View style={[card, tinted(bus && !offline ? C.live : accentColour('navy')), { padding: 18, gap: 14 }]}>
+      <CardTint color={bus && !offline ? C.live : accentColour('navy')} radius={R.lg} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Avatar name={child.name} size={46} />
         <View style={{ flex: 1, minWidth: 0 }}>
@@ -176,7 +179,8 @@ export default function ParentHome() {
   const AlertRow = ({ g }) => {
     const late = lateOf(g.latest);
     return (
-      <Pressable accessibilityRole="button" onPress={() => setAlertsOpen(true)} style={({ pressed }) => [card, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, shadowOpacity: 0 }, pressed && { opacity: 0.85 }]}>
+      <Pressable accessibilityRole="button" onPress={() => setAlertsOpen(true)} style={({ pressed }) => [card, tinted(g.latest.kind === 'LATE' ? C.delayed : C.danger), { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, shadowOpacity: 0 }, pressed && { opacity: 0.85 }]}>
+        <RowTint color={g.latest.kind === 'LATE' ? C.delayed : C.danger} radius={R.lg} />
         <IconBubble name={g.latest.kind === 'LATE' ? 'clock' : 'alert'} accent={g.latest.kind === 'LATE' ? 'amber' : 'danger'} size={36} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={{ fontSize: 15, lineHeight: 20, ...F[700], color: C.ink }} numberOfLines={1}>{late && g.latest.kind === 'LATE' ? `${g.latest.title.replace(/ is running late/, '')} delayed by ${late} min` : g.latest.title}</Text>
@@ -209,7 +213,8 @@ export default function ParentHome() {
       ) : list.map((c) => (
         <View key={c.id} style={{ gap: 14 }}>
           <ChildCard child={c} onMap={() => setMapOf(c)} />
-          <View style={[card, { paddingHorizontal: 18 }]}>
+          <View style={[card, tinted(accentColour('teal')), { paddingHorizontal: 18 }]}>
+            <CardTint color={accentColour('teal')} radius={R.lg} />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 56, borderBottomWidth: 1, borderBottomColor: C.line2 }}>
               <Text style={{ fontSize: 15, ...F[500], color: C.ink }}>To campus</Text>
               <TripChip trip={c.inbound} />
@@ -248,7 +253,8 @@ export default function ParentHome() {
       {alertsOpen ? (
         <DetailModal title="Alerts" onClose={() => setAlertsOpen(false)} refreshing={false} onRefresh={alerts.reload}>
           {groups.length ? groups.map((g) => (
-            <View key={g.latest.id} style={[card, { padding: 14, gap: 4, shadowOpacity: 0 }]}>
+            <View key={g.latest.id} style={[card, tinted(g.latest.kind === 'LATE' ? C.delayed : C.danger), { padding: 14, gap: 4, shadowOpacity: 0 }]}>
+              <RowTint color={g.latest.kind === 'LATE' ? C.delayed : C.danger} radius={R.lg} />
               <Text style={{ fontSize: 15, ...F[700], color: C.ink }}>{g.latest.title}</Text>
               <Txt muted>{g.latest.body}</Txt>
               <Txt muted small>{g.count > 1 ? `${g.count} updates · latest ${dateTime(g.latest.created_at)}` : dateTime(g.latest.created_at)}</Txt>

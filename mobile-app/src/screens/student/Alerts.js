@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import Icon from '../../components/Icon.js';
-import { Badge, IconBubble, Screen, Skeleton, Text, Txt } from '../../components/ui.js';
+import { accentColour, alpha, Badge, IconBubble, RowTint, Screen, Skeleton, Text, Txt } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
 import { METHOD_TEXT, thisMonth, time } from '../../lib/format.js';
 import { useAsync, useRefresh } from '../../lib/hooks.js';
@@ -72,7 +72,8 @@ function Thread({ item, unread, stopName, stopTime, onTrack }) {
   const late = delayOf(n);
   const at = stopTime != null && late != null ? formatMinutes(stopTime + late) : null;
   return (
-    <View style={[card, { gap: 12 }]}>
+    <View style={[card, tinted(C.delayed), { gap: 12 }]}>
+      <RowTint color={C.delayed} radius={R.lg} />
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <IconBubble name="clock" accent="amber" size={40} />
         <View style={{ flex: 1, minWidth: 0 }}>
@@ -115,7 +116,8 @@ function Thread({ item, unread, stopName, stopTime, onTrack }) {
 function Single({ n, unread }) {
   const look = LOOK[n.kind] ?? LOOK.ANNOUNCEMENT;
   return (
-    <View style={[card, { flexDirection: 'row', gap: 12, padding: 14, shadowOpacity: 0 }]}>
+    <View style={[card, tinted(accentColour(look.accent)), { flexDirection: 'row', gap: 12, padding: 14, shadowOpacity: 0 }]}>
+      <RowTint color={accentColour(look.accent)} radius={R.lg} />
       <IconBubble name={look.icon} accent={look.accent} size={40} />
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'space-between' }}>
@@ -218,3 +220,5 @@ export default function Alerts({ navigation }) {
 }
 
 const card = { backgroundColor: C.card, borderRadius: R.lg, padding: 16, borderWidth: 1, borderColor: C.line2, ...shadow };
+// A coloured card's border and clipping (the wash and edge come from CardTint / RowTint).
+const tinted = (colour) => ({ borderColor: alpha(colour, 0.25), overflow: 'hidden' });

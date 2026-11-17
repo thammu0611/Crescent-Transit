@@ -61,6 +61,11 @@ function translateChildren(language, children) {
   return list.map((c) => (typeof c === 'string' ? translated(language, c) : c));
 }
 
+// Larger system text is honoured up to 1.35x; beyond that cards and tab labels would break apart.
+export const MAX_FONT_SCALE = 1.35;
+// On tablets the screens keep a readable width, centred, instead of stretching edge to edge.
+const TABLET_MAX_WIDTH = 760;
+
 export const Text = forwardRef(function Text({ style, children, noTranslate, ...rest }, ref) {
   const nested = useContext(InsideText);
   const language = useLanguage();
@@ -68,7 +73,7 @@ export const Text = forwardRef(function Text({ style, children, noTranslate, ...
   const font = !flat.fontFamily && (!nested || flat.fontWeight) ? { fontFamily: interFor(flat.fontWeight), fontWeight: 'normal' } : null;
   const shown = noTranslate ? children : translateChildren(language, children);
   return (
-    <RNText ref={ref} style={font ? [style, font] : style} {...rest}>
+    <RNText ref={ref} style={font ? [style, font] : style} maxFontSizeMultiplier={MAX_FONT_SCALE} {...rest}>
       <InsideText.Provider value>{shown}</InsideText.Provider>
     </RNText>
   );
@@ -180,9 +185,11 @@ export function Screen({ children, refreshing = false, onRefresh, safeTop = fals
   const keyboard = useAndroidKeyboard();
   const tabSpace = useTabBarSpace();
   const headerHeight = useContext(HeaderHeightContext) ?? 0;
+  const { width } = useWindowDimensions();
+  const wide = width > TABLET_MAX_WIDTH + 32 ? { width: '100%', maxWidth: TABLET_MAX_WIDTH, alignSelf: 'center' } : null;
   const body = scroll ? (
     <ScrollView
-      contentContainerStyle={[header ? { paddingBottom: 40 } : [s.screen, contentStyle], tabSpace ? { paddingBottom: 40 + tabSpace } : null, keyboard ? { paddingBottom: 40 + keyboard } : null]}
+      contentContainerStyle={[header ? { paddingBottom: 40 } : [s.screen, contentStyle], wide, tabSpace ? { paddingBottom: 40 + tabSpace } : null, keyboard ? { paddingBottom: 40 + keyboard } : null]}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
@@ -190,7 +197,7 @@ export function Screen({ children, refreshing = false, onRefresh, safeTop = fals
     >
       {header ? <>{header}<View style={[s.screen, { paddingTop: 0, marginTop: -34 }, contentStyle]}>{children}</View></> : children}
     </ScrollView>
-  ) : <View style={[{ flex: 1 }, contentStyle]}>{children}</View>;
+  ) : <View style={[{ flex: 1 }, wide, contentStyle]}>{children}</View>;
   return (
     <SafeAreaView style={[s.fill, transparent && { backgroundColor: 'transparent' }]} edges={safeTop && !header ? ['top', 'left', 'right'] : ['left', 'right']}>
       {transparent ? null : <GlassBackdrop offset={headerHeight} />}
@@ -520,12 +527,14 @@ export function Panel({ title: name, icon, actions, children, style, accent = 'n
  * One record in a list of cards: a lead (avatar, route code or icon), title and lines,
  * an optional count pill, and an arrow when it opens something.
  */
-export function ListCard({ lead, title, lines = [], count, countLabel, tone, right, onPress }) {
+export function ListCard({ lead, title, lines = [], count, countLabel, tone, accent, right, onPress }) {
   const Wrap = onPress ? Pressable : View;
-  const bar = tone ? ACCENT_BAR[tone] : null;
-  const look = { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: C.glass, borderWidth: 1, borderColor: C.glassEdge, borderLeftWidth: bar ? 4 : 1, borderLeftColor: bar ?? C.glassEdge };
+  // Every record row has a colour, as on the website: its state, else its accent, else navy.
+  const bar = (tone && ACCENT_BAR[tone]) || accentColour(accent);
+  const look = { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: C.glass, borderWidth: 1, borderColor: alpha(bar, 0.2), overflow: 'hidden' };
   return (
     <Wrap onPress={onPress} accessibilityRole={onPress ? 'button' : undefined} style={onPress ? ({ pressed }) => [look, pressed && { opacity: 0.8 }] : look}>
+      <RowTint color={bar} />
       {lead}
       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
         <Txt bold numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{title}</Txt>
@@ -533,8 +542,8 @@ export function ListCard({ lead, title, lines = [], count, countLabel, tone, rig
       </View>
       {right}
       {count != null ? (
-        <View style={{ alignItems: 'center', minWidth: 52, paddingVertical: 6, paddingHorizontal: 8, borderRadius: 12, backgroundColor: C.navy50 }}>
-          <Text style={{ fontSize: 20, ...F.display, color: C.navy, fontVariant: ['tabular-nums'] }}>{count}</Text>
+        <View style={{ alignItems: 'center', minWidth: 52, paddingVertical: 6, paddingHorizontal: 8, borderRadius: 12, backgroundColor: alpha(bar, 0.1), borderWidth: 1, borderColor: alpha(bar, 0.22) }}>
+          <Text style={{ fontSize: 20, ...F.display, color: bar, fontVariant: ['tabular-nums'] }}>{count}</Text>
           <Text style={{ fontSize: 10, ...F[600], color: C.muted, letterSpacing: 0.5 }}>{countLabel}</Text>
         </View>
       ) : null}
@@ -545,7 +554,7 @@ export function ListCard({ lead, title, lines = [], count, countLabel, tone, rig
 
 const STAT_ACCENT = { live: 'emerald', delayed: 'amber', danger: 'danger', offline: 'navy' };
 // Without a state, a stat takes the colour of what it counts (as on the website).
-const ICON_ACCENT = { bus: 'navy', route: 'navy', pin: 'navy', shield: 'navy', signal: 'sky', chart: 'sky', users: 'violet', user: 'violet', card: 'amber', sparkle: 'amber', clock: 'amber', wallet: 'amber', check: 'emerald' };
+const ICON_ACCENT = { bus: 'navy', route: 'navy', pin: 'navy', shield: 'navy', signal: 'sky', chart: 'sky', users: 'violet', user: 'violet', card: 'gold', sparkle: 'gold', clock: 'gold', wallet: 'gold', check: 'emerald' };
 
 /** A hex colour with transparency: alpha('#1C315E', 0.12). */
 export const alpha = (hex, a) => {
@@ -553,6 +562,19 @@ export const alpha = (hex, a) => {
   if (h.length !== 6) return hex;
   return `rgba(${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}, ${a})`;
 };
+
+/** The strong colour of an accent name ('navy', 'teal', 'gold' ...); navy shows gold on dark. */
+export const accentColour = (accent = 'navy') => (C.dark && accent === 'navy' ? C.gold : (ACCENT[accent] ?? ACCENT.navy)[1]);
+
+/** A record row's colour: a 4 px left edge and a wash fading to the right. Put it first inside the row. */
+export function RowTint({ color, radius = 16 }) {
+  return (
+    <>
+      <LinearGradient pointerEvents="none" colors={[alpha(color, C.dark ? 0.16 : 0.08), alpha(color, 0)]} start={{ x: 0, y: 0 }} end={{ x: 0.42, y: 0 }} style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />
+      <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 4, backgroundColor: color }} />
+    </>
+  );
+}
 
 /** A card's own colour: a soft wash from the top corner and a 3 px top edge. Put it first inside the card. */
 export function CardTint({ color, radius = 18 }) {
@@ -659,7 +681,7 @@ export function Button({ title: name, onPress, variant = 'primary', icon, disabl
   const content = (
     <>
       {busy ? <ActivityIndicator size="small" color={v.fg} /> : icon ? <Icon name={icon} size={small ? 14 : 18} color={v.fg} /> : null}
-      {title ? <Text style={[s.btnText, small && { fontSize: 13 }, { color: v.fg }, textStyle]}>{title}</Text> : null}
+      {title ? <Text style={[s.btnText, small && { fontSize: 13 }, { color: v.fg }, textStyle]} numberOfLines={Platform.OS !== 'web' && String(title).length <= 16 ? 1 : 2} adjustsFontSizeToFit minimumFontScale={0.82}>{title}</Text> : null}
     </>
   );
   const box = [s.btn, small && s.btnSmall];
@@ -736,7 +758,7 @@ export function Input({ icon, style, multiline, onFocus, onBlur, ref: outerRef, 
     // The wrapper keeps the same native view on focus: only its border colour changes.
     <View collapsable={false} style={[s.inputWrap, highlight && s.inputHighlight, focused && s.inputFocused, multiline && { alignItems: 'flex-start' }, props.editable === false && { backgroundColor: C.line2 }]}>
       {icon ? <View style={{ paddingTop: multiline ? 12 : 0 }}><Icon name={icon} size={17} color={focused ? C.navy : C.faint} /></View> : null}
-      <TextInput
+      <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE}
         ref={setRef}
         placeholderTextColor={C.faint}
         // Android's autofill services (Google Autofill, Samsung Pass) can take over a
@@ -815,18 +837,19 @@ export function Select({ label, value, onChange, options, placeholder = 'Chooseâ
 export function Segmented({ value, onChange, options: list, full }) {
   const t = useT();
   const options = list.map((o) => ({ ...o, label: t(o.label) }));
-  // Up to three options share the full width; more scroll sideways.
-  const fill = full ?? options.length <= 3;
+  // Up to three options share the full width, and four or five short ones do too; more scroll sideways.
+  const letters = options.reduce((n, o) => n + String(o.label).length, 0);
+  const fill = full ?? (options.length <= 3 || (options.length === 4 && letters <= 30) || (options.length === 5 && letters <= 32));
   const items = options.map((o) => {
     const on = value === o.value;
     return (
-      <Pressable key={String(o.value)} onPress={() => { if (!on) tickSelect(); onChange(o.value); }} style={[s.seg, fill && { flex: 1, alignItems: 'center', paddingHorizontal: 4 }, on && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: on }}>
+      <Pressable key={String(o.value)} onPress={() => { if (!on) tickSelect(); onChange(o.value); }} style={[s.seg, fill && (options.length > 3 ? { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', alignItems: 'center', paddingHorizontal: options.length > 4 ? 5 : 8 } : { flex: 1, alignItems: 'center', paddingHorizontal: 4 }), on && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: on }}>
         <Text style={[s.segText, on && s.segTextOn]} numberOfLines={1}>{o.label}</Text>
       </Pressable>
     );
   });
   if (fill) return <View style={[s.segmented, { flexDirection: 'row' }]}>{items}</View>;
-  return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.segmented}>{items}</ScrollView>;
+  return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.segmented, { minWidth: '100%' }]}>{items}</ScrollView>;
 }
 
 export function SearchBox({ value, onChange, placeholder = 'Search' }) {
@@ -834,7 +857,7 @@ export function SearchBox({ value, onChange, placeholder = 'Search' }) {
   return (
     <View style={[s.inputWrap, { marginBottom: 10, backgroundColor: C.surface, borderColor: C.line2 }]}>
       <Icon name="search" size={16} color={C.faint} />
-      <TextInput importantForAutofill="no" value={value} onChangeText={onChange} placeholder={translated(language, placeholder)} placeholderTextColor={C.faint} style={[s.input, Platform.OS === 'web' && { outlineStyle: 'none' }]} autoCapitalize="none" autoCorrect={false} accessibilityLabel={translated(language, placeholder)} />
+      <TextInput maxFontSizeMultiplier={MAX_FONT_SCALE} importantForAutofill="no" value={value} onChangeText={onChange} placeholder={translated(language, placeholder)} placeholderTextColor={C.faint} style={[s.input, Platform.OS === 'web' && { outlineStyle: 'none' }]} autoCapitalize="none" autoCorrect={false} accessibilityLabel={translated(language, placeholder)} />
       {value ? <Pressable accessibilityRole="button" onPress={() => onChange('')} hitSlop={8} accessibilityLabel="Clear search"><Icon name="x" size={16} color={C.faint} /></Pressable> : null}
     </View>
   );
@@ -946,18 +969,18 @@ export function DataList({ rows, render, empty = 'Nothing to show.', keyOf = (r,
 const ACCENT_BAR = { live: C.live, delayed: C.delayed, danger: C.danger, offline: C.offline, info: C.indigo };
 
 /** One record card: title, subtitle, right-hand badge, and extra lines. */
-export function ItemCard({ title, subtitle, right, children, onPress, highlight, tone }) {
+export function ItemCard({ title, subtitle, right, children, onPress, highlight, tone, accent }) {
   const Wrap = onPress ? Pressable : View;
-  const bar = ACCENT_BAR[tone];
+  const bar = ACCENT_BAR[tone] || accentColour(accent);
   return (
     <Wrap
       onPress={onPress}
       style={onPress
-        ? ({ pressed }) => [s.item, highlight && s.itemOn, pressed && { opacity: 0.85 }]
-        : [s.item, highlight && s.itemOn]}
+        ? ({ pressed }) => [s.item, { borderColor: alpha(bar, 0.2) }, highlight && s.itemOn, pressed && { opacity: 0.85 }]
+        : [s.item, { borderColor: alpha(bar, 0.2) }, highlight && s.itemOn]}
     >
       <Sheen radius={R.lg - 4} />
-      {bar ? <View style={[s.itemBar, { backgroundColor: bar }]} /> : null}
+      <RowTint color={bar} />
       <View style={[s.row, { alignItems: 'flex-start', gap: 8 }]}>
         <View style={{ flex: 1 }}>
           {typeof title === 'string' ? <Text style={s.itemTitle}>{title}</Text> : title}

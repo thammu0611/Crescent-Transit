@@ -211,7 +211,7 @@ export function DetailModal({ title, subtitle, onClose, children, refreshing, on
 }
 
 /**
- * A compact card for one section of a screen: icon, title and a one-line summary.
+ * A compact card for one section of a screen: icon and title (`summary` is no longer shown).
  * Its contents open in their own full view. `children` may be a function of `close`,
  * for buttons that leave the screen.
  */
@@ -226,17 +226,17 @@ export function ViewCard({ title: name, icon, summary, badge, children }) {
         {inList ? null : <Sheen />}
         {icon ? (inList ? <IconBubble name={icon} accent={rowAccent(inList)} size={36} iconSize={18} /> : <IconBubble name={icon} colors={G.navy} size={36} iconSize={18} />) : null}
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-          {/* The badge sits beside the title, so the summary gets the full width. */}
+          {/* The badge sits beside the title. */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Txt bold numberOfLines={2} style={{ flexShrink: 1 }}>{title}</Txt>
             {badge}
           </View>
-          {summary ? <Txt muted small numberOfLines={2}>{summary}</Txt> : null}
+
         </View>
         <Icon name="arrow" size={16} color={C.faint} />
       </Pressable>
       {open ? (
-        <DetailModal title={title} subtitle={summary} onClose={close}>
+        <DetailModal title={title} onClose={close}>
           <View style={{ gap: 12 }}>{typeof children === 'function' ? children(close) : children}</View>
         </DetailModal>
       ) : null}
@@ -247,7 +247,7 @@ export function ViewCard({ title: name, icon, summary, badge, children }) {
 // Inside a ViewList, ViewCards and ListRows are rows of one card, split by hairlines.
 const InList = createContext(false);
 // Each row of a list in its own colour, in turn, so a list reads at a look.
-const ROW_ACCENTS = ['navy', 'sky', 'amber', 'emerald', 'violet'];
+const ROW_ACCENTS = ['navy', 'teal', 'gold', 'sky', 'emerald', 'violet'];
 const rowAccent = (inList) => ROW_ACCENTS[(inList?.i ?? 0) % ROW_ACCENTS.length];
 const listRow = { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: C.line2 };
 

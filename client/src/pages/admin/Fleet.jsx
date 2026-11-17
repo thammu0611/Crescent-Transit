@@ -8,6 +8,8 @@ import Icon from '../../components/Icon.jsx';
 import TrackersTab from './Trackers.jsx';
 import { Badge, ErrorText, Field, PasswordInput, Modal, Notice, Page, Panel, RowActions, SearchBox, Segmented, Table } from '../../components/ui.jsx';
 
+const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
 function BusForm({ token, bus, routes, onClose, onSaved }) {
   const [f, setF] = useState({
     fleetCode: bus?.fleet_code ?? '',
@@ -146,11 +148,11 @@ export default function Fleet() {
             empty="No bus matches."
             columns={[
               { key: 'fleet_code', label: 'Bus', render: (b) => <><b>{b.fleet_code}</b>{b.live && <> <Badge tone="live">on trip</Badge></>}{b.tracker_id && <> <Badge tone={b.liveSource === 'tracker' ? 'live' : 'offline'}>GPS tracker</Badge></>}<small>{b.bus_type ?? ''}</small></> },
-              { key: 'registration_number', label: 'Reg. no.', render: (b) => b.registration_number ?? '—' },
+              ...((buses.data ?? []).some((b) => b.registration_number) ? [{ key: 'registration_number', label: 'Reg. no.', render: (b) => b.registration_number ?? '—' }] : []),
               { key: 'route_code', label: 'Route', wrap: true, render: (b) => (b.route_code ? <><span className="route-code sm">{b.route_code}</span> {b.route_name}</> : <span className="muted">Unassigned</span>) },
               { key: 'capacity', label: 'Seats', align: 'right' },
               { key: 'driver_name', label: 'Driver', render: (b) => b.driver_name ?? '—' },
-              { key: 'status', label: 'Status', render: (b) => <Badge tone={b.status === 'active' ? 'live' : 'delayed'}>{b.status}</Badge> },
+              { key: 'status', label: 'Status', render: (b) => <Badge tone={b.status === 'active' ? 'live' : 'delayed'}>{cap(b.status)}</Badge> },
               { key: 'x', label: '', render: (b) => <RowActions><button className="link" onClick={() => setEditBus(b)}><Icon name="edit" size={13} />Edit</button><button className="link danger" onClick={() => remove('buses', b.id, b.fleet_code)}><Icon name="trash" size={13} />Delete</button></RowActions> },
             ]}
           />
@@ -163,7 +165,7 @@ export default function Fleet() {
               { key: 'fleet_code', label: 'Bus', render: (d) => d.fleet_code ?? <span className="muted">None</span> },
               { key: 'route_code', label: 'Route', render: (d) => (d.route_code ? <span className="route-code sm">{d.route_code}</span> : '—') },
               { key: 'last_trip', label: 'Last trip', render: (d) => dateTime(d.last_trip) },
-              { key: 'status', label: 'Status', render: (d) => <Badge tone={d.status === 'active' ? 'live' : 'danger'}>{d.status}</Badge> },
+              { key: 'status', label: 'Status', render: (d) => <Badge tone={d.status === 'active' ? 'live' : 'danger'}>{cap(d.status)}</Badge> },
               { key: 'x', label: '', render: (d) => <RowActions><button className="link" onClick={() => setEditDriver(d)}><Icon name="edit" size={13} />Edit</button><button className="link danger" onClick={() => remove('drivers', d.id, d.username)}><Icon name="trash" size={13} />Delete</button></RowActions> },
             ]}
           />

@@ -13,7 +13,7 @@ import QRCode from 'react-native-qrcode-svg';
 import Icon from '../components/Icon.js';
 import { Dot, MapBox, RouteLayer } from '../components/maps';
 import {
-  Badge, Button, Collapsible, confirm, ErrorText, LivePulse, Notice, Panel, PillIconButton, Row, Screen, SearchBox, Segmented, Sheet, Text,
+  accentColour, alpha, Badge, Button, CardTint, Collapsible, confirm, ErrorText, LivePulse, Notice, Panel, PillIconButton, Row, Screen, SearchBox, Segmented, Sheet, Text,
   TextField, Txt,
 } from '../components/ui.js';
 import { api, ApiError } from '../lib/api.js';
@@ -41,6 +41,8 @@ const ago = (iso, now) => {
 };
 
 const card = { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 1, borderColor: C.line2, ...shadow };
+// A coloured card's border and clipping (the wash and edge come from CardTint / RowTint).
+const tinted = (colour) => ({ borderColor: alpha(colour, 0.25), overflow: 'hidden' });
 const metaLabel = { fontSize: 13, lineHeight: 18, ...F[500], color: C.muted };
 const dist = (a, b) => {
   if (!a || !b) return null;
@@ -54,6 +56,8 @@ const clock = (ms) => {
   const h = Math.floor(s / 3600);
   const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
   const ss = String(s % 60).padStart(2, '0');
+  // A trip left running for a day or more (it is closed by the server after a few hours).
+  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
   return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 };
 
@@ -174,7 +178,8 @@ function BoardingCode({ token }) {
   const left = code ? Math.max(0, Math.round((code.until - now) / 1000)) : 0;
   const digits = code ? String(code.code) : '';
   return (
-    <View style={[card, { padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14 }]}>
+    <View style={[card, tinted(accentColour('gold')), { padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14 }]}>
+      <CardTint color={accentColour('gold')} radius={R.lg} />
       <View style={{ flex: 1, gap: 8 }}>
         <Text style={metaLabel}>Boarding code · show to students</Text>
         <Text style={{ fontSize: 34, lineHeight: 40, ...F.displayBold, letterSpacing: 4, color: C.ink, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit>
@@ -445,6 +450,51 @@ export default function DriverApp() {
       .then(({ trip: t }) => { if (t) { setTrip(t); setOccupancy(t.occupancy ?? null); } })
       .catch(() => {});
   }, [trip, trackerTripId, token]);
+
+  // Phone-only bus, no trip yet: send where the phone is every 10 s while this
+  // screen is open. When the bus leaves the depot in trip hours the server starts
+  // the trip by itself (server/autostart.js), so a forgotten Start costs nothing.
+  const [autoWait, setAutoWait] = useState(null);
+  const phoneOnly = Boolean(busGps && !busGps.tracker);
+  useEffect(() => {
+    if (trip || !phoneOnly || !token) { setAutoWait(null); return undefined; }
+    let sub = null;
+    let timer = null;
+    let cancelled = false;
+    const pending = [];
+    (async () => {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (cancelled || status !== 'granted') return;
+      sub = await Location.watchPositionAsync({ accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 0 }, (p) => {
+        pending.push({
+          lat: p.coords.latitude,
+          lng: p.coords.longitude,
+          speedKmh: p.coords.speed == null || p.coords.speed < 0 ? undefined : Math.round(p.coords.speed * 36) / 10,
+          recordedAt: new Date(p.timestamp).toISOString(),
+        });
+        if (pending.length > 24) pending.splice(0, pending.length - 24);
+      });
+      if (cancelled) { sub.remove(); return; }
+      timer = setInterval(async () => {
+        if (!pending.length) return;
+        const fixes = pending.splice(0);
+        try {
+          const r = await api('/api/driver/standby', { token, body: { fixes } });
+          if (r.trip) {
+            distanceRef.current = 0;
+            setCounts({ sent: 0, accepted: 0, rejected: 0 });
+            setSource('gps');
+            setTrip(r.trip);
+            setOccupancy(r.trip.occupancy ?? null);
+            if (r.started) Vibration.vibrate([0, 200, 80, 200]);
+          } else setAutoWait(r.waiting ?? null);
+        } catch {
+          // No signal: the next batch tries again.
+        }
+      }, 10000);
+    })();
+    return () => { cancelled = true; sub?.remove(); clearInterval(timer); };
+  }, [trip, phoneOnly, token]);
 
   // No tracker fitted to this bus: the phone is the only source, so it is the default.
   const choseSource = useRef(false);
@@ -735,7 +785,8 @@ export default function DriverApp() {
         </View>
 
         {/* Trip status */}
-        <View style={[card, { padding: 18, gap: 14 }]}>
+        <View style={[card, tinted(trip ? C.live : accentColour('navy')), { padding: 18, gap: 14 }]}>
+          <CardTint color={trip ? C.live : accentColour('navy')} radius={R.lg} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ minWidth: 48, height: 34, paddingHorizontal: 8, borderRadius: 10, backgroundColor: C.navyFill, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: '#fff', fontSize: 16, ...F.displayBold }}>{user.routeCode}</Text>
@@ -781,9 +832,11 @@ export default function DriverApp() {
               <ErrorText>{error}</ErrorText>
               <Button title="Start trip" icon="play" onPress={startTrip} disabled={!route} style={{ minHeight: 64 }} />
               <Txt muted small style={{ textAlign: 'center' }}>{gps.tone === 'live' || useTracker ? 'Location is ready.' : 'You can start now. Location will connect in a moment.'}</Txt>
+              {phoneOnly ? <Txt muted small style={{ textAlign: 'center' }}>{t('Forgot to press Start? The trip starts by itself when the bus leaves the depot.')}{autoWait ? ` (${t(autoWait)})` : ''}</Txt> : null}
             </>
           )}
           {trip?.started_by === 'tracker' ? <Txt muted small>{t('This trip was started automatically by the bus GPS tracker.')}</Txt> : null}
+          {trip?.started_by === 'auto' ? <Txt muted small>{t('This trip started by itself when the bus left the depot.')}</Txt> : null}
         </View>
 
         {trip ? <BoardingCode token={token} /> : null}
@@ -795,7 +848,8 @@ export default function DriverApp() {
               {Object.entries(OCCUPANCY).map(([k, o]) => {
                 const on = occupancy === k;
                 return (
-                  <Pressable accessibilityRole="button" accessibilityState={{ selected: on }} key={k} onPress={() => tapOccupancy(k)} style={({ pressed }) => ({ flex: 1, minHeight: 72, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 2, borderColor: on ? TONE[o.tone].fg : C.line, backgroundColor: on ? TONE[o.tone].bg : C.card, opacity: pressed ? 0.85 : 1 })}>
+                  <Pressable accessibilityRole="button" accessibilityState={{ selected: on }} key={k} onPress={() => tapOccupancy(k)} style={({ pressed }) => ({ flex: 1, minHeight: 72, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: on ? 2 : 1, borderColor: on ? TONE[o.tone].fg : alpha(TONE[o.tone].fg, 0.25), backgroundColor: on ? TONE[o.tone].bg : C.card, overflow: 'hidden', opacity: pressed ? 0.85 : 1 })}>
+                    {on ? null : <CardTint color={TONE[o.tone].fg} radius={16} />}
                     <Icon name={k === 'FULL' ? 'alert' : 'users'} size={20} color={TONE[o.tone].fg} />
                     <Text style={{ ...F[700], color: TONE[o.tone].fg, fontSize: 14 }}>{o.label}</Text>
                   </Pressable>

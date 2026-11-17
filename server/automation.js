@@ -40,6 +40,12 @@ export class AutomationService {
 
     tracking.on('fix', (snap) => this.onFix(snap));
     tracking.on('tripEnded', ({ tripId, busId }) => {
+      // The trip is over, so its "tracker offline" flag needs nobody any more.
+      this.db.query(
+        `UPDATE incidents SET status = 'RESOLVED', resolution = 'Closed automatically: the trip ended', resolved_at = now()
+          WHERE trip_id = $1 AND kind = 'TRACKER_OFFLINE' AND status = 'OPEN' RETURNING *`,
+        [tripId],
+      ).then(({ rows }) => rows.forEach((r) => this.io?.to('admins').emit('incident', r))).catch(() => {});
       this.atEnd.delete(tripId);
       this.lastSpeedAlert.delete(tripId);
       this.overLimit.delete(busId);
@@ -204,11 +210,34 @@ export class AutomationService {
     return rows[0];
   }
 
+  /** Trips nobody ended (the driver forgot, the phone died): closed after STALE_TRIP_HOURS. */
+  async endStaleTrips() {
+    const hours = this.settings.staleTripHours;
+    if (!hours) return [];
+    const { rows } = await this.db.query(
+      `SELECT id, bus_id FROM trips WHERE status = 'active' AND started_at < now() - make_interval(hours => $1)`,
+      [hours],
+    );
+    const ended = [];
+    for (const trip of rows) {
+      try {
+        await this.tracking.endTrip({ busId: trip.bus_id }, trip.id);
+      } catch (err) {
+        if (err.status === 404) continue; // ended meanwhile
+        throw err;
+      }
+      await audit(this.db, { action: 'TRIP_ENDED_STALE', entity: 'trip', entityId: trip.id, reason: `still running after ${hours} hours` });
+      ended.push(trip.id);
+    }
+    return ended;
+  }
+
   /** Every minute (jobs.js). */
   async tick(now = Date.now()) {
+    const stale = await this.endStaleTrips();
     const ended = await this.endArrivedTrips(now);
     const notices = await this.guardians?.sendNotices(now);
     const care = await this.fleetCare?.sendReminders();
-    return { tripsEnded: ended.length, parentNotices: notices?.sent ?? 0, careReminders: care?.sent ?? 0 };
+    return { tripsEnded: ended.length + stale.length, parentNotices: notices?.sent ?? 0, careReminders: care?.sent ?? 0 };
   }
 }

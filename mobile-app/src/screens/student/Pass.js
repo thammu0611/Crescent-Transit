@@ -143,7 +143,7 @@ export default function BusPass({ navigation }) {
                 ? <Image source={{ uri: pass.photo }} style={{ width: 68, height: 68, borderRadius: 18, borderWidth: 2, borderColor: 'rgba(247,188,49,0.75)' }} />
                 : (
                   <LinearGradient colors={['#3C5BA3', '#1C315E']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 68, height: 68, borderRadius: 18, borderWidth: 2, borderColor: 'rgba(247,188,49,0.75)', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ color: '#fff', fontSize: 22, ...F.displayBold }}>{initials(pass.name)}</Text>
+                    <Text noTranslate style={{ color: '#fff', fontSize: 22, ...F.displayBold }}>{initials(pass.name)}</Text>
                   </LinearGradient>
                 )}
               <View style={{ flex: 1, gap: 2 }}>
@@ -154,7 +154,7 @@ export default function BusPass({ navigation }) {
             <View style={{ flexDirection: 'row', gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.14)' }}>
               <Fact k={t('Route')} v={pass.routeCode ? `${pass.routeCode} · ${pass.routeName}` : '—'} />
               <Fact k={t('Stop')} v={pass.stopName ?? '—'} />
-              <Fact k={t('Valid till')} v={pass.validTo ? date(pass.validTo) : t('Active')} />
+              <Fact k={t('Valid till')} v={pass.validTo ? date(pass.validTo) : t('No expiry')} />
             </View>
           </LinearGradient>
 

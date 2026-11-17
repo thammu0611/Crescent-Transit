@@ -25,7 +25,7 @@ export function ColumnChart({ data, height = 160, color = 'var(--chart-navy)', h
           <div key={`${d.label}-${i}`} className={`kit-column${on ? ' on' : ''}`}>
             <b className="tabular" style={on ? { color } : undefined}>{compact(d.value)}</b>
             <span className="kit-column-track" style={{ height }}>
-              <i style={{ height: `${Math.max(2, (d.value / max) * 100)}%`, background: on ? color : `color-mix(in srgb, ${color} 33%, transparent)` }} />
+              <i style={{ height: `${Math.max(2, (d.value / max) * 100)}%`, background: color, opacity: on ? 1 : 0.33 }} />
             </span>
             <small>{d.label}</small>
           </div>
@@ -127,7 +127,7 @@ export function Figure({ value, label }) {
 export function Avatar({ name = '', size = 44, photo = null }) {
   const initials = name.replace(/^(Mr|Mrs|Ms|Dr)\.?\s*/i, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
   return (
-    <span className={`kit-avatar${photo ? ' has-photo' : ''}`} style={{ width: size, height: size, fontSize: size * 0.36 }}>
+    <span className={`kit-avatar${photo ? ' has-photo' : ''}`} style={{ width: size, height: size, fontSize: size * 0.36 }} data-no-translate="">
       {photo ? <img src={photo} alt="" /> : initials}
     </span>
   );
@@ -159,7 +159,7 @@ export function DetailView({ title, subtitle, onClose, children, actions }) {
 }
 
 /**
- * A compact card for one section of a page: icon, title and a one-line summary.
+ * A compact card for one section of a page: icon and title (`summary` is no longer shown).
  * Its contents open in their own full view, like a driver or a student does.
  * `actions` go in that view's header, for instance a search box.
  */
@@ -172,12 +172,12 @@ export function ViewCard({ title: name, icon, summary, badge, actions, children,
     <>
       <button type="button" className="panel kit-view-card" onClick={() => setOpen(true)}>
         {icon && <span className="kit-fold-icon"><Icon name={icon} size={17} /></span>}
-        <span className="kit-view-text"><b>{title}</b>{summary && <small>{summary}</small>}</span>
+        <span className="kit-view-text"><b>{title}</b></span>
         {badge}
         <Icon name="arrow" size={16} className="kit-chevron" />
       </button>
       {open && (
-        <DetailView title={title} subtitle={summary} onClose={close} actions={actions}>
+        <DetailView title={title} onClose={close} actions={actions}>
           <section className={`panel ${className}`}>{children}</section>
         </DetailView>
       )}

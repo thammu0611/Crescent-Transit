@@ -1,4 +1,6 @@
 // Background jobs:
+//   every 60 s   renewal, pre-trip check and complaint reminders (followups.js),
+//                SOS escalation (escalation.js), the Monday report (weekly.js)
 //   every 15 s   attendance tick (prompt timeouts, dead trackers) and boarding
 //                question reminders (every 10 min until answered)
 //   every 60 s   another bus for students whose own has passed or not come;
@@ -7,13 +9,18 @@
 //   every 60 s   silent buses and buses that have not started (server/monitor.js)
 //   23:30 daily  nightly: lock records, auto-confirm old provisionals, expire
 //                subscriptions, apply retention (doc 9.5, 9.11), expire the
-//                day's unanswered boarding questions, clear old location history
+//                day's unanswered boarding questions, clear old location history,
+//                service credit for runs that did not happen, suggestions (insights.js)
 //   01:30 daily  database backup (server/backup.js)
 import { localDate, localMinutes } from './clock.js';
 import { purgeOld } from './housekeeping.js';
 
 export class JobRunner {
-  constructor(db, config, { attendance, billing, boarding = null, alternatives = null, automation = null, backups = null, monitor = null }) {
+  constructor(db, config, { attendance, billing, boarding = null, alternatives = null, automation = null, backups = null, monitor = null, followups = null, escalation = null, insights = null, weekly = null }) {
+    this.followups = followups;
+    this.escalation = escalation;
+    this.insights = insights;
+    this.weekly = weekly;
     this.db = db;
     this.config = config;
     this.attendance = attendance;
@@ -37,6 +44,10 @@ export class JobRunner {
       else if (name === 'alternatives') result = await this.alternatives?.sweep();
       else if (name === 'automation') result = await this.automation?.tick();
       else if (name === 'monitor') result = await this.monitor?.sweep();
+      else if (name === 'followups') result = await this.followups?.tick();
+      else if (name === 'escalation') result = await this.escalation?.sweep();
+      else if (name === 'weekly') result = await this.weekly?.send();
+      else if (name === 'insights') result = await this.insights?.daily();
       else if (name === 'backup') result = await this.backups?.run();
       else if (name === 'reconcile') result = await this.billing.reconcilePending();
       else if (name === 'expire') result = await this.billing.expireSubscriptions();
@@ -46,6 +57,8 @@ export class JobRunner {
           subscriptions: await this.billing.expireSubscriptions(),
           boarding: await this.boarding?.nightly(),
           retention: await purgeOld(this.db, this.config),
+          serviceCredits: await this.followups?.serviceCredits(),
+          suggestions: await this.insights?.daily(),
         };
         await this.db.query(
           `INSERT INTO job_runs (job, last_run) VALUES ('nightly', now()) ON CONFLICT (job) DO UPDATE SET last_run = now()`,
@@ -80,6 +93,14 @@ export class JobRunner {
     every(60000, () => this.run('alternatives'));
     every(60000, () => this.run('automation'));
     every(60000, () => this.run('monitor'));
+    every(60000, () => this.run('followups'));
+    every(60000, () => this.run('escalation'));
+    every(60000, async () => {
+      if (await this.weekly?.due()) {
+        const r = await this.run('weekly');
+        console.log('[jobs] weekly report:', JSON.stringify(r));
+      }
+    });
     every(this.config.subscription.reconcileEveryMinutes * 60000, () => this.run('reconcile'));
     every(60000, async () => {
       if (await this.nightlyDue()) {

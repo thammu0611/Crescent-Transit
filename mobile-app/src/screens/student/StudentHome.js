@@ -5,7 +5,7 @@ import Icon from '../../components/Icon.js';
 import { MiniMap } from '../../components/maps';
 import SelectRoute from '../../components/SelectRoute.js';
 import {
-  Avatar, Badge, Button, confirm, ErrorText, FadeIn, GradientCard, HeaderIconButton, IconBubble, KV, LivePulse,
+  accentColour, alpha, Avatar, Badge, Button, CardTint, confirm, ErrorText, FadeIn, GradientCard, HeaderIconButton, IconBubble, KV, LivePulse,
   Notice, Screen, SectionTitle, Select, Sheet, Skeleton, Text, TextField, Txt, DirectionBadge,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
@@ -44,9 +44,10 @@ function NextBusCard({ route, stop, stopSeq, bus, eta, entitled, loading, day, a
   if (!route) return <Skeleton height={250} />;
   if (!next) {
     return (
-      <FadeIn style={[card, { gap: 12 }]}>
+      <FadeIn style={[card, tinted(accentColour('gold')), { gap: 12 }]}>
+        <CardTint color={accentColour('gold')} radius={R.lg} />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <IconBubble name="clock" accent="navy" size={48} iconSize={24} />
+          <IconBubble name="clock" accent="gold" size={48} iconSize={24} />
           <Badge tone="offline">Not started</Badge>
         </View>
         <Text style={{ fontSize: 20, lineHeight: 26, ...F.display, color: C.ink }}>No more buses today</Text>
@@ -58,8 +59,10 @@ function NextBusCard({ route, stop, stopSeq, bus, eta, entitled, loading, day, a
       </FadeIn>
     );
   }
+  const colour = etaLive ? (bus.freshness === 'delayed' ? C.delayed : C.live) : accentColour('gold');
   return (
-    <FadeIn style={[card, { gap: 14 }]}>
+    <FadeIn style={[card, tinted(colour), { gap: 14 }]}>
+      <CardTint color={colour} radius={R.lg} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ minWidth: 48, height: 32, paddingHorizontal: 8, borderRadius: 10, backgroundColor: C.navyFill, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ color: '#fff', fontSize: 15, ...F.displayBold }}>{route.code}</Text>
@@ -95,7 +98,7 @@ function NextBusCard({ route, stop, stopSeq, bus, eta, entitled, loading, day, a
         return (
           <View style={{ gap: 8 }}>
             <View style={{ height: 6, borderRadius: 3, backgroundColor: C.raised, overflow: 'hidden' }}>
-              <View style={{ width: `${done * 100}%`, height: 6, borderRadius: 3, backgroundColor: C.navy }} />
+              <View style={{ width: `${done * 100}%`, height: 6, borderRadius: 3, backgroundColor: colour }} />
             </View>
             <Txt small style={{ color: C.faint }} numberOfLines={1}>
               {[bus.nearestStop?.name ? `Near ${bus.nearestStop.name}` : null, away ? `${away} stop${away === 1 ? '' : 's'} away` : 'At your stop', `updated ${ageLabel(bus.recordedAt)}`].filter(Boolean).join(' · ')}
@@ -123,13 +126,14 @@ function TodayCard({ route, stopSeq, day, bus, entitled }) {
   const runs = dailyRuns(route, stopSeq, day);
   if (!route) return null;
   return (
-    <View style={[card, { paddingVertical: 14, gap: 0 }]}>
+    <View style={[card, tinted(accentColour('teal')), { paddingVertical: 14, gap: 0 }]}>
+      <CardTint color={accentColour('teal')} radius={R.lg} />
       {runs.map((r, i) => {
         const live = r.next && entitled && bus && bus.freshness !== 'offline';
         return (
           <View key={r.key} style={{ flexDirection: 'row', gap: 14 }}>
             <View style={{ width: 14, alignItems: 'center', paddingTop: 5 }}>
-              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: r.next ? C.navy : r.done ? C.faint : 'transparent', borderWidth: r.next || r.done ? 0 : 2, borderColor: C.faint }} />
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: r.next ? accentColour('teal') : r.done ? C.faint : 'transparent', borderWidth: r.next || r.done ? 0 : 2, borderColor: C.faint }} />
               {i < runs.length - 1 ? <View style={{ width: 2, flex: 1, minHeight: 30, backgroundColor: C.line, marginTop: 6 }} /> : null}
             </View>
             <View style={{ flex: 1, paddingBottom: i < runs.length - 1 ? 14 : 0, gap: 2 }}>
@@ -156,10 +160,11 @@ function QuickActions({ items }) {
           accessibilityRole="button"
           accessibilityLabel={q.label}
           onPress={q.onPress}
-          style={({ pressed }) => [{ flex: 1, minHeight: 86, borderRadius: 18, borderWidth: 1, borderColor: C.line2, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 4 }, pressed && { opacity: 0.8 }]}
+          style={({ pressed }) => [{ flex: 1, minHeight: 86, borderRadius: 18, borderWidth: 1, borderColor: alpha(accentColour(q.accent), 0.25), backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 4, overflow: 'hidden' }, pressed && { opacity: 0.8 }]}
         >
+          <CardTint color={accentColour(q.accent)} />
           <IconBubble name={q.icon} accent={q.accent} size={38} iconSize={20} />
-          <Text style={{ fontSize: 12, lineHeight: 15, ...F[600], color: C.ink, textAlign: 'center' }} numberOfLines={2}>{q.label}</Text>
+          <Text style={{ fontSize: 12, lineHeight: 15, minHeight: 30, ...F[600], color: C.ink, textAlign: 'center' }} numberOfLines={2}>{q.label}</Text>
         </Pressable>
       ))}
     </View>
@@ -167,6 +172,8 @@ function QuickActions({ items }) {
 }
 
 const card = { backgroundColor: C.card, borderRadius: R.lg, padding: 18, borderWidth: 1, borderColor: C.line2, ...shadow };
+// A coloured card's border and clipping (the wash and top edge come from CardTint).
+const tinted = (colour) => ({ borderColor: alpha(colour, 0.25), overflow: 'hidden' });
 
 const km = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`);
 const leaveHeadline = (plan) => (plan.leaveInMin <= 0 ? 'Leave now' : `Leave by ${time(plan.leaveAt)}`);
@@ -478,9 +485,9 @@ export default function StudentHome({ navigation }) {
       </View>
       <TodayCard route={route.data} stopSeq={stopSeq} day={calendar.data?.today} bus={bus} entitled={entitled} />
       <QuickActions items={[
-        { label: t('Schedule'), icon: 'clock', accent: 'navy', onPress: () => navigation.navigate('Schedule') },
+        { label: t('Schedule'), icon: 'clock', accent: 'gold', onPress: () => navigation.navigate('Schedule') },
         { label: t('Bus pass'), icon: 'qr', accent: 'navy', onPress: () => navigation.navigate('BusPass') },
-        { label: t('Attendance'), icon: 'check', accent: 'emerald', onPress: () => navigation.navigate('Attendance') },
+        { label: t('Attendance'), icon: 'check', accent: 'teal', onPress: () => navigation.navigate('Attendance') },
         { label: t('Report issue'), icon: 'alert', accent: 'danger', onPress: () => setReporting(true) },
       ]} />
 

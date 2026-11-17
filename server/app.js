@@ -14,6 +14,13 @@ import { readUploadedDocument } from './docreader.js';
 import { GuardianService } from './guardians.js';
 import { BusPassService } from './pass.js';
 import { mountServices } from './routes/services.js';
+import { mountAutomations } from './routes/automations.js';
+import { PhoneAutoStart } from './autostart.js';
+import { EscalationService } from './escalation.js';
+import { FollowupService } from './followups.js';
+import { InsightsService } from './insights.js';
+import { MessagingService } from './messaging.js';
+import { WeeklyReportService } from './weekly.js';
 import { BoardingCheckService } from './boarding.js';
 import {
   changePassword, emailCheck, HttpError, loadProfile, login, registerParent, registerStudent, requestPasswordReset, requireRole, resetPassword, sendEmailCode, verifyEmailCode, verifyToken,
@@ -91,7 +98,8 @@ export async function createServer(db, config, { mailer = createMailer(config) }
   attendance.calendar = calendar;
   const boarding = new BoardingCheckService(db, config, { tracking, attendance, calendar, io, push });
   const alternatives = new BusAlternativesService(db, config, { tracking, attendance, billing, calendar, io, push, eveningDeparture });
-  const guardians = new GuardianService(db, config, { tracking, billing, push });
+  const messaging = new MessagingService(db, config);
+  const guardians = new GuardianService(db, config, { tracking, billing, push, messaging });
   const pass = new BusPassService(db, config, { tracking, attendance, billing });
   const fleetCare = new FleetCareService(db, config, { tracking, io, push });
   const automation = new AutomationService(db, config, { tracking, attendance, billing, calendar, notify: (n) => broadcastNotification(n), eveningDeparture, fleetCare, io, push, guardians });
@@ -100,7 +108,12 @@ export async function createServer(db, config, { mailer = createMailer(config) }
   const monitor = new MonitorService(db, config, { mailer, calendar, backups, io });
   const privacy = new PrivacyService(db);
   const roster = new RosterService(db, config, { tracking });
-  const jobs = new JobRunner(db, config, { attendance, billing, boarding, alternatives, automation, backups, monitor });
+  const escalation = new EscalationService(db, config, { push, mailer, messaging, monitor, io });
+  const followups = new FollowupService(db, config, { billing, calendar, push, mailer, escalation, eveningDeparture, io });
+  const insights = new InsightsService(db, config, { tracking, notify: (n) => broadcastNotification(n), guardians, push, io });
+  const weekly = new WeeklyReportService(db, config, { mailer, monitor });
+  const autoStart = new PhoneAutoStart(db, config, { tracking, push, calendar });
+  const jobs = new JobRunner(db, config, { attendance, billing, boarding, alternatives, automation, backups, monitor, followups, escalation, insights, weekly });
 
   // The test gateway calls our webhook over HTTP, like the real one.
   httpServer.on('listening', () => {
@@ -163,6 +176,10 @@ export async function createServer(db, config, { mailer = createMailer(config) }
   app.post('/api/admin/documents/read', adminOnly, rateLimit({ windowMs: 60000, max: 20 }), express.json({ limit: '12mb' }), async (req, res) => {
     res.json(await readUploadedDocument(req.body));
   });
+  // A fuel receipt photo, from the driver (or the office): litres, amount and odometer.
+  app.post('/api/fuel/receipt', role('driver', 'admin'), rateLimit({ windowMs: 60000, max: 20 }), express.json({ limit: '12mb' }), async (req, res) => {
+    res.json(await readUploadedDocument({ ...req.body, kind: 'FUEL' }));
+  });
 
   // Raw bytes are kept for the webhook: its signature covers the exact body.
   app.use(express.json({ limit: '200kb', verify: (req, _res, buf) => { req.rawBody = buf; } }));
@@ -208,6 +225,8 @@ export async function createServer(db, config, { mailer = createMailer(config) }
       [kind, source, message, routeId, busId, tripId, auth.userId, lat, lng],
     );
     io.to('admins').emit('incident', rows[0]);
+    // A breakdown: the nearest free bus and driver, for the office to approve.
+    if (kind === 'BREAKDOWN') insights.suggestReplacement(rows[0]).catch((err) => monitor.capture('insights', err));
     // An SOS or emergency reaches the transport office's phones straight away.
     if (PUSH_INCIDENTS.has(kind)) {
       push.toRole('admin', {
@@ -767,6 +786,7 @@ export async function createServer(db, config, { mailer = createMailer(config) }
   app.post('/api/notifications', adminOnly, postNotification);
   app.post('/api/admin/notifications', adminOnly, postNotification);
 
+  mountAutomations(app, { db, config, autoStart, escalation, insights, weekly, messaging, followups, driverOnly, adminOnly, student });
   mountServices(app, { db, config, tracking, guardians, pass, calendar, fleetCare, reports, io, push, role, anyUser, student, driverOnly, adminOnly });
 
   /** Everything held about me, as a file; then delete my account (DPDP Act). */
@@ -885,5 +905,5 @@ export async function createServer(db, config, { mailer = createMailer(config) }
     trackers.stop();
   };
 
-  return { app, httpServer, io, monitor, backups, tracking, billing, attendance, boarding, alternatives, automation, guardians, pass, calendar, fleetCare, reports, jobs, gateway, trackers, trackerListeners, stop };
+  return { app, httpServer, io, monitor, backups, tracking, billing, attendance, boarding, alternatives, automation, guardians, pass, calendar, fleetCare, reports, jobs, gateway, trackers, trackerListeners, messaging, escalation, followups, insights, weekly, autoStart, stop };
 }

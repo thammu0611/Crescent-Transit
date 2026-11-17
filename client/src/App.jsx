@@ -35,6 +35,8 @@ import Reports from './pages/admin/Reports.jsx';
 import Notices from './pages/admin/Notices.jsx';
 import BusCare from './pages/admin/BusCare.jsx';
 import ServiceDesk from './pages/admin/ServiceDesk.jsx';
+import Suggestions from './pages/admin/Suggestions.jsx';
+import CommandPalette from './components/CommandPalette.jsx';
 import ParentHome from './pages/parent/ParentHome.jsx';
 import BusPass from './pages/student/Pass.jsx';
 import Services from './pages/student/Services.jsx';
@@ -77,6 +79,7 @@ const NAV = {
     ['/service', 'Service desk', ServiceDesk, 'sparkle'],
     ['/care', 'Bus care', BusCare, 'shield'],
     ['/reports', 'Reports', Reports, 'list'],
+    ['/suggestions', 'Suggestions', Suggestions, 'sparkle'],
   ],
   // finance: [
   //   ['/', 'Collections', Collections, 'wallet'],
@@ -135,6 +138,15 @@ function Shell() {
   const [scrolled, setScrolled] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [checkingHealth, setCheckingHealth] = useState(false);
+  // Quick search: Ctrl+K (Cmd+K on a Mac) or the search button, once signed in.
+  const [searching, setSearching] = useState(false);
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if (user) setSearching((o) => !o); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [user]);
   const [contacts, setContacts] = useState(FALLBACK_CONTACTS);
   useEffect(() => {
     api('/api/contacts').then(setContacts).catch(() => {});
@@ -205,6 +217,13 @@ function Shell() {
             <Icon name="menu" size={22} />
           </button>
           <MainNav links={nav} activePath={entry[0]} role={role} open={menuOpen}>
+            {user && !choosing && !verifying && (
+              <button type="button" className="cmdk-trigger" onClick={() => setSearching(true)} aria-label={t('Quick search')} title={t('Quick search (Ctrl+K)')}>
+                <Icon name="search" size={16} />
+                <span>{t('Search')}</span>
+                <kbd>Ctrl K</kbd>
+              </button>
+            )}
             {user && (
               <span className="user-chip">
                 <ProfileMenu roleLabel={ROLE_LABEL[role]} onChangePassword={() => setChangingPassword(true)} onSystemHealth={role === 'admin' ? () => setCheckingHealth(true) : null} />
@@ -229,6 +248,7 @@ function Shell() {
       {role === 'student' && !verifying && !choosing && <AttendancePrompt />}
       {role === 'student' && !verifying && !choosing && <BoardingCheck />}
       {role === 'student' && !verifying && !choosing && <BusAlternatives />}
+      {user && !choosing && !verifying && <CommandPalette links={nav} role={role} open={searching} onClose={() => setSearching(false)} />}
       {user && changingPassword && <ChangePassword onClose={() => setChangingPassword(false)} />}
       {role === 'admin' && checkingHealth && <Modal title="System health" width={760} onClose={() => setCheckingHealth(false)}><SystemHealth heading={null} /></Modal>}
     </div>

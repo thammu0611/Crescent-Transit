@@ -16,8 +16,8 @@ export function createMailer(config) {
   });
   return {
     configured: true,
-    async send({ to, subject, text, html }) {
-      await transport.sendMail({ from: smtp.from, to, subject, text, html });
+    async send({ to, subject, text, html, attachments }) {
+      await transport.sendMail({ from: smtp.from, to, subject, text, html, attachments });
       return true;
     },
   };

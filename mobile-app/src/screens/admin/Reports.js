@@ -6,7 +6,7 @@ import Icon from '../../components/Icon.js';
 import { Block, ColumnChart, HBars, Table } from '../../components/adminkit.js';
 import {
   Badge, Button, DateField, ErrorText, IconBubble, KV, ListCard, Row, RouteCode, Screen, SearchBox, Segmented, Select, Sheet, Skeleton,
-  Stat, StatGrid, Text, TextField, Txt, YesNo, DirectionBadge,
+  Text, TextField, Txt, YesNo, DirectionBadge,
 } from '../../components/ui.js';
 import { api, download, pickTextFile } from '../../lib/api.js';
 import { METHOD_TEXT, daysAgo, thisMonth, today } from '../../lib/format.js';
@@ -46,18 +46,26 @@ const rangeText = (from, to) => { const a = dm(from); const b = dm(to); return `
 const esc = (v) => String(v ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const card = { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 1, borderColor: C.line2, ...shadow };
 
-/** A key figure: its name, a big number and a short note. */
-function Kpi({ label, value, note, tone }) {
+const TONE_COLOUR = { live: C.live, delayed: C.delayed, danger: C.danger };
+
+/**
+ * A key figure, the same on every report: an icon and its name on one line,
+ * the big value, and a short note. Two to a row, equal in size, nothing cut off.
+ */
+function Kpi({ label, value, note, tone, icon }) {
+  const colour = TONE_COLOUR[tone] ?? (typeof tone === 'string' && tone.startsWith('#') ? tone : C.ink);
   return (
-    <View style={[card, { flexBasis: '47%', flexGrow: 1, padding: 14, gap: 4, shadowOpacity: 0 }]}>
-      <Text style={{ fontSize: 13, ...F[500], color: C.muted }} numberOfLines={2}>{label}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, flexWrap: 'wrap' }}>
-        <Text style={{ fontSize: 26, lineHeight: 32, ...F.displayBold, color: tone ?? C.ink, fontVariant: ['tabular-nums'] }}>{value ?? '—'}</Text>
-        {note ? <Text style={{ fontSize: 12.5, ...F[500], color: C.muted, paddingBottom: 5 }} numberOfLines={1}>{note}</Text> : null}
+    <View style={[card, { flexBasis: '47%', flexGrow: 1, minWidth: 0, minHeight: 104, padding: 14, gap: 6, justifyContent: 'space-between', shadowOpacity: 0 }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        {icon ? <Icon name={icon} size={15} color={C.muted} /> : null}
+        <Text style={{ flex: 1, fontSize: 12.5, ...F[600], color: C.muted }} numberOfLines={1}>{label}</Text>
       </View>
+      <Text style={{ fontSize: 26, lineHeight: 31, ...F.displayBold, color: colour, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{value ?? '—'}</Text>
+      <Text style={{ fontSize: 12, ...F[500], color: C.faint }} numberOfLines={1}>{note ?? ' '}</Text>
     </View>
   );
 }
+const KpiGrid = ({ children }) => <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>{children}</View>;
 
 /** Columns per day with the average as a dashed line; the latest day is highlighted. */
 function DayBars({ title, data, height = 120 }) {
@@ -146,10 +154,10 @@ function EtaAccuracy({ token, q }) {
   const ok = data.overall.maeMin != null && data.overall.maeMin <= data.targetMin;
   return (
     <>
-      <StatGrid>
-        <Stat icon="clock" label="Overall error" value={data.overall.maeMin == null ? '—' : `${data.overall.maeMin} min`} tone={data.overall.maeMin == null ? undefined : ok ? 'live' : 'delayed'} />
-        <Stat icon="chart" label="Predictions scored" value={data.overall.n} />
-      </StatGrid>
+      <KpiGrid>
+        <Kpi icon="clock" label="Overall error" value={data.overall.maeMin == null ? '—' : `${data.overall.maeMin} min`} note={`target under ${data.targetMin} min`} tone={data.overall.maeMin == null ? undefined : ok ? 'live' : 'delayed'} />
+        <Kpi icon="chart" label="Predictions" value={data.overall.n} note="scored" />
+      </KpiGrid>
       <Txt muted small>Target: under {data.targetMin} minutes. Each minute the server logs its prediction for the next three stops; when the bus reaches the stop the error is |actual − predicted|.</Txt>
       {[['By route', data.byRoute], ['By method', data.byMethod], ['By how far ahead', data.byLead], ['By hour', data.byHour]].map(([title, rows]) => (
         <Block key={title} title={title}>
@@ -177,12 +185,12 @@ function AccuracyUpload({ token }) {
       </Block>
       {result && (
         <>
-          <StatGrid>
-            <Stat label={`Precision (≥ ${result.targets.precisionPct}%)`} value={result.precisionPct == null ? '—' : `${result.precisionPct}%`} tone={result.precisionPct >= result.targets.precisionPct ? 'live' : 'delayed'} />
-            <Stat label={`Recall (≥ ${result.targets.recallPct}%)`} value={result.recallPct == null ? '—' : `${result.recallPct}%`} tone={result.recallPct >= result.targets.recallPct ? 'live' : 'delayed'} />
-            <Stat label="Prompt response" value={result.promptResponsePct == null ? '—' : `${result.promptResponsePct}%`} />
-            <Stat label="Provisional share" value={result.provisionalSharePct == null ? '—' : `${result.provisionalSharePct}%`} />
-          </StatGrid>
+          <KpiGrid>
+            <Kpi label="Precision" value={result.precisionPct == null ? '—' : `${result.precisionPct}%`} note={`target ${result.targets.precisionPct}% or more`} tone={result.precisionPct >= result.targets.precisionPct ? 'live' : 'delayed'} />
+            <Kpi label="Recall" value={result.recallPct == null ? '—' : `${result.recallPct}%`} note={`target ${result.targets.recallPct}% or more`} tone={result.recallPct >= result.targets.recallPct ? 'live' : 'delayed'} />
+            <Kpi label="Prompt response" value={result.promptResponsePct == null ? '—' : `${result.promptResponsePct}%`} note="answered the question" />
+            <Kpi label="Provisional share" value={result.provisionalSharePct == null ? '—' : `${result.provisionalSharePct}%`} note="not yet confirmed" />
+          </KpiGrid>
           <Block title="Breakdown">
             <KV k="Trips" v={result.trips} />
             <KV k="True positives" v={result.truePositives} />
@@ -348,7 +356,7 @@ export default function Reports({ navigation }) {
         <View style={{ flex: 1, minWidth: 0 }}>
           <Txt small muted>Report</Txt>
           <Text style={{ fontSize: 18, lineHeight: 23, ...F[700], color: C.ink }}>{current.label}</Text>
-          <Txt muted small>{current.desc}</Txt>
+          <Txt muted small numberOfLines={1}>{current.desc}</Txt>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Txt small style={{ color: C.navy, ...F[600] }}>Change</Txt>
@@ -376,20 +384,22 @@ export default function Reports({ navigation }) {
         </Sheet>
       ) : null}
       <ErrorText>{error ?? loadError}</ErrorText>
+      {tab !== 'accuracy' && (CSV[tab] || tab !== 'eta') ? (
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {CSV[tab] ? <Button small title="Export CSV" variant="ghost" icon="list" onPress={exportCsv} style={{ flex: 1 }} /> : null}
+          {tab !== 'eta' ? <Button small title="Export PDF" variant="ghost" icon="download" onPress={exportPdf} style={{ flex: 1 }} /> : null}
+        </View>
+      ) : null}
 
       {tab === 'register' && (reg == null ? loading : (
         <>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            <Kpi label="Boarding records" value={reg.length} note={PRESETS.find((x) => x.value === preset)?.label.toLowerCase()} />
-            <Kpi label="Present" value={reg.length ? `${Math.round((regStats.present / reg.length) * 100)}%` : '—'} note={`${regStats.present} of ${reg.length}`} tone={C.live} />
-            <Kpi label="Students riding" value={regStats.students} note="students" />
-            <Kpi label="Pending · flagged" value={`${regStats.pending} · ${regStats.flagged}`} note={regStats.pending || regStats.flagged ? 'need review' : 'all clear'} tone={regStats.pending || regStats.flagged ? C.delayed : undefined} />
-          </View>
+          <KpiGrid>
+            <Kpi icon="list" label="Boarding records" value={reg.length} note={PRESETS.find((x) => x.value === preset)?.label.toLowerCase()} />
+            <Kpi icon="check" label="Present" value={reg.length ? `${Math.round((regStats.present / reg.length) * 100)}%` : '—'} note={`${regStats.present} of ${reg.length}`} tone="live" />
+            <Kpi icon="users" label="Students riding" value={regStats.students} note="students" />
+            <Kpi icon="alert" label="Pending · flagged" value={`${regStats.pending} · ${regStats.flagged}`} note={regStats.pending || regStats.flagged ? 'need review' : 'all clear'} tone={regStats.pending || regStats.flagged ? 'delayed' : undefined} />
+          </KpiGrid>
           <DayBars title="Students present per day" data={regStats.days} />
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Button title="Export CSV" variant="ghost" icon="list" onPress={exportCsv} style={{ flex: 1 }} />
-            <Button title="Export PDF" variant="ghost" icon="download" onPress={exportPdf} style={{ flex: 1 }} />
-          </View>
           <Block
             title="Register by bus"
             caption={`${regBuses.length} bus${regBuses.length === 1 ? '' : 'es'} · ${reg.length} records · tap a bus to open it`}
@@ -401,7 +411,7 @@ export default function Reports({ navigation }) {
                 onPress={() => setBusId(g.bus)}
                 lead={<RouteCode code={g.route} small />}
                 title={String(g.bus).replace('BSACIST-', 'Bus ')}
-                lines={[`${g.students.length} student${g.students.length === 1 ? '' : 's'} · ${g.rows.length} record${g.rows.length === 1 ? '' : 's'}`]}
+                lines={[`${g.students.length} student${g.students.length === 1 ? '' : 's'}`, `${g.rows.length} record${g.rows.length === 1 ? '' : 's'}`]}
                 count={g.present}
                 countLabel="PRESENT"
               />
@@ -411,19 +421,15 @@ export default function Reports({ navigation }) {
         </>
       ))}
 
-      {tab !== 'register' && tab !== 'accuracy' ? (
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          {CSV[tab] ? <Button title="Export CSV" variant="ghost" icon="list" onPress={exportCsv} style={{ flex: 1 }} /> : null}
-          {tab !== 'eta' ? <Button title="Export PDF" variant="ghost" icon="download" onPress={exportPdf} style={{ flex: 1 }} /> : null}
-        </View>
-      ) : null}
+
 
       {tab === 'demand' && (demand.data == null ? loading : (
         <>
-          <StatGrid>
-            <Stat icon="users" label="Boardings" value={demandTotal} />
-            <Stat icon="clock" label="Peak hour" value={peak ? `${peak.label}:00` : '—'} />
-          </StatGrid>
+          <KpiGrid>
+            <Kpi icon="users" label="Boardings" value={demandTotal} note="morning runs" />
+            <Kpi icon="clock" label="Peak hour" value={peak ? `${peak.label}:00` : '—'} note={peak ? `to ${String((peak.hour + 1) % 24).padStart(2, '0')}:00 · ${peak.value} boardings` : ' '} />
+            <Kpi icon="pin" label="Busiest stop" value={demandByStop[0] ? demandByStop[0].label.split(' · ').slice(1).join(' · ') : '—'} note={demandByStop[0] ? `Route ${demandByStop[0].label.split(' · ')[0]} · ${demandByStop[0].n} boardings` : ' '} />
+          </KpiGrid>
           <Block title="Busiest boarding stops" caption="Top 12 by boardings" right={<CsvButton title="CSV" onPress={() => csv('/api/reports/demand', 'stop-demand')} />}>
             <HBars rows={demandByStop} label={(r) => r.label} value={(r) => r.n} />
           </Block>
@@ -435,19 +441,19 @@ export default function Reports({ navigation }) {
 
       {tab === 'occupancy' && (occ == null ? loading : (
         <>
-          <StatGrid>
-            <Stat icon="bus" label="Trips" value={occ.length} />
-            <Stat icon="chart" label="Average load" value={occLoads.length ? `${Math.round(occLoads.reduce((n, r) => n + r.load_pct, 0) / occLoads.length)}%` : '—'} />
-            <Stat icon="alert" label="Over capacity" value={occ.filter((r) => r.load_pct > 100).length} tone={occ.some((r) => r.load_pct > 100) ? 'danger' : undefined} />
-            <Stat icon="users" label="Near full (> 85%)" value={occ.filter((r) => r.load_pct > 85 && r.load_pct <= 100).length} tone="delayed" />
-          </StatGrid>
+          <KpiGrid>
+            <Kpi icon="bus" label="Trips" value={occ.length} note="in this period" />
+            <Kpi icon="chart" label="Average load" value={occLoads.length ? `${Math.round(occLoads.reduce((n, r) => n + r.load_pct, 0) / occLoads.length)}%` : '—'} note="of the seats" />
+            <Kpi icon="alert" label="Over capacity" value={occ.filter((r) => r.load_pct > 100).length} note="trips over 100%" tone={occ.some((r) => r.load_pct > 100) ? 'danger' : undefined} />
+            <Kpi icon="users" label="Near full" value={occ.filter((r) => r.load_pct > 85 && r.load_pct <= 100).length} note="trips over 85%" tone={occ.some((r) => r.load_pct > 85 && r.load_pct <= 100) ? 'delayed' : undefined} />
+          </KpiGrid>
           <Block title="Occupancy against capacity" right={<CsvButton title="CSV" onPress={() => csv('/api/reports/occupancy', 'occupancy')} />}>
             <Table
               rows={occ}
               keyOf={(r) => r.trip_id}
               empty="No trips in this period."
               columns={[
-                { key: 'started', label: 'Started', flex: 1.2, render: (r) => r.started.slice(5) },
+                { key: 'started', label: 'Started', flex: 1.3, render: (r) => { const [d, t] = r.started.split(' '); return <View><Txt small bold numberOfLines={1}>{dm(d).text}</Txt><Txt small muted numberOfLines={1}>{t}</Txt></View>; } },
                 { key: 'route', label: 'Route', flex: 0.7, align: 'center' },
                 { key: 'travelled', label: 'Riders', flex: 0.9, align: 'right', render: (r) => `${r.travelled}/${r.capacity ?? '—'}` },
                 { key: 'load', label: 'Load', flex: 0.9, align: 'right', render: (r) => <Badge tone={r.load_pct > 100 ? 'danger' : r.load_pct > 85 ? 'delayed' : 'live'}>{`${r.load_pct ?? '—'}%`}</Badge> },
@@ -459,21 +465,21 @@ export default function Reports({ navigation }) {
 
       {tab === 'exceptions' && (ex == null ? loading : (
         <>
-          <StatGrid>
-            <Stat icon="alert" label="Provisional / flagged" value={ex.provisionalOrFlagged.length} tone={ex.provisionalOrFlagged.length ? 'delayed' : undefined} />
-            <Stat icon="edit" label="Manual overrides" value={ex.manualOverrides.length} />
-            <Stat icon="signal" label="System incidents" value={ex.systemIncidents.length} tone={ex.systemIncidents.length ? 'danger' : undefined} />
-            <Stat icon="shield" label="Flagged devices" value={ex.flaggedDevices.length} tone={ex.flaggedDevices.length ? 'danger' : undefined} />
-          </StatGrid>
+          <KpiGrid>
+            <Kpi icon="alert" label="Flagged records" value={ex.provisionalOrFlagged.length} note="to review" tone={ex.provisionalOrFlagged.length ? 'delayed' : undefined} />
+            <Kpi icon="edit" label="Manual overrides" value={ex.manualOverrides.length} note="by staff" />
+            <Kpi icon="signal" label="System incidents" value={ex.systemIncidents.length} note="automatic" tone={ex.systemIncidents.length ? 'danger' : undefined} />
+            <Kpi icon="shield" label="Flagged devices" value={ex.flaggedDevices.length} note="mock location" tone={ex.flaggedDevices.length ? 'danger' : undefined} />
+          </KpiGrid>
           <Block title="Provisional, auto-confirmed or flagged records">
             <Table
               rows={ex.provisionalOrFlagged}
               keyOf={(r) => r.attendance_id}
               empty="None in this period."
               columns={[
-                { key: 'username', label: 'Student', flex: 1.4, bold: true },
+                { key: 'username', label: 'Student', flex: 1.1, bold: true },
                 { key: 'trip_id', label: 'Trip', flex: 0.6, align: 'center' },
-                { key: 'status', label: 'Status', flex: 1.4, align: 'right', render: (r) => <Badge tone={r.flagged ? 'danger' : 'delayed'}>{r.flag_reason ?? `${statusText(r.status)}${r.auto_confirmed ? ' · auto' : ''}`}</Badge> },
+                { key: 'status', label: 'Status', flex: 1.5, render: (r) => <Badge tone={r.flagged ? 'danger' : 'delayed'}>{r.flagged ? (r.flag_reason ?? 'Flagged').replaceAll('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase()) : r.auto_confirmed ? 'Auto-confirmed' : statusText(r.status)}</Badge> },
               ]}
             />
           </Block>
@@ -509,10 +515,10 @@ export default function Reports({ navigation }) {
 
       {tab === 'leakage' && (leak == null ? loading : (
         <>
-          <StatGrid>
-            <Stat icon="alert" label="Rides without a pass" value={leak.length} tone={leak.length ? 'danger' : 'live'} />
-            <Stat icon="users" label="Students" value={new Set(leak.map((r) => r.username)).size} />
-          </StatGrid>
+          <KpiGrid>
+            <Kpi icon="alert" label="Rides without a pass" value={leak.length} note="in this period" tone={leak.length ? 'danger' : 'live'} />
+            <Kpi icon="users" label="Students" value={new Set(leak.map((r) => r.username)).size} note="travelled unpaid" />
+          </KpiGrid>
           <Block
             title="Travelled without a subscription"
             caption="Recorded on a bus (by QR or the driver) with no subscription covering that day."

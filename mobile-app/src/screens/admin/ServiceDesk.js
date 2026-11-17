@@ -138,10 +138,10 @@ function Calendar({ token }) {
   const save = () => a.run(() => api('/api/admin/calendar', { token, body: { ...form, morningShift: Number(form.morningShift || 0), eveningShift: Number(form.eveningShift || 0) } }))
     .then((r) => { if (r) { setForm(blank); cal.reload(); } });
   const remove = (d) => a.run(() => api(`/api/admin/calendar/${d.day}`, { token, method: 'DELETE' })).then(cal.reload);
-  const list = cal.data?.upcoming ?? [];
+  const list = (cal.data?.upcoming ?? []).filter((d) => !d.weekly); // Sundays are built in; only added days are listed
   return (
     <>
-      <Panel title="Holidays and special days" icon="clock" summary="On a holiday, questions and bus alerts stop">
+      <Panel title="Holidays and special days" icon="clock" summary="No buses on Sundays. On a holiday, questions and bus alerts stop">
         <DateField label="Date" value={form.day} onChange={set('day')} />
         <Select label="Kind" value={form.kind} onChange={set('kind')} options={Object.entries(DAY_KIND_TEXT).map(([value, label]) => ({ value, label }))} />
         <TextField label="Name" value={form.title} maxLength={80} placeholder="e.g. Pongal" onChangeText={set('title')} />

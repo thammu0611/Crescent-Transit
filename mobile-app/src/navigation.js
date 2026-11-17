@@ -36,6 +36,7 @@ import VerifyEmail from './screens/student/VerifyEmail.js';
 import LiveMap from './screens/LiveMap.js';
 import BusCare from './screens/admin/BusCare.js';
 import ServiceDesk from './screens/admin/ServiceDesk.js';
+import Suggestions from './screens/admin/Suggestions.js';
 import Appearance from './components/Appearance.js';
 import ParentHome from './screens/parent/ParentHome.js';
 import BusPass from './screens/student/Pass.js';
@@ -196,6 +197,7 @@ const ADMIN_MORE = [
   ['ServiceDesk', 'Service desk', 'sparkle', 'Complaints, route requests, lost items, driver checks', 'emerald'],
   ['BusCare', 'Bus care', 'shield', 'Documents, service, fuel, scorecards, stops', 'indigo'],
   ['Reports', 'Reports', 'list', 'Registers, demand, occupancy, accuracy', 'violet'],
+  ['Suggestions', 'Suggestions', 'sparkle', 'Timetable fixes, crowded routes, replacement buses, weekly report', 'emerald'],
 ];
 
 function MoreMenu({ navigation }) {
@@ -253,6 +255,7 @@ function AdminNav() {
       <Stack.Screen name="ServiceDesk" component={ServiceDesk} options={{ title: 'Service desk', headerTitle: '' }} />
       <Stack.Screen name="BusCare" component={BusCare} options={{ title: 'Bus care', headerTitle: '' }} />
       <Stack.Screen name="Reports" component={Reports} options={{ headerTitle: '' }} />
+      <Stack.Screen name="Suggestions" component={Suggestions} options={{ title: 'Suggestions', headerTitle: '' }} />
     </Stack.Navigator>
   );
 }
@@ -300,7 +303,10 @@ const BY_ROLE = { parent: ParentNav, student: StudentNav, driver: DriverNav, adm
 // Where a tapped notification leads, by role: route alerts to the alerts list,
 // an SOS to the transport office's incident log. The boarding questions need
 // no screen: opening the app loads them as in-app sheets.
-const OPEN_ON_TAP = { student: { notification: 'Alerts' }, admin: { incident: 'Notices', notification: 'Notices' } };
+const OPEN_ON_TAP = {
+  student: { notification: 'Alerts', renew: 'Subscription', subscription: 'Subscription' },
+  admin: { incident: 'Notices', notification: 'Notices', suggestion: 'Suggestions', feedback: 'ServiceDesk' },
+};
 
 /** Register this phone for push after sign-in, and follow taps on notifications. */
 function usePushNotifications(token, user) {

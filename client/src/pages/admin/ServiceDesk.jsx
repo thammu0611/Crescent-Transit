@@ -164,10 +164,10 @@ function Calendar({ token }) {
       .then((r) => { if (r) { setForm(blank); cal.reload(); } });
   };
   const remove = (d) => a.run(() => api(`/api/admin/calendar/${d.day}`, { token, method: 'DELETE' })).then(cal.reload);
-  const list = cal.data?.upcoming ?? [];
+  const list = (cal.data?.upcoming ?? []).filter((d) => !d.weekly); // Sundays are built in; only added days are listed
   return (
     <>
-      <Panel title="Holidays and special days" icon="clock" summary="On a holiday, boarding questions, attendance prompts and bus alerts stop">
+      <Panel title="Holidays and special days" icon="clock" summary="Buses never run on Sundays. On a holiday, boarding questions, attendance prompts and bus alerts stop">
         <form onSubmit={save}>
           <div className="grid2">
             <Field label="Date"><input type="date" value={form.day} onChange={set('day')} required /></Field>

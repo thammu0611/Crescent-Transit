@@ -3,6 +3,7 @@ import { api } from '../lib/api.js';
 import { date } from '../lib/format.js';
 import { CHECKLIST_ITEMS } from '../../../shared/service.js';
 import { DIRECTION_TEXT } from '../../../shared/direction.js';
+import { readDocument } from '../../../shared/docscan.js';
 import { useT } from '../lib/i18n.js';
 import { useAction, useAsync } from '../lib/useAsync.js';
 import Icon from './Icon.jsx';
@@ -157,6 +158,27 @@ export function FuelEntry({ token }) {
   const [form, setForm] = useState({ odometerKm: '', litres: '', costRupees: '' });
   const a = useAction();
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const [scan, setScan] = useState(null); // { progress } while reading, { found } after
+  // A photo or PDF of the pump receipt fills the boxes; the driver checks them and saves.
+  const readReceipt = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setScan({ progress: 0 });
+    try {
+      const { documentText } = await import('../lib/docText.js');
+      const r = readDocument(await documentText(file, (p) => setScan({ progress: p })), 'FUEL');
+      setForm((f) => ({
+        odometerKm: r.odometerKm ? String(r.odometerKm) : f.odometerKm,
+        litres: r.litres ? String(r.litres) : f.litres,
+        costRupees: r.amountRupees ? String(r.amountRupees) : f.costRupees,
+      }));
+      const found = [r.litres, r.amountRupees, r.odometerKm].filter(Boolean).length;
+      setScan({ found, message: found ? t('Filled from the receipt - check the boxes, then save.') : t('Could not read this receipt. Type the numbers instead.') });
+    } catch {
+      setScan({ found: 0, message: t('Could not read this receipt. Type the numbers instead.') });
+    }
+  };
   const send = (e) => {
     e.preventDefault();
     a.run(() => api('/api/fuel', { token, body: { odometerKm: Number(form.odometerKm), litres: Number(form.litres), costRupees: Number(form.costRupees) } }), t('Fuel saved.'))
@@ -165,6 +187,12 @@ export function FuelEntry({ token }) {
   return (
     <ViewCard icon="wallet" title="Fuel entry" summary={t('Odometer, litres and the amount paid')}>
       <form onSubmit={send}>
+        <label className={`btn ghost receipt-scan${scan?.progress != null ? ' busy' : ''}`}>
+          <Icon name="upload" size={16} />
+          {scan?.progress != null ? `${t('Reading the receipt…')} ${Math.round(scan.progress * 100)}%` : t('Scan fuel receipt')}
+          <input type="file" accept="image/*,application/pdf" capture="environment" onChange={readReceipt} hidden />
+        </label>
+        {scan?.message && <p className={scan.found ? 'notice' : 'error'} role="status">{scan.message}</p>}
         <Field label="Odometer (km)"><input type="number" min="0" inputMode="numeric" value={form.odometerKm} onChange={set('odometerKm')} required /></Field>
         <div className="grid2">
           <Field label="Litres"><input type="number" min="0" step="0.01" inputMode="decimal" value={form.litres} onChange={set('litres')} required /></Field>

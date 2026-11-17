@@ -7,12 +7,26 @@ import { localDate } from './clock.js';
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const KINDS = ['HOLIDAY', 'EXAM', 'SPECIAL'];
 const SHIFT_LIMIT = 240;
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const weekdayOf = (date) => new Date(`${date}T12:00:00Z`).getUTCDay();
+const addDays = (date, n) => new Date(Date.parse(`${date}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 
 export class CalendarService {
   constructor(db, config) {
     this.db = db;
     this.config = config;
     this.cached = new Map(); // date -> { at, day }
+    this.closedWeekdays = config.calendar?.closedWeekdays ?? [0];
+  }
+
+  /** The built-in day off for a weekly closed day (every Sunday), or null. */
+  weeklyOff(date) {
+    const weekday = weekdayOf(date);
+    if (!this.closedWeekdays.includes(weekday)) return null;
+    return {
+      day: date, kind: 'HOLIDAY', title: DAY_NAMES[weekday], note: `Buses do not run on ${DAY_NAMES[weekday]}s`,
+      no_service: true, morning_shift: 0, evening_shift: 0, weekly: true,
+    };
   }
 
   async on(date) {
@@ -22,7 +36,8 @@ export class CalendarService {
       `SELECT to_char(day, 'YYYY-MM-DD') AS day, kind, title, note, no_service, morning_shift, evening_shift FROM special_days WHERE day = $1`,
       [date],
     );
-    const day = rows[0] ?? null;
+    // A calendar entry wins; otherwise a weekly day off (Sunday) is a day with no buses.
+    const day = rows[0] ?? this.weeklyOff(date);
     this.cached.set(date, { at: Date.now(), day });
     return day;
   }
@@ -43,14 +58,25 @@ export class CalendarService {
     return (direction === 'DOWN' ? day?.evening_shift : day?.morning_shift) ?? 0;
   }
 
-  /** Today and what is coming, oldest first. */
-  async upcoming(limit = 60) {
+  /**
+   * Today and what is coming, oldest first. The weekly days off (Sundays) of the next two weeks
+   * are included, marked weekly: true, so a week's timetable shows them; the admin calendar hides them.
+   */
+  async upcoming(limit = 60, now = Date.now()) {
+    const today = localDate(new Date(now), this.config.timeZone);
     const { rows } = await this.db.query(
       `SELECT to_char(day, 'YYYY-MM-DD') AS day, kind, title, note, no_service, morning_shift, evening_shift
          FROM special_days WHERE day >= $1 ORDER BY day LIMIT $2`,
-      [localDate(new Date(), this.config.timeZone), limit],
+      [today, limit],
     );
-    return rows;
+    const listed = new Set(rows.map((r) => r.day));
+    const weekly = [];
+    for (let i = 0; i < 14; i += 1) {
+      const date = addDays(today, i);
+      const off = listed.has(date) ? null : this.weeklyOff(date);
+      if (off) weekly.push(off);
+    }
+    return [...rows, ...weekly].sort((a, b) => a.day.localeCompare(b.day)).slice(0, limit + weekly.length);
   }
 
   async save(body = {}, actorId = null) {

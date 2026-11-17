@@ -14,6 +14,7 @@ import { greeting } from '../../lib/schedule.js';
 import { useSession } from '../../lib/session.js';
 import { ACCENT, C, F, shadow } from '../../theme.js';
 import MyAvatar from '../../components/MyAvatar.js';
+import { SuggestionsCard } from '../../components/Automations.js';
 
 const titleCase = (k) => k.replaceAll('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
@@ -105,14 +106,14 @@ export default function Dashboard({ navigation }) {
 
   return (
     <Screen safeTop refreshing={refreshing} onRefresh={onRefresh}>
-      <GreetHeader title="Dashboard" name={user?.name} right={<HeaderIconButton dark icon="bell" label="Alerts and incidents" badge={k.openIncidents} onPress={() => navigation.navigate('Notices')} />} />
+      <GreetHeader title="Dashboard" name={user?.name} right={<HeaderIconButton dark icon="bell" label="Alerts and incidents" badge={k.openReported ?? k.openIncidents} onPress={() => navigation.navigate('Notices')} />} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         <Kpi icon="bus" accent="navy" label="Buses on trip" value={ready ? buses.length : null} note={`of ${tot.buses ?? '—'}`} onPress={() => navigation.navigate('FleetMap')} />
         <Kpi icon="signal" accent="emerald" label="Live now" value={ready ? counts.live ?? 0 : null} note="GPS < 30 s" onPress={() => navigation.navigate('FleetMap')} />
         <Kpi icon="clock" accent="amber" label="Delayed" value={ready ? counts.delayed ?? 0 : null} note={counts.offline ? `${counts.offline} offline` : 'signal late'} tone={counts.delayed ? C.delayed : undefined} onPress={() => navigation.navigate('FleetMap')} />
         <Kpi icon="check" accent="emerald" label="Attendance" value={k.presentUpToday == null ? null : `${k.presentUpToday}/${k.presentDownToday}`} note="in / out today" onPress={() => navigation.navigate('AttendanceAdmin')} />
-        <Kpi icon="alert" accent="danger" label="Open incidents" value={k.openIncidents} tone={k.openIncidents ? C.danger : undefined} onPress={() => navigation.navigate('Notices')} />
-        <Kpi icon="card" accent="navy" label="Active passes" value={tot.subscribers} note="students" onPress={() => navigation.navigate('Reports')} />
+        <Kpi icon="alert" accent="danger" label="Open incidents" value={k.openReported ?? k.openIncidents} note={k.openAutomatic ? `+${k.openAutomatic} automatic` : undefined} tone={(k.openReported ?? k.openIncidents) ? C.danger : undefined} onPress={() => navigation.navigate('Notices')} />
+        <Kpi icon="card" accent="navy" label="Active passes" value={tot.subscribers} note={tot.subscribers === 1 ? 'student' : 'students'} onPress={() => navigation.navigate('Reports')} />
       </View>
       {k.awaitingReview ? (
         <Pressable accessibilityRole="button" onPress={() => navigation.navigate('AttendanceAdmin')} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16, backgroundColor: C.card, borderWidth: 1, borderColor: C.line2 }, pressed && { opacity: 0.85 }]}>
@@ -125,6 +126,8 @@ export default function Dashboard({ navigation }) {
         <Button title="Trips today" variant="ghost" icon="clock" onPress={() => navigation.navigate('Trips')} style={{ flex: 1 }} />
         <Button title="Announce" variant="ghost" icon="bell" onPress={() => navigation.navigate('Notices')} style={{ flex: 1 }} />
       </View>
+
+      <SuggestionsCard onSeeAll={() => navigation.navigate('Suggestions')} />
 
       <Block
         title={trend === 'present' ? 'Riders, last 7 days' : 'Trips, last 7 days'}
@@ -213,6 +216,7 @@ export default function Dashboard({ navigation }) {
           );
         })}
       </ViewCard>
+
     </Screen>
   );
 }

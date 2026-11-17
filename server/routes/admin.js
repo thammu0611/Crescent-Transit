@@ -451,10 +451,26 @@ export function adminRouter({ db, config, tracking, attendance, reports, jobs, i
     res.json(rows);
   });
 
+  // Automatic alerts (tracker offline, speeding, capacity...) closed in one go,
+  // so the open list keeps only what people reported. SOS and breakdowns are never
+  // automatic, so they stay.
+  r.post('/incidents/resolve-system', async (req, res) => {
+    const { rows } = await db.query(
+      `UPDATE incidents SET status = 'RESOLVED', resolution = $1, resolved_by = $2, resolved_at = now(),
+              acknowledged_at = coalesce(acknowledged_at, now()), acknowledged_by = coalesce(acknowledged_by, $2)
+        WHERE status = 'OPEN' AND source = 'system' RETURNING id`,
+      [str(req.body?.resolution, 500) || 'Reviewed together', req.auth.userId],
+    );
+    await audit(db, { actorId: req.auth.userId, action: 'INCIDENTS_RESOLVED_IN_BULK', entity: 'incident', detail: { count: rows.length } });
+    io.to('admins').emit('incident', { bulk: true });
+    res.json({ resolved: rows.length });
+  });
+
   r.post('/incidents/:id/resolve', async (req, res) => {
     const id = intParam(req.params.id, 'id');
     const { rows } = await db.query(
-      `UPDATE incidents SET status = 'RESOLVED', resolution = $2, resolved_by = $3, resolved_at = now()
+      `UPDATE incidents SET status = 'RESOLVED', resolution = $2, resolved_by = $3, resolved_at = now(),
+              acknowledged_at = coalesce(acknowledged_at, now()), acknowledged_by = coalesce(acknowledged_by, $3)
         WHERE id = $1 AND status = 'OPEN' RETURNING *`,
       [id, str(req.body?.resolution, 500) || 'Resolved', req.auth.userId],
     );

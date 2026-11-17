@@ -171,6 +171,8 @@ export function loadConfig(overrides = {}) {
       stopAlertMinutes: Number(env.STOP_ALERT_MINUTES) || 5, // push this long before the bus reaches the stop
       stopAlertEveryS: 30, // how often one bus is checked
       autoEndAtGeofence: env.AUTO_END_TRIPS !== '0',
+      // A trip still running this many hours after it started was forgotten: end it.
+      staleTripHours: Number(env.STALE_TRIP_HOURS) || 8,
       geofenceM: 300, // inside this far of the run's last stop
       geofenceDwellMin: 3, // for this long, and the trip ends
       speedLimitKmh: Number(env.SPEED_LIMIT_KMH) || 65,
@@ -255,6 +257,12 @@ export function loadConfig(overrides = {}) {
       } : null,
     },
 
+    // Days of the week the buses never run (0 = Sunday ... 6 = Saturday). A calendar entry on
+    // one of these days with buses running (a special working Sunday) overrides it.
+    calendar: {
+      closedWeekdays: (env.NO_SERVICE_WEEKDAYS ?? '0').split(',').map((d) => d.trim()).filter((d) => /^[0-6]$/.test(d)).map(Number),
+    },
+
     // Who is told when something goes wrong (server/monitor.js).
     monitor: {
       alertEmail: env.ALERT_EMAIL || null,
@@ -270,6 +278,61 @@ export function loadConfig(overrides = {}) {
     // Websites allowed to open the live connection, besides the app's own address.
     // Phone apps send no origin and are always allowed.
     allowedOrigins: (env.ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean),
+
+    // Where links in messages point (the renew link): the website's address.
+    appUrl: (env.APP_URL || (env.ALLOWED_ORIGINS ?? '').split(',')[0] || '').trim().replace(/\/$/, '') || null,
+
+    // Things the system does by itself on a timer (server/followups.js, server/escalation.js,
+    // server/insights.js, server/weekly.js, server/autostart.js).
+    followups: {
+      renewDaysBefore: [3, 0], // push 3 days before a subscription ends and on its last day; then when grace starts
+      checklistBeforeMin: 15, // remind the driver this long before the run if the pre-trip check is not done
+      complaintRemindHours: 48, // an unanswered complaint reminds the service desk ...
+      complaintEscalateHours: 72, // ... then goes to the transport head
+      serviceCredits: env.SERVICE_CREDITS !== '0', // a day added for a run that did not happen
+    },
+    escalation: {
+      afterMinutes: Number(env.ESCALATE_AFTER_MIN) || 5,
+      // Usernames in order: the next person, then the transport head (last).
+      chain: (env.ESCALATE_TO || '').split(',').map((s) => s.trim()).filter(Boolean),
+    },
+    weeklyReport: {
+      enabled: env.WEEKLY_REPORT !== '0',
+      to: (env.WEEKLY_REPORT_TO || env.ALERT_EMAIL || '').split(',').map((s) => s.trim()).filter(Boolean),
+      weekday: 1, // Monday
+      at: env.WEEKLY_REPORT_AT || '07:30',
+    },
+    insights: {
+      timetableMinStops: 3, // a route's timetable is looked at once this many stops differ ...
+      timetableDiffMin: 4, // ... by at least this many minutes on average
+      timetableMinTrips: 5, // over at least this many recent trips
+      crowdedTrips: 3, // FULL this many times in the last ...
+      crowdedDays: 10, // ... days flags the route
+    },
+    // Phone-only drivers: the trip starts by itself once the phone leaves the depot
+    // in trip hours (server/autostart.js). Uses the GPS tracker thresholds above.
+    phoneAutoStart: { enabled: env.PHONE_AUTO_START !== '0', leaveDepotM: 300 },
+    // WhatsApp or SMS to parents who do not use the app (server/messaging.js).
+    // WhatsApp: Meta's WhatsApp Cloud API with an approved template that has one
+    // text variable ({{1}}). SMS: Twilio. Nothing is sent until one is set.
+    messaging: {
+      whatsapp: env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_ID ? {
+        token: env.WHATSAPP_TOKEN,
+        phoneId: env.WHATSAPP_PHONE_ID,
+        template: env.WHATSAPP_TEMPLATE || 'transport_update',
+        language: env.WHATSAPP_TEMPLATE_LANG || 'en',
+        apiVersion: env.WHATSAPP_API_VERSION || 'v20.0',
+      } : null,
+      sms: env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM ? {
+        sid: env.TWILIO_ACCOUNT_SID,
+        token: env.TWILIO_AUTH_TOKEN,
+        from: env.TWILIO_FROM,
+      } : null,
+      defaultCountry: env.PHONE_COUNTRY_CODE || '91',
+      // Rough cost per message in paise, for the transport office's count.
+      costPaise: { whatsapp: Number(env.WHATSAPP_COST_PAISE) || 80, sms: Number(env.SMS_COST_PAISE) || 25 },
+      maxContactsPerStudent: 2,
+    },
 
     emergencyContacts: [
       { label: 'Transport office', phone: env.TRANSPORT_OFFICE_PHONE || '+91 44 2275 1347' },

@@ -532,3 +532,34 @@ test('anyone can set the language, including a parent', async () => {
   assert.equal(r.body.user.language, 'ta');
   assert.equal((await t.call('/api/me/language', { token: parent.token, method: 'PUT', body: { language: 'fr' } })).status, 400);
 });
+
+test('buses do not run on Sundays, unless the calendar makes one a working day', async () => {
+  assert.deepEqual(loadConfig({ jwtSecret: 'x', demoPassword: 'x' }).calendar.closedWeekdays, [0], 'Sunday off by default');
+  const cal = t.calendar;
+  cal.closedWeekdays = [0];
+  cal.cached.clear();
+  try {
+    const sunday = await cal.on('2030-01-06');
+    assert.equal(sunday.no_service, true);
+    assert.equal(sunday.weekly, true);
+    assert.equal(sunday.title, 'Sunday');
+    assert.equal(await cal.on('2030-01-07'), null, 'Monday runs as usual');
+    assert.equal(await cal.isPaused(Date.parse('2030-01-06T05:00:00Z')), true, '10:30 on a Sunday in India');
+    assert.equal(await cal.isPaused(Date.parse('2030-01-07T05:00:00Z')), false);
+
+    // A working Sunday entered by the office overrides the weekly day off, and removing it restores it.
+    const made = await t.call('/api/admin/calendar', { token: admin, body: { day: '2030-01-13', kind: 'SPECIAL', title: 'Make-up day', noService: false } });
+    assert.equal(made.status, 201, JSON.stringify(made.body));
+    assert.equal((await cal.on('2030-01-13')).no_service, false);
+    assert.equal((await t.call('/api/admin/calendar/2030-01-13', { token: admin, method: 'DELETE' })).status, 200);
+    assert.equal((await cal.on('2030-01-13')).no_service, true);
+
+    // The next two weeks' Sundays are in the upcoming list, marked weekly (the admin list hides them).
+    const upcoming = await cal.upcoming(60, Date.parse('2030-01-07T05:00:00Z'));
+    const weekly = upcoming.filter((d) => d.weekly).map((d) => d.day);
+    assert.deepEqual(weekly, ['2030-01-13', '2030-01-20']);
+  } finally {
+    cal.closedWeekdays = [];
+    cal.cached.clear();
+  }
+});

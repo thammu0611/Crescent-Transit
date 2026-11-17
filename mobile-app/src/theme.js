@@ -84,6 +84,9 @@ const accents = () => ({
   violet: [C.indigo50, C.violet],
   sky: [C.indigo50, C.sky],
   rose: [C.danger50, C.rose],
+  // The website's teal and gold cards: soft wash, strong colour (brighter on dark).
+  teal: C.dark ? ['rgba(45,212,191,0.14)', '#2DD4BF'] : ['rgba(13,128,120,0.12)', '#0D8078'],
+  gold: C.dark ? ['rgba(247,188,49,0.15)', '#F7BC31'] : ['rgba(196,138,10,0.13)', '#B07B06'],
 });
 export const ACCENT = accents();
 

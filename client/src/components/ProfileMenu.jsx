@@ -66,7 +66,7 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
   const setLanguage = (language) => api('/api/me/language', { token, method: 'PUT', body: { language } }).then(refresh).catch((err) => setError(err.message));
 
   const picture = (size) => (
-    <span className={`profile-pic ${size}`} aria-hidden="true">
+    <span className={`profile-pic ${size}`} aria-hidden="true" data-no-translate="">
       {photo ? <img src={photo} alt="" /> : initials(user.name)}
     </span>
   );
@@ -86,14 +86,10 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
               <span className="profile-pic-edit"><Icon name="edit" size={13} /></span>
             </button>
             <span className="profile-who">
-              <b>{user.name}</b>
-              <small>{roleLabel}</small>
-              <small>@{user.username}</small>
+              <b title={user.name}>{user.name}</b>
+              <small>{roleLabel} · @{user.username}</small>
+              {photo && <button type="button" role="menuitem" className="profile-photo-link" disabled={busy} onClick={() => save(null)}>{t('Remove photo')}</button>}
             </span>
-          </div>
-          <div className="profile-photo-actions">
-            <button type="button" role="menuitem" disabled={busy} onClick={() => file.current.click()}>{t(photo ? 'Change photo' : 'Add photo')}</button>
-            {photo && <button type="button" role="menuitem" className="quiet" disabled={busy} onClick={() => save(null)}>{t('Remove photo')}</button>}
           </div>
           <input ref={file} type="file" accept="image/*" hidden onChange={choose} />
           {error && <p className="profile-error" role="alert">{error}</p>}

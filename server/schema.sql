@@ -717,3 +717,81 @@ CREATE TABLE IF NOT EXISTS system_alerts (
 
 -- When the phone-change code was last sent, to space out requests for a new one.
 ALTER TABLE device_otps ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+-- ===========================================================================
+-- Automations: reminders, escalation, suggestions, service credit, WhatsApp
+-- ===========================================================================
+-- One row per message already sent, so each reminder goes out once.
+CREATE TABLE IF NOT EXISTS sent_notices (
+  key        TEXT PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- SOS and breakdowns: someone in the transport office must acknowledge them.
+ALTER TABLE incidents ADD COLUMN IF NOT EXISTS acknowledged_at  TIMESTAMPTZ;
+ALTER TABLE incidents ADD COLUMN IF NOT EXISTS acknowledged_by  INT REFERENCES users(id);
+ALTER TABLE incidents ADD COLUMN IF NOT EXISTS escalation_level INT NOT NULL DEFAULT 0;
+ALTER TABLE incidents ADD COLUMN IF NOT EXISTS escalated_at     TIMESTAMPTZ;
+
+-- Trips the phone started by itself are 'auto' (server/autostart.js).
+-- started_by is free text: 'driver', 'tracker', 'admin' or 'auto'.
+
+-- Suggestions for the transport office to approve or dismiss (server/insights.js).
+CREATE TABLE IF NOT EXISTS ops_suggestions (
+  id          SERIAL PRIMARY KEY,
+  kind        TEXT NOT NULL CHECK (kind IN ('TIMETABLE', 'OVERCROWDING', 'REPLACEMENT')),
+  key         TEXT NOT NULL UNIQUE,
+  route_id    INT REFERENCES routes(id) ON DELETE CASCADE,
+  bus_id      INT REFERENCES buses(id) ON DELETE CASCADE,
+  incident_id INT REFERENCES incidents(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,
+  detail      JSONB NOT NULL DEFAULT '{}',
+  status      TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPLIED', 'DISMISSED')),
+  decided_by  INT REFERENCES users(id),
+  decided_at  TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ops_suggestions_open ON ops_suggestions (status, created_at DESC);
+
+-- A day added to students' subscriptions for a run that did not happen.
+CREATE TABLE IF NOT EXISTS service_credits (
+  route_id   INT NOT NULL REFERENCES routes(id) ON DELETE CASCADE,
+  day        DATE NOT NULL,
+  students   INT NOT NULL DEFAULT 0,
+  reason     TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (route_id, day)
+);
+
+-- Parents without the app: a WhatsApp or SMS number the student adds.
+CREATE TABLE IF NOT EXISTS guardian_contacts (
+  id         SERIAL PRIMARY KEY,
+  student_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name       TEXT NOT NULL,
+  phone      TEXT NOT NULL,
+  channel    TEXT NOT NULL DEFAULT 'whatsapp' CHECK (channel IN ('whatsapp', 'sms')),
+  active     BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (student_id, phone)
+);
+
+-- Every WhatsApp or SMS sent, for the cost count. The number is kept masked.
+CREATE TABLE IF NOT EXISTS outbound_messages (
+  id         BIGSERIAL PRIMARY KEY,
+  channel    TEXT NOT NULL,
+  to_masked  TEXT NOT NULL,
+  kind       TEXT NOT NULL,
+  ok         BOOLEAN NOT NULL,
+  cost_paise INT NOT NULL DEFAULT 0,
+  error      TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS outbound_messages_time ON outbound_messages (created_at DESC);
+
+-- Notices already sent to a parent's WhatsApp/SMS number (boarded, reached).
+CREATE TABLE IF NOT EXISTS contact_notices (
+  contact_id    INT NOT NULL REFERENCES guardian_contacts(id) ON DELETE CASCADE,
+  attendance_id INT NOT NULL,
+  kind          TEXT NOT NULL,
+  PRIMARY KEY (contact_id, attendance_id, kind)
+);

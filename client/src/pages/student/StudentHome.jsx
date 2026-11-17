@@ -152,7 +152,7 @@ function BusContact({ bus, route }) {
       <span className="route-card-label">Bus contact</span>
       {bus ? (
         <div className="contact-row">
-          <span className="contact-avatar">{(bus.driverName ?? 'D').replace(/^(Mr|Mrs|Ms)\.?\s*/i, '').slice(0, 1)}</span>
+          <span className="contact-avatar" data-no-translate="">{(bus.driverName ?? 'D').replace(/^(Mr|Mrs|Ms)\.?\s*/i, '').slice(0, 1)}</span>
           <span className="contact-text"><b>{bus.driverName ?? 'Driver'}</b><small>{bus.fleetCode} · Route {bus.routeCode}</small></span>
           {bus.occupancy && <Badge tone={OCCUPANCY[bus.occupancy].tone}>{OCCUPANCY[bus.occupancy].label}</Badge>}
         </div>

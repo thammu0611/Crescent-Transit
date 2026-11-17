@@ -9,7 +9,7 @@ import { HttpError } from './auth.js';
 
 const require = createRequire(import.meta.url);
 const MAX_BYTES = 8 * 1024 * 1024;
-const KINDS = ['INSURANCE', 'FITNESS', 'PERMIT', 'PUC', 'SERVICE'];
+const KINDS = ['INSURANCE', 'FITNESS', 'PERMIT', 'PUC', 'SERVICE', 'FUEL'];
 
 // One OCR worker, made on first use and kept: starting one takes a few seconds.
 let ocrWorker = null;

@@ -13,6 +13,20 @@ import { Avatar, ViewList } from '../../components/adminkit.jsx';
 import DayBanner from '../../components/DayBanner.jsx';
 import { Badge, Empty, ErrorText, Field, ListCard, Panel } from '../../components/ui.jsx';
 
+/** Repeated alerts with the same title on the same day become one entry: the latest, with a count. */
+function groupAlerts(list) {
+  const out = [];
+  const seen = new Map();
+  for (const a of list) {
+    const k = `${a.title}|${new Date(a.created_at).toDateString()}`;
+    if (seen.has(k)) { seen.get(k).count += 1; continue; }
+    const g = { latest: a, count: 1 };
+    seen.set(k, g);
+    out.push(g);
+  }
+  return out;
+}
+
 const STATE_TONE = { NOT_YET: 'offline', ON_BOARD: 'info', REACHED: 'live', WAITING: 'delayed' };
 
 function TripLine({ direction, trip, place }) {
@@ -78,12 +92,12 @@ export default function ParentHome() {
       <ErrorText>{children.error?.message}</ErrorText>
       <DayBanner />
       {list == null ? <div className="skeleton-block" /> : list.length === 0 ? <Empty>No student is linked yet. Ask your child for a code from Services in their app.</Empty> : (
-        <div className="kit-grid-2 top">{list.map((c) => <ChildCard key={c.id} child={c} />)}</div>
+        <div className={`kit-grid-2 top${list.length === 1 ? ' single' : ''}`}>{list.map((c) => <ChildCard key={c.id} child={c} />)}</div>
       )}
       {alerts.data?.length > 0 && (
         <Panel title={t('Recent alerts')} icon="bell">
           <div className="kit-list">
-            {alerts.data.slice(0, 5).map((a) => <ListCard key={a.id} tone={a.kind === 'LATE' ? 'delayed' : 'alert'} lead={<Icon name={a.kind === 'LATE' ? 'clock' : 'alert'} size={18} />} title={a.title} lines={[a.body, dateTime(a.created_at)]} />)}
+            {groupAlerts(alerts.data).slice(0, 5).map(({ latest: a, count }) => <ListCard key={a.id} tone={a.kind === 'LATE' ? 'delayed' : 'alert'} lead={<Icon name={a.kind === 'LATE' ? 'clock' : 'alert'} size={18} />} title={a.title} lines={[a.body, count > 1 ? `${dateTime(a.created_at)} · ${count} times today` : dateTime(a.created_at)]} side={count > 1 ? <Badge tone={a.kind === 'LATE' ? 'delayed' : 'danger'}>{`×${count}`}</Badge> : null} />)}
           </div>
         </Panel>
       )}

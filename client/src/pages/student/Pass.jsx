@@ -107,7 +107,7 @@ export default function BusPass() {
             <dl className="pass-facts">
               <div><dt>{t('Route')}</dt><dd>{pass.routeCode ? `${pass.routeCode} · ${pass.routeName}` : '—'}</dd></div>
               <div><dt>{t('Your stop')}</dt><dd>{pass.stopName ?? '—'}</dd></div>
-              <div><dt>{t('Valid till')}</dt><dd>{pass.validTo ? date(pass.validTo) : t('Active')}</dd></div>
+              <div><dt>{t('Valid till')}</dt><dd>{pass.validTo ? date(pass.validTo) : t('No expiry')}</dd></div>
             </dl>
           </section>
           <section className="panel pass-code">

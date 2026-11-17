@@ -10,6 +10,7 @@ import { useAction, useAsync, useRefresh } from '../../lib/hooks.js';
 import { useSession } from '../../lib/session.js';
 import { G } from '../../theme.js';
 import TrackersTab from './Trackers.js';
+const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
 function BusForm({ token, bus, routes, onClose, onSaved }) {
   const [f, setF] = useState({
@@ -137,9 +138,9 @@ export default function Fleet() {
               <ItemCard
                 title={b.fleet_code}
                 subtitle={b.bus_type ?? ''}
-                right={<View style={{ gap: 4, alignItems: 'flex-end' }}><Badge tone={b.status === 'active' ? 'live' : 'delayed'}>{b.status}</Badge>{b.live ? <Badge tone="live">on trip</Badge> : null}{b.tracker_id ? <Badge tone={b.liveSource === 'tracker' ? 'live' : 'offline'}>GPS tracker</Badge> : null}</View>}
+                right={<View style={{ gap: 4, alignItems: 'flex-end' }}><Badge tone={b.status === 'active' ? 'live' : 'delayed'}>{cap(b.status)}</Badge>{b.live ? <Badge tone="live">On trip</Badge> : null}{b.tracker_id ? <Badge tone={b.liveSource === 'tracker' ? 'live' : 'offline'}>GPS tracker</Badge> : null}</View>}
               >
-                <KV k="Reg. no." v={b.registration_number ?? '—'} />
+                {b.registration_number ? <KV k="Reg. no." v={b.registration_number} /> : null}
                 <KV k="Route" v={b.route_code ? `${b.route_code} · ${b.route_name}` : 'Unassigned'} />
                 <KV k="Seats" v={b.capacity} />
                 <KV k="Driver" v={b.driver_name ?? '—'} />
@@ -155,7 +156,7 @@ export default function Fleet() {
             rows={driverRows}
             empty="No driver matches."
             render={(d) => (
-              <ItemCard title={d.full_name} subtitle={`${d.username}${d.phone ? ` · ${d.phone}` : ''}`} right={<Badge tone={d.status === 'active' ? 'live' : 'danger'}>{d.status}</Badge>}>
+              <ItemCard title={d.full_name} subtitle={`${d.username}${d.phone ? ` · ${d.phone}` : ''}`} right={<Badge tone={d.status === 'active' ? 'live' : 'danger'}>{cap(d.status)}</Badge>}>
                 <KV k="Bus" v={d.fleet_code ?? 'None'} />
                 <KV k="Route" v={d.route_code ?? '—'} />
                 <KV k="Last trip" v={dateTime(d.last_trip)} />

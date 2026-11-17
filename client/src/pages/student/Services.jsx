@@ -45,6 +45,52 @@ function ParentAccess({ token }) {
   );
 }
 
+/**
+ * A parent who will not install the app: the student adds their WhatsApp (or
+ * SMS) number, and the same boarded, reached, late and SOS messages go there.
+ */
+function ParentWhatsApp({ token }) {
+  const t = useT();
+  const data = useAsync(() => api('/api/me/parent-contacts', { token }), [token]);
+  const [form, setForm] = useState({ name: '', phone: '', channel: 'whatsapp' });
+  const a = useAction();
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const add = (e) => {
+    e.preventDefault();
+    a.run(() => api('/api/me/parent-contacts', { token, body: form }), t('Added. They will get a message now.'))
+      .then((r) => { if (r) { setForm({ name: '', phone: '', channel: 'whatsapp' }); data.reload(); } });
+  };
+  const remove = (c) => {
+    if (window.confirm(`Stop messages to ${c.name}?`)) a.run(() => api(`/api/me/parent-contacts/${c.id}`, { token, method: 'DELETE' })).then(data.reload);
+  };
+  const d = data.data;
+  const list = d?.contacts ?? [];
+  const ready = d && (d.channels.whatsapp || d.channels.sms);
+  return (
+    <ViewCard icon="phone" title={t('Parent on WhatsApp')} summary={list.length ? `${list.length} number${list.length === 1 ? '' : 's'} added` : t('For a parent without the app')}>
+      <p className="muted">They get a message when you board and reach, if the bus is late, and in an emergency. No app needed.</p>
+      {d && !ready && <p className="notice">{t('Messages start once the transport office switches WhatsApp or SMS on.')}</p>}
+      <div className="kit-list">
+        {list.map((c) => (
+          <ListCard key={c.id} lead={<Icon name="phone" size={18} />} title={c.name} lines={[`${c.phone} · ${c.channel === 'sms' ? 'SMS' : 'WhatsApp'}`]} side={<button type="button" className="link danger" onClick={() => remove(c)}>{t('Remove')}</button>} />
+        ))}
+      </div>
+      {d && list.length < d.max && (
+        <form onSubmit={add}>
+          <div className="grid2">
+            <Field label="Parent's name"><input value={form.name} onChange={set('name')} maxLength={60} required /></Field>
+            <Field label="Mobile number"><input type="tel" inputMode="tel" value={form.phone} onChange={set('phone')} placeholder="98400 12345" required /></Field>
+          </div>
+          <Segmented value={form.channel} onChange={(channel) => setForm((f) => ({ ...f, channel }))} options={[{ value: 'whatsapp', label: 'WhatsApp' }, { value: 'sms', label: 'SMS' }]} />
+          <Notice>{a.message}</Notice>
+          <ErrorText>{a.error}</ErrorText>
+          <button className="btn primary inline" disabled={a.busy}><Icon name="plus" size={14} /> {t('Add number')}</button>
+        </form>
+      )}
+    </ViewCard>
+  );
+}
+
 /** Ask to move to another route or stop. */
 function RouteChange({ token }) {
   const t = useT();
@@ -181,6 +227,7 @@ export default function Services() {
     <Page eyebrow="Student" title={t('Services')}>
       <ViewList label="Services">
         <ParentAccess token={token} />
+        <ParentWhatsApp token={token} />
         <RouteChange token={token} />
         <LostAndFound token={token} user={user} />
         <MyFeedback token={token} />

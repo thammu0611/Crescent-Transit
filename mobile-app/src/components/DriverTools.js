@@ -4,7 +4,7 @@ import { Image, Modal, Pressable, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DIRECTION_TEXT } from '../../../shared/direction.js';
 import { CHECKLIST_ITEMS } from '../../../shared/service.js';
-import { api } from '../lib/api.js';
+import { api, pickDocumentFile } from '../lib/api.js';
 import { date } from '../lib/format.js';
 import { useAction, useAsync } from '../lib/hooks.js';
 import { useT } from '../lib/offline.js';
@@ -142,10 +142,37 @@ export function FuelEntry({ token }) {
   const [form, setForm] = useState({ odometerKm: '', litres: '', costRupees: '' });
   const a = useAction();
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+  const [scan, setScan] = useState(null); // { reading } or { found, message }
+  // A photo or PDF of the pump receipt: the server reads it and the boxes fill in.
+  const readReceipt = async () => {
+    let file;
+    try {
+      file = await pickDocumentFile();
+    } catch (err) {
+      setScan({ found: 0, message: err.message });
+      return;
+    }
+    if (!file) return;
+    setScan({ reading: true });
+    try {
+      const r = await api('/api/fuel/receipt', { token, body: { data: file.data, mimeType: file.mimeType, name: file.name } });
+      setForm((f) => ({
+        odometerKm: r.odometerKm ? String(r.odometerKm) : f.odometerKm,
+        litres: r.litres ? String(r.litres) : f.litres,
+        costRupees: r.amountRupees ? String(r.amountRupees) : f.costRupees,
+      }));
+      const found = [r.litres, r.amountRupees, r.odometerKm].filter(Boolean).length;
+      setScan({ found, message: found ? t('Filled from the receipt - check the boxes, then save.') : (r.message ?? t('Could not read this receipt. Type the numbers instead.')) });
+    } catch (err) {
+      setScan({ found: 0, message: err.message });
+    }
+  };
   const send = () => a.run(() => api('/api/fuel', { token, body: { odometerKm: Number(form.odometerKm), litres: Number(form.litres), costRupees: Number(form.costRupees) } }), t('Fuel saved.'))
     .then((r) => { if (r) setForm({ odometerKm: '', litres: '', costRupees: '' }); });
   return (
     <ViewCard icon="wallet" title="Fuel entry" summary={t('Odometer, litres and the amount paid')}>
+      <Button title={scan?.reading ? t('Reading the receipt…') : t('Scan fuel receipt')} icon="camera" variant="ghost" busy={scan?.reading} onPress={readReceipt} />
+      {scan?.message ? (scan.found ? <Notice>{scan.message}</Notice> : <ErrorText>{scan.message}</ErrorText>) : null}
       <TextField label="Odometer (km)" keyboardType="number-pad" value={form.odometerKm} onChangeText={set('odometerKm')} />
       <TextField label="Litres" keyboardType="decimal-pad" value={form.litres} onChangeText={set('litres')} />
       <TextField label="Amount paid (₹)" keyboardType="decimal-pad" value={form.costRupees} onChangeText={set('costRupees')} />

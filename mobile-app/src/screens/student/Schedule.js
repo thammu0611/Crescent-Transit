@@ -95,12 +95,13 @@ export default function Schedule({ navigation }) {
   const nextSeq = isToday && !bus ? stops.find((s) => (parseTime(s.scheduled_time) ?? -1) >= nowMinutes())?.seq : null;
 
   const segOn = C.dark ? '#2B3A5C' : C.card;
-  const DirTab = ({ k, label }) => {
+  const DirTab = ({ k, label, at }) => {
     const on = dir === k;
     return (
       <Pressable accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => setDir(k)}
         style={{ flex: 1, minHeight: 44, paddingVertical: 4, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6, backgroundColor: on ? segOn : 'transparent', ...(on ? shadow : null) }}>
-        <Text style={{ fontSize: 13.5, ...F[600], color: on ? C.ink : C.muted, textAlign: 'center' }} numberOfLines={2}>{label}</Text>
+        <Text style={{ fontSize: 13.5, ...F[600], color: on ? C.ink : C.muted, textAlign: 'center' }} numberOfLines={1}>{label}</Text>
+        {at ? <Text style={{ fontSize: 12, ...F[500], color: on ? C.muted : C.faint, textAlign: 'center', marginTop: 1 }} numberOfLines={1}>{at}</Text> : null}
       </Pressable>
     );
   };
@@ -142,8 +143,8 @@ export default function Schedule({ navigation }) {
       </View>
 
       <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 4, padding: 4, borderRadius: 14, backgroundColor: C.raised, borderWidth: 1, borderColor: C.line2 }}>
-        <DirTab k="up" label={`To campus · ${morning}`} />
-        <DirTab k="down" label={`From campus · ${evening}`} />
+        <DirTab k="up" label="To campus" at={morning} />
+        <DirTab k="down" label="From campus" at={evening} />
       </View>
 
       <View style={{ flexDirection: 'row', gap: 6 }}>

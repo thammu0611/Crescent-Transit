@@ -280,7 +280,7 @@ export class ReportService {
            FROM location_pings WHERE received_at > now() - interval '1 hour'`,
       ),
       this.db.query(`SELECT count(*)::int AS n FROM rejected_pings WHERE (received_at AT TIME ZONE $1)::date = $2`, [tz, today]),
-      this.db.query(`SELECT count(*)::int AS n FROM incidents WHERE status = 'OPEN'`),
+      this.db.query(`SELECT count(*)::int AS n, (count(*) FILTER (WHERE source <> 'system'))::int AS reported FROM incidents WHERE status = 'OPEN'`),
       this.db.query(
         `SELECT count(*) FILTER (WHERE ${PRESENT_SQL})::int AS present, count(*) FILTER (WHERE a.method = 'GPS')::int AS gps,
                 count(*) FILTER (WHERE t.direction = 'UP' AND ${PRESENT_SQL})::int AS up,
@@ -310,6 +310,9 @@ export class ReportService {
       avgUpdateDelayS: delay.rows[0].s,
       gpsFailuresToday: failures.rows[0].n,
       openIncidents: incidents.rows[0].n,
+      // Raised by people (SOS, breakdowns, problems) and raised automatically (tracker offline, speeding).
+      openReported: incidents.rows[0].reported,
+      openAutomatic: incidents.rows[0].n - incidents.rows[0].reported,
       presentToday: attendance.rows[0].present,
       presentUpToday: attendance.rows[0].up,
       presentDownToday: attendance.rows[0].down,

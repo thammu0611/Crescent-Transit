@@ -15,12 +15,18 @@ const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I to misread
 const CODE_LENGTH = 8;
 
 export class GuardianService {
-  constructor(db, config, { tracking, billing, push = null }) {
+  constructor(db, config, { tracking, billing, push = null, messaging = null }) {
     this.db = db;
     this.config = config;
     this.tracking = tracking;
     this.billing = billing;
     this.push = push;
+    this.messaging = messaging; // WhatsApp/SMS to parents without the app
+  }
+
+  /** One line for WhatsApp/SMS: the app's name, then the title and body. */
+  textFor({ title, body }) {
+    return `${this.config.institution.appName}: ${title}. ${body}`;
   }
 
   hash(code) {
@@ -161,19 +167,23 @@ export class GuardianService {
     return { told: new Set(parentIds).size };
   }
 
-  /** Every parent with a child on this route. */
+  /** Every parent with a child on this route, and the WhatsApp/SMS numbers students added. */
   async toRouteParents(routeId, message) {
     const { rows } = await this.db.query(
       `SELECT DISTINCT l.parent_id FROM guardian_links l JOIN users u ON u.id = l.student_id WHERE u.home_route_id = $1 AND u.status = 'active'`,
       [routeId],
     );
-    return this.tellParents(rows.map((r) => r.parent_id), message);
+    const told = await this.tellParents(rows.map((r) => r.parent_id), message);
+    const texted = await this.messaging?.toRouteContacts(routeId, this.textFor(message), message.kind);
+    return { ...told, texted: texted?.sent ?? 0 };
   }
 
-  /** The parents of one student. */
+  /** The parents of one student, in the app and by WhatsApp/SMS. */
   async toChildParents(studentId, message) {
     const { rows } = await this.db.query('SELECT parent_id FROM guardian_links WHERE student_id = $1', [studentId]);
-    return this.tellParents(rows.map((r) => r.parent_id), message);
+    const told = await this.tellParents(rows.map((r) => r.parent_id), message);
+    const texted = await this.messaging?.toStudentsContacts([studentId], this.textFor(message), message.kind);
+    return { ...told, texted: texted?.sent ?? 0 };
   }
 
   async alertsFor(parentId) {
@@ -215,6 +225,40 @@ export class GuardianService {
       if (r.boarded_due) await send('BOARDED', `${r.full_name} boarded ${bus}`, `On the way to ${place}.`);
       if (r.reached_due) await send('REACHED', `${r.full_name} reached ${place}`, `Got off ${bus}.`);
     }
-    return { sent };
+    const texted = await this.textNotices(since);
+    return { sent: sent + texted };
+  }
+
+  /** The same boarded and reached notices to the WhatsApp/SMS numbers students added. */
+  async textNotices(since) {
+    if (!this.messaging?.configured) return 0;
+    const { rows } = await this.db.query(
+      `SELECT a.attendance_id, a.alighted_at, t.direction, u.full_name, b.fleet_code, c.id AS contact_id, c.phone, c.channel,
+              NOT EXISTS (SELECT 1 FROM contact_notices n WHERE n.contact_id = c.id AND n.attendance_id = a.attendance_id AND n.kind = 'BOARDED') AS boarded_due,
+              a.alighted_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM contact_notices n WHERE n.contact_id = c.id AND n.attendance_id = a.attendance_id AND n.kind = 'REACHED') AS reached_due
+         FROM attendance a
+         JOIN guardian_contacts c ON c.student_id = a.user_id AND c.active
+         JOIN users u ON u.id = a.user_id
+         JOIN trips t ON t.id = a.trip_id
+         JOIN buses b ON b.id = a.bus_id
+        WHERE ${PRESENT_SQL} AND coalesce(a.alighted_at, a.boarded_at) > $1`,
+      [since],
+    );
+    let sent = 0;
+    for (const r of rows) {
+      const bus = busLabel(r.fleet_code);
+      const place = r.direction === DOWN ? 'their stop' : 'college';
+      const text = async (kind, title, body) => {
+        const { rows: fresh } = await this.db.query(
+          'INSERT INTO contact_notices (contact_id, attendance_id, kind) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING contact_id',
+          [r.contact_id, r.attendance_id, kind],
+        );
+        if (!fresh[0]) return;
+        if ((await this.messaging.send({ to: r.phone, channel: r.channel, kind, text: this.textFor({ title, body }) })).ok) sent += 1;
+      };
+      if (r.boarded_due) await text('BOARDED', `${r.full_name} boarded ${bus}`, `On the way to ${place}.`);
+      if (r.reached_due) await text('REACHED', `${r.full_name} reached ${place}`, `Got off ${bus}.`);
+    }
+    return sent;
   }
 }

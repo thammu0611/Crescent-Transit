@@ -186,7 +186,7 @@ export default function Settings({ navigation }) {
         </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {chip('route', user.homeRouteCode ? `Route ${user.homeRouteCode}` : 'No route', false)}
-          {chip('pin', stop?.name ?? 'No stop chosen', false)}
+          {chip('pin', stop?.name ?? (form.homeStopSeq && !route.data ? '…' : 'No stop chosen'), false)}
         </View>
       </View>
 

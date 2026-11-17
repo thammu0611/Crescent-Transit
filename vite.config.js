@@ -7,7 +7,8 @@ export default defineConfig({
   root: 'client',
   envDir: '..', // VITE_ variables (e.g. the Google Maps key) live in the project-root .env
   plugins: [react()],
-  build: { outDir: 'dist', emptyOutDir: true },
+  // Oldest browsers served: the first versions with :has(), which the styles rely on.
+  build: { outDir: 'dist', emptyOutDir: true, target: ['es2020', 'chrome105', 'edge105', 'firefox121', 'safari15.4', 'ios15.4'] },
   server: {
     port: 5173,
     fs: { allow: ['..'] }, // the client imports ../shared (geo + freshness)

@@ -13,6 +13,7 @@ const pad = (n) => String(n).padStart(2, '0');
 
 /** What kind of paper it is, from the words on it. Order matters: a PUC page often says "insurance" in small print. */
 const KINDS = [
+  ['FUEL', /\b(?:petrol|diesel|hsd|fuel|bpcl|hpcl|iocl?|indian\s*oil|bharat\s*petroleum|hindustan\s*petroleum|nayara|shell)\b[\s\S]{0,400}?\b(?:lit(?:re|er)s?|ltrs?|vol(?:ume)?|qty|quantity)\b|\b(?:lit(?:re|er)s?|ltrs?|vol(?:ume)?)\b[\s\S]{0,400}?\b(?:petrol|diesel|hsd|fuel|rate)\b/i],
   ['PUC', /pollution\s+under\s+control|\bP\.?\s?U\.?\s?C\b|emission\s+test|puc\s+certificate/i],
   ['FITNESS', /certificate\s+of\s+fitness|fitness\s+certificate|\bfitness\s+valid|form\s*38\b/i],
   ['PERMIT', /\bpermit\b(?!\s+holder\s+insurance)|contract\s+carriage|stage\s+carriage|educational\s+institution\s+bus/i],
@@ -85,6 +86,42 @@ export function findOdometer(text) {
   return n > 0 && n < 10_000_000 ? n : null;
 }
 
+/** A number after one of these labels (commas allowed), on the same line. */
+const NUMBER_AFTER = /[^\d\n]{0,25}?(\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)/.source;
+function numberAfter(text, labels, { max = 1e7 } = {}) {
+  for (const label of labels) {
+    const m = text.match(new RegExp(`(?:${label.source})${NUMBER_AFTER}`, 'i'));
+    if (!m) continue;
+    const n = Number(m[1].replace(/,/g, ''));
+    if (n > 0 && n < max) return n;
+  }
+  return null;
+}
+
+/**
+ * A fuel pump receipt: litres, the amount paid, and the odometer when the
+ * attendant printed it. The amount is cross-checked with litres x rate when the
+ * rate is printed too.
+ */
+export function readFuelReceipt(text) {
+  const litres = numberAfter(text, [/\bvol(?:ume)?\s*(?:\(\s*l\s*\)|in\s*l(?:tr?s?)?)?/, /\b(?:qty|quantity)/, /\b(?:lit(?:re|er)s?|ltrs?)\b/], { max: 1000 });
+  const rate = numberAfter(text, [/\brate(?:\s*(?:rs\.?)?\s*\/\s*l(?:tr)?)?/, /\bprice(?:\s*\/\s*l)?/, /\brs\.?\s*\/\s*l/], { max: 500 });
+  let amount = numberAfter(text, [/\b(?:total\s*)?(?:sale\s*)?amount(?:\s*rs\.?)?/, /\bamt/, /\btotal/, /\bvalue/], { max: 1000000 });
+  // Pump receipts often print Rs before the rate as well: prefer the value that matches litres x rate.
+  if (litres && rate) {
+    const expected = Math.round(litres * rate * 100) / 100;
+    if (!amount || Math.abs(amount - expected) > Math.max(2, expected * 0.02)) amount = expected;
+  }
+  const dates = findDates(text);
+  return {
+    litres: litres ? Math.round(litres * 100) / 100 : null,
+    amountRupees: amount ? Math.round(amount * 100) / 100 : null,
+    rate: rate ?? null,
+    odometerKm: findOdometer(text),
+    filledOn: dates.length ? dates.map((d) => d.iso).sort().at(-1) : null,
+  };
+}
+
 /** The document's kind, number, dates and readings. `hint` forces the kind when the person chose it. */
 export function readDocument(rawText, hint = null) {
   const text = String(rawText ?? '').replace(/[|]/g, ' ').replace(/[ \t]+/g, ' ');
@@ -95,6 +132,12 @@ export function readDocument(rawText, hint = null) {
     if (m && /\d/.test(m[1])) { number = m[1].replace(/[.,;:]+$/, '').toUpperCase(); break; }
   }
   const result = { kind, number, registration: findRegistration(text) };
+  if (kind === 'FUEL') {
+    Object.assign(result, readFuelReceipt(text));
+    const found = [result.litres, result.amountRupees, result.odometerKm].filter(Boolean).length;
+    result.confidence = found >= 2 ? 'high' : found === 1 ? 'partial' : 'low';
+    return result;
+  }
   if (kind === 'SERVICE') {
     const dates = findDates(text);
     result.odometerKm = findOdometer(text);

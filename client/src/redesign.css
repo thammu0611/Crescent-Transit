@@ -1816,3 +1816,240 @@ html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover { background: rgba(247, 
 /* Reports: the columns scroll with the wheel or trackpad, without a visible scrollbar line. */
 .rep-layout > .rep-main, .rep-layout > .rep-side { scrollbar-width: none !important; -ms-overflow-style: none; }
 .rep-layout > .rep-main::-webkit-scrollbar, .rep-layout > .rep-side::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+
+/* An SOS or breakdown nobody has acknowledged yet. */
+.incident-unseen { color: var(--danger); font-size: 12.5px; }
+
+/* Suggestions queue and the weekly report (admin dashboard). */
+.sugg-list { display: grid; gap: 10px; }
+.sugg { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.sugg-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--tc, var(--navy)); background: rgba(28, 49, 94, 0.08); background: color-mix(in srgb, var(--tc, var(--navy)) 12%, transparent); }
+.sugg[data-c="danger"] { --tc: var(--danger); }
+.sugg[data-c="delayed"] { --tc: var(--delayed); }
+.sugg-body { min-width: 0; display: grid; gap: 4px; }
+.sugg-top { display: flex; gap: 8px; align-items: center; }
+.sugg-body p { margin: 0; font-size: 13px; }
+.sugg-actions { display: flex; flex-direction: column; gap: 6px; }
+.sugg-stops { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 3px; font-size: 12.5px; }
+.sugg-stops li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto auto; gap: 8px; align-items: center; }
+.sugg-stops li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sugg-stops s { color: var(--muted); }
+.sugg-stops small { color: var(--delayed); font-weight: 600; }
+@media (max-width: 640px) {
+  .sugg { grid-template-columns: auto 1fr; }
+  .sugg-actions { grid-column: 1 / -1; flex-direction: row; }
+}
+.weekly-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.weekly-figs > div { padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); display: grid; gap: 2px; }
+.weekly-figs b { font-size: 20px; color: var(--navy); font-variant-numeric: tabular-nums; }
+.weekly-figs small { color: var(--muted); font-size: 12px; }
+.weekly-send { display: flex; gap: 8px; flex-wrap: wrap; }
+.weekly-send input { flex: 1 1 220px; height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.auto-list { margin-top: 12px; font-size: 13px; }
+.auto-list summary { cursor: pointer; font-weight: 600; color: var(--navy); }
+.auto-list ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }
+
+/* Fuel form: read the pump receipt. */
+.receipt-scan { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer; }
+.receipt-scan.busy { pointer-events: none; opacity: 0.8; }
+
+.auto-start-hint { text-align: center; margin: 8px 0 0; font-size: 12.5px; }
+
+/* Driver page: figures on one line, no scrollbar line beside the controls, a quieter "no tracker" note. */
+.drive-stats b { white-space: nowrap; font-size: clamp(18px, 2.1vw, 26px); line-height: 1.15; }
+.drive-stats > div { justify-content: center; min-height: 86px; }
+.driver-layout > .driver-controls { scrollbar-width: none; }
+.driver-layout > .driver-controls::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.tracker-line.none small { opacity: 0.85; }
+
+/* The auto-start hint sits on the navy trip card: light text. */
+.drive-card .auto-start-hint, .drive-card .muted.small { color: rgba(255, 255, 255, 0.72); }
+.drive-settings select { text-overflow: ellipsis; }
+
+/* ---- Scrolling columns blend into the screen ----------------------------------------
+   The driver's controls, the live map's side panel and the Reports columns scroll
+   inside their own box. Content fades out at the top and bottom edges instead of
+   being cut off by a hard line, with room above and below so nothing is faded
+   when the column is at rest. Same look on every screen; no scrollbar line. */
+@media (min-width: 901px) {
+  .live-layout > .sidebar, .driver-layout > .driver-controls {
+    --fade: 22px;
+    padding-top: var(--fade) !important;
+    padding-bottom: calc(var(--fade) + 12px) !important;
+    margin-top: calc(var(--fade) * -1);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%);
+    scrollbar-width: none;
+  }
+  .live-layout > .sidebar::-webkit-scrollbar, .driver-layout > .driver-controls::-webkit-scrollbar { display: none; width: 0; height: 0; }
+  /* The cards keep their shadow inside the faded edges: a little room at the sides. */
+  .live-layout > .sidebar, .driver-layout > .driver-controls { padding-left: 6px !important; padding-right: 10px !important; margin-left: -6px; }
+}
+@media (min-width: 981px) and (min-height: 600px) {
+  .rep-layout > .rep-main, .rep-layout > .rep-side {
+    --fade: 18px;
+    padding-top: var(--fade) !important;
+    padding-bottom: calc(var(--fade) + 12px) !important;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade), #000 calc(100% - var(--fade)), transparent 100%);
+  }
+}
+
+/* Driver page: a bigger map. On wide screens the greeting sits above the controls
+   only, and the map runs the full height beside both; on narrow screens it is taller. */
+@media (min-width: 901px) {
+  .driver-layout > .driver-greet { grid-column: 1; grid-row: 1; }
+  .driver-layout > .driver-controls { grid-column: 1; grid-row: 2; }
+  .driver-layout > .map-wrap { grid-column: 2; grid-row: 1 / span 2; min-height: 0; }
+}
+@media (max-width: 900px) { .driver-layout { grid-template-rows: auto 68vh auto !important; } }
+
+/* One click to clear the automatic alerts, so the list shows what people reported. */
+.incident-bulk { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 4px 0 12px; padding: 10px 14px; border-radius: 12px; background: rgba(28, 49, 94, 0.06); background: color-mix(in srgb, var(--navy) 6%, transparent); font-size: 13px; color: var(--muted); }
+.incident-bulk b { color: var(--navy); }
+
+/* Dashboard hero: the buses on the road right now. */
+.kit-fleet { display: flex; flex-direction: column; }
+.kit-fleet-buses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 14px 0 4px; flex: 1; align-content: start; }
+.kit-fleet-bus { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.14); color: #fff; text-decoration: none; transition: background 0.15s ease, transform 0.15s ease; }
+.kit-fleet-bus:hover { background: rgba(255, 255, 255, 0.18); transform: translateY(-1px); }
+.kit-fleet-bus i { width: 8px; height: 8px; border-radius: 50%; background: #61ce70; box-shadow: 0 0 0 3px rgba(97, 206, 112, 0.25); }
+.kit-fleet-bus.delayed i { background: #e0a43a; box-shadow: 0 0 0 3px rgba(224, 164, 58, 0.25); }
+.kit-fleet-bus.offline i { background: #9aa0ab; box-shadow: none; }
+.kit-fleet-bus b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.kit-fleet-bus span { font-size: 12.5px; opacity: 0.82; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kit-fleet-bus small { font-size: 12px; opacity: 0.75; }
+.kit-fleet-more, .kit-fleet-empty { grid-column: 1 / -1; font-size: 12.5px; color: rgba(255, 255, 255, 0.75); margin: 2px 0 0; text-decoration: none; }
+.kit-fleet-more:hover { color: #fff; }
+@media (max-width: 520px) { .kit-fleet-buses { grid-template-columns: 1fr; } }
+
+/* ---- Quick search (Ctrl+K) ------------------------------------------------------------ */
+.cmdk-trigger { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 10px 0 12px; border-radius: 999px; border: 1px solid rgba(28, 49, 94, 0.14); background: rgba(255, 255, 255, 0.7); color: var(--muted); font: inherit; font-size: 13.5px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease; }
+.cmdk-trigger:hover { background: #fff; color: var(--navy); box-shadow: 0 6px 16px rgba(20, 37, 72, 0.1); }
+.cmdk-trigger kbd, .cmdk kbd { font: 600 11px/1 Inter, system-ui, sans-serif; padding: 4px 6px; border-radius: 6px; background: rgba(28, 49, 94, 0.08); color: var(--navy); border: 1px solid rgba(28, 49, 94, 0.12); }
+@media (max-width: 1280px) { .cmdk-trigger span, .cmdk-trigger kbd { display: none; } .cmdk-trigger { width: 40px; justify-content: center; padding: 0; } }
+.cmdk-backdrop { position: fixed; inset: 0; z-index: 2000; background: rgba(15, 25, 50, 0.38); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 16px; animation: fade 0.15s ease; }
+.cmdk { width: min(640px, 100%); max-height: 70vh; display: flex; flex-direction: column; border-radius: 20px; background: var(--card, #fff); box-shadow: 0 30px 80px rgba(15, 25, 50, 0.35); border: 1px solid rgba(255, 255, 255, 0.6); overflow: hidden; animation: rise 0.18s var(--ease, ease); }
+.cmdk-search { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); color: var(--muted); }
+.cmdk-search input { flex: 1; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: var(--ink, #111); }
+.cmdk-list { list-style: none; margin: 0; padding: 8px; overflow-y: auto; scrollbar-width: none; }
+.cmdk-list::-webkit-scrollbar { display: none; }
+.cmdk-group { padding: 10px 10px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.cmdk-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; cursor: pointer; }
+.cmdk-item.on { background: rgba(28, 49, 94, 0.07); background: color-mix(in srgb, var(--navy) 8%, transparent); }
+.cmdk-item.on .cmdk-icon { background: var(--navy); color: #fff; }
+.cmdk-icon { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: rgba(28, 49, 94, 0.07); background: color-mix(in srgb, var(--navy) 8%, transparent); color: var(--navy); transition: background 0.12s ease, color 0.12s ease; }
+.cmdk-label { font-weight: 600; color: var(--ink, #111); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmdk-item small { color: var(--muted); font-size: 12px; }
+.cmdk-empty { padding: 28px; text-align: center; color: var(--muted); }
+.cmdk-foot { display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.cmdk-foot span { display: inline-flex; align-items: center; gap: 4px; }
+@media (max-width: 640px) { .cmdk-foot { display: none; } .cmdk-backdrop { padding-top: 8vh; } }
+html[data-theme='dark'] .cmdk { background: #182238; border-color: rgba(255, 255, 255, 0.08); }
+html[data-theme='dark'] .cmdk-trigger { background: rgba(255, 255, 255, 0.06); color: #c7cfdf; }
+/* Quick search: a solid panel, and a compact button so the profile chip keeps its room. */
+.cmdk { background: #fff !important; }
+.cmdk-trigger kbd { white-space: nowrap; }
+@media (max-width: 1700px) { .cmdk-trigger span, .cmdk-trigger kbd { display: none; } .cmdk-trigger { width: 40px; justify-content: center; padding: 0; flex: none; } }
+html[data-theme='dark'] .cmdk { background: #182238 !important; }
+@media (prefers-color-scheme: dark) { html:not([data-theme='light']) .cmdk { background: #182238 !important; } }
+
+/* The account chip gives way a little on mid-size screens, so the search button fits beside it. */
+@media (max-width: 1500px) { html .app .topbar .user-chip { margin-left: 8px; padding-left: 10px; } html .app .topbar .user-meta b { max-width: 116px; } html .app .topbar .cmdk-trigger { margin-left: 6px; } }
+@media (max-width: 1500px) { html .app .topbar .user-meta { max-width: 128px; min-width: 0; overflow: hidden; } html .app .topbar .user-meta b, html .app .topbar .user-meta small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
+
+
+/* ---- Reports: everything on one grid ---------------------------------------------------
+   Period buttons in an even 2 x 2 grid; each report's cards full width so no column ends
+   early; number tiles in equal columns with one-line labels; the ETA breakdowns as four
+   equal cards; buttons in one row. */
+.rep-filters .kit-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rep-filters .kit-chips > button { width: 100%; justify-content: center; text-align: center; margin: 0; }
+.rep-main .kit-grid-2 { grid-template-columns: minmax(0, 1fr) !important; }
+.rep-main .kit-stats { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.rep-main .kit-stats.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rep-main .kit-stats.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rep-main .kit-stats > .stat { min-width: 0; min-height: 84px; align-items: center; }
+.rep-main .kit-stats > .stat > b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.rep-main .kit-stats > .stat > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+@media (max-width: 1180px) { .rep-main .kit-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.rep-quad { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+.rep-quad-card { padding: 16px 18px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); min-width: 0; }
+.rep-quad-card h4 { margin: 0 0 10px; font-size: 14px; color: var(--navy); }
+@media (max-width: 900px) { .rep-quad { grid-template-columns: minmax(0, 1fr); } }
+.rep-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0 4px; }
+.rep-actions .btn.primary { min-width: 160px; }
+.rep-actions label.btn { cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.rep-item-text small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+/* ETA breakdowns: three short cards in a row, "By hour" across the full width in two columns. */
+.rep-quad { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+.rep-quad-card.wide { grid-column: 1 / -1; }
+.rep-quad-card.wide .kit-hbars { columns: 2; column-gap: 32px; }
+.rep-quad-card.wide .kit-hbars > li { break-inside: avoid; }
+@media (max-width: 1100px) { .rep-quad { grid-template-columns: minmax(0, 1fr); } .rep-quad-card.wide .kit-hbars { columns: 1; } }
+.rep-quad { align-items: stretch; }
+
+/* ---- Page titles over the route backdrop -------------------------------------------------
+   Titles sit straight on the backdrop, so a soft halo in the page colour keeps route lines
+   and the passing bus from cutting through the letters. */
+.page-head .eyebrow, .page-head h1, .page-head .page-sub {
+  text-shadow: 0 0 2px var(--bg), 0 0 6px var(--bg), 0 0 14px var(--bg), 0 0 22px var(--bg);
+}
+
+/* Parent page: one child fills the row instead of leaving an empty half. */
+.kit-grid-2.single { grid-template-columns: minmax(0, 1fr) !important; }
+
+/* ---- Incident rows: plain-words title, amber or red edge by urgency, map link as a chip ---- */
+.kit-row.is-empty { --tc: 100, 116, 139; }
+html[data-theme='dark'] .kit-row.is-empty { --tc: 148, 163, 184; }
+.kit-row .incident-where { font-weight: 600; color: var(--muted); }
+.incident-meta { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.incident-map { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  color: var(--accent) !important; background: var(--accent-soft-2); text-decoration: none !important; }
+.incident-map:hover { background: var(--accent-soft-2); filter: brightness(0.96); }
+
+/* ---- Alerts page: the two cards line up ---------------------------------------------------
+   Both cards run the full height of the row, the note sits on the announcement card's bottom
+   edge, and the message box keeps a sensible size. With every incident open, the announcement
+   card stays at its own height and follows you down the page. */
+.notices-cols { align-items: stretch; }
+.notices-cols > .col { display: flex; flex-direction: column; }
+.notices-cols > .col > .panel { flex: 1 1 auto; display: flex; flex-direction: column; margin: 0; }
+.notices-compose form { display: flex; flex-direction: column; gap: 12px; }
+.notices-compose form > .btn.primary { margin-top: 4px; }
+.notices-compose textarea { min-height: 112px; max-height: 260px; resize: vertical; }
+.notices-compose .fine-print { margin-top: auto; padding-top: 14px; }
+.notices-incidents .show-more { margin-top: auto; }
+.notices-cols.long { align-items: flex-start; }
+.notices-cols.long > .col:first-child { position: sticky; top: 96px; align-self: flex-start; }
+.notices-cols.long > .col > .panel { flex: 0 0 auto; }
+@media (max-width: 900px) {
+  .notices-cols.long > .col:first-child { position: static; }
+}
+
+/* ---- Account menu, compact ------------------------------------------------------------------
+   Photo changes through the pencil on the picture; name on one line with role and username
+   under it; language and theme as one row each, the switch beside its label; tighter items. */
+html .profile-menu { width: 320px !important; padding: 12px !important; gap: 2px !important; }
+html .profile-menu .profile-head { gap: 12px; padding: 2px 4px 12px !important; margin-bottom: 4px; border-bottom: 1px solid var(--line-2) !important; }
+html .profile-menu .profile-pic.large { width: 50px !important; height: 50px !important; font-size: 18px !important; }
+html .profile-menu .profile-pic-edit { width: 22px; height: 22px; right: -3px; bottom: -3px; }
+html .profile-menu .profile-pic-edit svg { width: 11px; height: 11px; }
+html .profile-menu .profile-who { flex: 1; gap: 2px; }
+html .profile-menu .profile-who b { font-size: 15px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+html .profile-menu .profile-who small { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+html .profile-menu .profile-photo-link { align-self: flex-start; padding: 0; margin-top: 2px; border: 0; background: none; font: inherit; font-size: 12px; font-weight: 600; color: var(--accent); cursor: pointer; }
+html .profile-menu .profile-language { flex-direction: row !important; align-items: center !important; justify-content: space-between; gap: 10px !important; padding: 5px 4px 5px 6px !important; }
+html .profile-menu .profile-language > span:first-child { gap: 10px !important; font-size: 14px; }
+html .profile-menu .pref-icon { width: 28px; height: 28px; }
+html .profile-menu .profile-switch { padding: 3px !important; gap: 2px; border-radius: 11px !important; flex-shrink: 0; }
+html .profile-menu .profile-switch button { min-height: 28px; padding: 3px 10px; border-radius: 8px !important; font-size: 12.5px; }
+html .profile-menu .profile-language + .profile-item { position: relative; margin-top: 9px; }
+html .profile-menu .profile-language + .profile-item::before { content: ''; position: absolute; left: 4px; right: 4px; top: -5px; height: 1px; background: var(--line-2); }
+html .profile-menu .profile-item { min-height: 40px; padding: 5px 6px !important; border-radius: 10px; font-size: 14px; }
+html .profile-menu .profile-item > .icon { width: 28px !important; height: 28px !important; padding: 6px; }
+@media (max-width: 1060px) { html .profile-menu { width: auto !important; } }
+/* The switch sits beside its label at its own width; the label keeps its room. */
+html .profile-menu .profile-language > span:first-child { flex: 1 1 auto; min-width: 0; }
+html .profile-menu .profile-language .profile-switch { width: auto !important; flex: 0 0 auto; display: inline-flex !important; }
+html .profile-menu .profile-language .profile-switch button { flex: 0 0 auto; padding: 4px 11px !important; }

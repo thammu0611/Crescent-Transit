@@ -37,6 +37,7 @@ export default function MainNav({ links, activePath, role, open, children }) {
     const bar = root.current?.closest('.topbar');
     const brand = bar?.querySelector('.brand');
     const chip = root.current?.querySelector('.user-chip');
+    const search = root.current?.querySelector('.cmdk-trigger'); // the quick-search button beside the chip
     const measure = () => {
       if (!bar || window.matchMedia(NARROW).matches) {
         setFit(null);
@@ -49,14 +50,14 @@ export default function MainNav({ links, activePath, role, open, children }) {
       tight.pop();
       const style = getComputedStyle(bar);
       const room = bar.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
-        - parseFloat(style.columnGap) - outerWidth(brand) - outerWidth(chip) - TRACK_PADDING;
+        - parseFloat(style.columnGap) - outerWidth(brand) - outerWidth(chip) - (search ? outerWidth(search) : 0) - TRACK_PADDING;
       const next = fitNav({ wide, tight, more, room, gap: LINK_GAP, active });
       setFit((prev) => (sameFit(prev, next) ? prev : next));
     };
     measure();
     document.fonts?.ready.then(measure);
     const watch = new ResizeObserver(measure);
-    [bar, chip].forEach((el) => el && watch.observe(el));
+    [bar, chip, search].forEach((el) => el && watch.observe(el));
     return () => watch.disconnect();
   }, [labels, active, role]);
 

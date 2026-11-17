@@ -1,0 +1,117 @@
+/* Every device: phones from 320 px to 4K screens, touch and mouse, notched iPhones, the
+   Safari address bar, landscape, larger text settings and reduced motion. Loaded last. */
+
+/* iOS keeps its own text size in landscape instead of inflating it. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* Notched phones: with viewport-fit=cover the page runs under the notch and the home bar, so
+   the top bar, the side edges and the bottom keep clear of them. */
+.app {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+.app > .masthead { padding-top: env(safe-area-inset-top); }
+.screen { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Safari's moving address bar: full-height sheets use the visible height where it is known. */
+.modal { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); }
+@media (min-width: 981px) { .rep-side { max-height: calc(100dvh - 160px); } }
+
+/* Touch screens: text boxes at 16 px so iPhone Safari does not zoom the page on focus, and
+   controls at least 44 px tall to hit with a finger. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea { font-size: 16px !important; }
+  .btn, button.btn, .seg button, .profile-switch button, .kit-chips > button { min-height: 44px; }
+  .profile-item { min-height: 44px; }
+}
+
+/* No hover on touch: lifted cards would stay lifted after a tap. */
+@media (hover: none) {
+  .stat:hover, .kit-row:hover, .kit-bus:hover, .bus-card:hover, .kit-shortcut:hover, .panel:hover { transform: none !important; }
+}
+
+/* Very small phones (320 px): tighter gutters and headings that wrap instead of overflowing. */
+@media (max-width: 360px) {
+  .page { padding-left: 12px !important; padding-right: 12px !important; }
+  .page-head h1 { font-size: 26px !important; line-height: 1.15; overflow-wrap: break-word; }
+  .kit-stats, .kit-stats.two, .kit-stats.three { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* Long words and codes (bus numbers, email addresses) never push the page sideways. */
+/* break-word, not anywhere: a word only breaks when it cannot fit a line on its own, so narrow
+   boxes never squeeze Tamil words apart letter by letter. */
+.kit-row-main, .panel, .stat, .kit-detail { min-width: 0; overflow-wrap: break-word; }
+img, video, canvas, svg { max-width: 100%; }
+.table-wrap, .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Soft tint behind an icon in its own colour (works without color-mix). */
+.soft-tint { position: relative; isolation: isolate; }
+.soft-tint::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: currentColor; opacity: 0.12; z-index: -1; }
+
+/* Windows high-contrast mode: keep borders and focus rings visible. */
+@media (forced-colors: active) {
+  .btn, .panel, .stat, .kit-row, input, select, textarea { border: 1px solid CanvasText !important; }
+  :focus-visible { outline: 2px solid Highlight !important; }
+}
+
+/* People who ask for less motion get none. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+/* Printing a page (reports, registers): no bars, no backdrop, plain paper. */
+@media print {
+  .route-bg, .utility-bar, .topbar, .tabbar, .cmdk-trigger, .profile, .btn, .sos { display: none !important; }
+  html, body, .app { background: #fff !important; }
+  .panel, .stat, .kit-row { box-shadow: none !important; break-inside: avoid; }
+}
+
+/* ---- Tamil and dark-mode fixes ---------------------------------------------------------------- */
+/* Words never break letter by letter (an older rule let panels and rows break anywhere). */
+.panel, .kit-block, .kit-day, .kit-row, .notice, .alert, .profile-who b, .profile-who small, .settings-kv dd { overflow-wrap: break-word; }
+
+/* Rows with a badge (driver tools, settings): the title keeps room for whole words; a long badge
+   shortens with an ellipsis instead of squeezing the title into a narrow column. */
+.panel.kit-view-card > .kit-view-text { flex: 1 1 0; min-width: 132px; }
+.panel.kit-view-card > .badge { flex: 0 1 auto; min-width: 0; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Account menu: the switch goes under its label when a longer language needs the room. */
+html .profile-menu .profile-language { flex-wrap: wrap; row-gap: 6px !important; }
+html .profile-menu .profile-language > span:first-child { flex: 1 0 auto !important; white-space: nowrap; }
+html .profile-menu .profile-language .profile-switch { margin-left: auto; }
+
+/* Dark theme: the top bar stays light, so its round search button keeps dark ink. */
+html[data-theme='dark'] .topbar .cmdk-trigger { color: #1C315E !important; background: rgba(28, 49, 94, 0.06) !important; border-color: rgba(28, 49, 94, 0.16) !important; }
+html[data-theme='dark'] .topbar .cmdk-trigger kbd { color: #1C315E !important; border-color: rgba(28, 49, 94, 0.2) !important; background: #fff !important; }
+
+/* Dark theme: the More menu is dark, so its links are light (an earlier rule forced navy). */
+html[data-theme='dark'] .app .topbar .nav-more-menu a { color: #E9EDF5 !important; }
+html[data-theme='dark'] .app .topbar .nav-more-menu a .icon { color: #F7BC31 !important; opacity: 1; }
+html[data-theme='dark'] .app .topbar .nav-more-menu a:hover, html[data-theme='dark'] .app .topbar .nav-more-menu a:focus-visible,
+html[data-theme='dark'] .app .topbar .nav-more-menu a.active { background: rgba(255, 255, 255, 0.08) !important; color: #fff !important; }
+
+/* Dark theme: the driver's bus card stays white, so its status chip keeps its light colours. */
+html[data-theme='dark'] .route-card .route-pick .trip-chip { background: #EBEDF1 !important; color: #5D6B80 !important; }
+html[data-theme='dark'] .route-card .route-pick .trip-chip.on { background: #E9F7EB !important; color: #1F6B2F !important; }
+
+/* Crowd-level buttons: each as wide as its label, as many per row as fit, growing to fill the row
+   (three in English; Tamil labels drop to a second row rather than split mid-word). */
+.occupancy-row { display: flex !important; flex-wrap: wrap; gap: 8px; }
+.occupancy-row .occ { flex: 1 1 auto; min-width: 0; padding: 0 12px; line-height: 1.25; overflow-wrap: normal; word-break: keep-all; }
+
+/* Long badges in list rows wrap to a second line instead of being cut. */
+.panel.kit-view-card > .badge { white-space: normal !important; text-overflow: clip; overflow: visible; line-height: 1.25; text-align: left; }
+
+/* ---- Tamil: longer words than English, so big figures and tab labels get room ------------------ */
+/* Bottom tab bar on phones: each label stays in its own column, shortening with an ellipsis. */
+.bottom-tabs a { min-width: 0; }
+.bottom-tabs a > span, .bottom-tabs a > small { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px; }
+html[lang='ta'] .bottom-tabs a { font-size: 9.5px !important; letter-spacing: -0.01em; }
+
+/* Big values on the home tiles and stat cards: in Tamil a word-value ("Not running", "None yet")
+   wraps onto a second line at a smaller size instead of being cut off. */
+html[lang='ta'] .glance-value, html[lang='ta'] .stat > b, html[lang='ta'] .stat-text > b {
+  white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
+  font-size: clamp(17px, 1.6vw, 22px) !important; line-height: 1.2 !important; overflow-wrap: break-word;
+}
+html[lang='ta'] .glance-label, html[lang='ta'] .glance-detail { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }

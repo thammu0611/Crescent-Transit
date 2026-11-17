@@ -23,6 +23,9 @@ export async function startTestServer(overrides = {}) {
     // subscription: { studentRequired: false } to test the free default.
     subscription: { ...base.subscription, studentRequired: true, ...overrides.subscription },
     attendance: { ...base.attendance, travelWindows: '00:00-24:00', ...overrides.attendance },
+    // Every day runs buses in tests, so a suite run on a Sunday behaves like any other day;
+    // the weekly day off has its own test.
+    calendar: { ...base.calendar, closedWeekdays: [], ...overrides.calendar },
     otp: { ...base.otp, showInResponse: true },
     rateLimits: { login: 1000, register: 1000, orders: 1000, webhook: 1000, deviceFixes: 1000 },
   };

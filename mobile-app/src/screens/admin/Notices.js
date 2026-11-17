@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Linking } from 'react-native';
+import { Linking, View } from 'react-native';
 import {
-  Badge, Button, DataList, ErrorText, ItemCard, LinkButton, Notice, PageHead, Panel, Row, Screen, Segmented,
+  Badge, Button, confirm, DataList, ErrorText, ItemCard, LinkButton, Notice, PageHead, Panel, Row, Screen, Segmented,
   Select, TextField, Txt, usePrompt,
 } from '../../components/ui.js';
+import { incidentKind, incidentMessage, incidentSource } from '../../../../shared/incidents.js';
 import { api } from '../../lib/api.js';
 import { dateTime } from '../../lib/format.js';
 import { useAction, useAsync, useRefresh } from '../../lib/hooks.js';
 import { useSession } from '../../lib/session.js';
-import { G } from '../../theme.js';
+import { C, G } from '../../theme.js';
 
 const URGENT = ['SOS', 'EMERGENCY', 'BREAKDOWN', 'CAPACITY_BREACH'];
 const LATEST = 3;
@@ -30,6 +31,14 @@ export default function Notices() {
   const set = (k) => (v) => setF((x) => ({ ...x, [k]: v }));
   const { refreshing, onRefresh } = useRefresh(incidents);
 
+  const automatic = (incidents.data ?? []).filter((i) => i.status === 'OPEN' && i.source === 'system').length;
+  const clearAutomatic = async () => {
+    if (await confirm('Clear automatic alerts', `Mark all ${automatic} automatic alerts as reviewed? Alerts people sent (SOS, breakdowns, problems) stay open.`, 'Clear')) {
+      a.run(() => api('/api/admin/incidents/resolve-system', { token, body: { resolution: 'Reviewed together' } }), `${automatic} automatic alerts cleared.`).then(incidents.reload);
+    }
+  };
+  const needsAck = (i) => i.status === 'OPEN' && !i.acknowledged_at && ['SOS', 'EMERGENCY', 'BREAKDOWN'].includes(i.kind);
+  const acknowledge = (i) => a.run(() => api(`/api/admin/incidents/${i.id}/ack`, { token, method: 'POST' })).then(incidents.reload);
   const resolve = async (i) => {
     const resolution = await prompt('How was it resolved?', 'Resolved');
     if (resolution) a.run(() => api(`/api/admin/incidents/${i.id}/resolve`, { token, body: { resolution } })).then(incidents.reload);
@@ -74,6 +83,12 @@ export default function Notices() {
         badge={sorted?.length ? <Badge tone={status === 'OPEN' ? 'danger' : 'offline'}>{sorted.length}</Badge> : null}
       >
         <Segmented value={status} onChange={(v) => { setStatus(v); setShowAll(false); }} options={[{ value: 'OPEN', label: 'Open' }, { value: 'RESOLVED', label: 'Resolved' }, { value: '', label: 'All' }]} />
+        {status === 'OPEN' && automatic > 1 ? (
+          <View style={{ gap: 8, padding: 12, borderRadius: 12, backgroundColor: C.navy50 }}>
+            <Txt small muted>{`${automatic} automatic alerts (tracker offline, speeding, capacity).`}</Txt>
+            <Button title='Clear automatic alerts' icon='check' variant='ghost' busy={a.busy} onPress={clearAutomatic} />
+          </View>
+        ) : null}
         <ErrorText>{incidents.error?.message}</ErrorText>
         <DataList
           rows={rows}
@@ -81,12 +96,14 @@ export default function Notices() {
           render={(i) => (
             <ItemCard
               title={i.fleet_code ?? (i.route_code ? `Route ${i.route_code}` : 'Network')}
-              subtitle={`${dateTime(updatedAt(i))}${i.resolved_at ? ' (resolved)' : ''} · ${i.source}${i.username ? ` · ${i.username}` : ''}`}
+              subtitle={`${dateTime(updatedAt(i))}${i.resolved_at ? ' (resolved)' : ''} · ${incidentSource(i)}`}
               tone={URGENT.includes(i.kind) ? 'danger' : i.status === 'OPEN' ? 'delayed' : 'offline'}
-              right={<Badge tone={URGENT.includes(i.kind) ? 'danger' : 'delayed'}>{i.kind.replaceAll('_', ' ')}</Badge>}
+              right={<Badge tone={URGENT.includes(i.kind) ? 'danger' : 'delayed'}>{incidentKind(i.kind)}</Badge>}
             >
-              <Txt small>{i.message ?? '—'}</Txt>
+              <Txt small>{incidentMessage(i)}</Txt>
+              {needsAck(i) ? <Txt small bold style={{ color: C.danger }}>{i.escalation_level ? `Not acknowledged - sent up the chain (${i.escalation_level})` : 'Not acknowledged yet'}</Txt> : null}
               <Row gap={16}>
+                {needsAck(i) && <LinkButton icon="check" title="Acknowledge" onPress={() => acknowledge(i)} />}
                 {i.lat != null && <LinkButton icon="map" title="Map" onPress={() => Linking.openURL(`https://www.openstreetmap.org/?mlat=${i.lat}&mlon=${i.lng}#map=16/${i.lat}/${i.lng}`)} />}
                 {i.status === 'OPEN' ? <LinkButton title="Resolve" onPress={() => resolve(i)} /> : <Txt small muted>{i.resolution}</Txt>}
               </Row>

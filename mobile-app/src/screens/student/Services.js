@@ -133,6 +133,40 @@ function MyFeedback({ token }) {
 }
 
 /** Everything a student asks of the transport office, one card each. */
+/** A parent without the app: their WhatsApp or SMS number gets the same messages. */
+function ParentWhatsApp({ token }) {
+  const t = useT();
+  const data = useAsync(() => api('/api/me/parent-contacts', { token }), [token]);
+  const [form, setForm] = useState({ name: '', phone: '', channel: 'whatsapp' });
+  const a = useAction();
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+  const add = () => a.run(() => api('/api/me/parent-contacts', { token, body: form }), t('Added. They will get a message now.'))
+    .then((r) => { if (r) { setForm({ name: '', phone: '', channel: 'whatsapp' }); data.reload(); } });
+  const remove = async (c) => {
+    if (await confirm('Remove number', `Stop messages to ${c.name}?`, 'Remove', true)) a.run(() => api(`/api/me/parent-contacts/${c.id}`, { token, method: 'DELETE' })).then(data.reload);
+  };
+  const d = data.data;
+  const list = d?.contacts ?? [];
+  const ready = d && (d.channels.whatsapp || d.channels.sms);
+  return (
+    <ViewCard icon="phone" title={t('Parent on WhatsApp')} summary={list.length ? `${list.length} number${list.length === 1 ? '' : 's'} added` : t('For a parent without the app')}>
+      <Txt muted small>They get a message when you board and reach, if the bus is late, and in an emergency. No app needed.</Txt>
+      {d && !ready ? <Notice>{t('Messages start once the transport office switches WhatsApp or SMS on.')}</Notice> : null}
+      {list.map((c) => <ListCard key={c.id} title={c.name} lines={[`${c.phone} · ${c.channel === 'sms' ? 'SMS' : 'WhatsApp'}`]} right={<LinkButton title="Remove" danger onPress={() => remove(c)} />} />)}
+      {d && list.length < d.max ? (
+        <>
+          <TextField label="Parent's name" value={form.name} onChangeText={set('name')} maxLength={60} />
+          <TextField label="Mobile number" value={form.phone} onChangeText={set('phone')} keyboardType="phone-pad" placeholder="98400 12345" />
+          <Segmented value={form.channel} onChange={set('channel')} options={[{ value: 'whatsapp', label: 'WhatsApp' }, { value: 'sms', label: 'SMS' }]} full />
+          <Notice>{a.message}</Notice>
+          <ErrorText>{a.error}</ErrorText>
+          <Button title={t('Add number')} icon="plus" busy={a.busy} disabled={form.name.trim().length < 2 || form.phone.replace(/D/g, '').length < 10} onPress={add} />
+        </>
+      ) : null}
+    </ViewCard>
+  );
+}
+
 export default function Services() {
   const { token, user } = useSession();
   const t = useT();
@@ -140,6 +174,7 @@ export default function Services() {
     <Screen>
       <PageHead icon="sparkle" colors={G.navy} eyebrow="Student" title={t('Services')} />
       <ParentAccess token={token} />
+      <ParentWhatsApp token={token} />
       <RouteChange token={token} />
       <LostAndFound token={token} user={user} />
       <MyFeedback token={token} />

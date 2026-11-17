@@ -7,7 +7,7 @@ import { Chips, DetailModal } from '../../components/adminkit.js';
 import Icon from '../../components/Icon.js';
 import RateTrip from '../../components/RateTrip.js';
 import {
-  Badge, Button, DataList, DirectionBadge, Empty, ErrorText, ItemCard, LinkButton, MonthPicker, Row, Screen,
+  accentColour, alpha, Badge, Button, CardTint, DataList, DirectionBadge, Empty, ErrorText, ItemCard, LinkButton, MonthPicker, Row, Screen,
   Segmented, Select, Sheet, Text, TextField, Txt,
 } from '../../components/ui.js';
 import { api, ApiError, getSocket } from '../../lib/api.js';
@@ -31,6 +31,8 @@ const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateStrin
 const label = { margin: 0, fontSize: 13, lineHeight: 18, ...F[500], color: C.muted };
 const h2 = { fontSize: 20, lineHeight: 26, ...F.display, color: C.ink };
 const card = { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 1, borderColor: C.line2, ...shadow };
+// A coloured card's border and clipping (the wash and edge come from CardTint / RowTint).
+const tinted = (colour) => ({ borderColor: alpha(colour, 0.25), overflow: 'hidden' });
 
 /** The automatic (GPS) check-in: what it needs, and whether it is running. */
 function AutoPanel({ token, user, navigation }) {
@@ -412,7 +414,8 @@ export default function StudentAttendance({ navigation }) {
       </View>
 
       {/* Boarding check */}
-      <LinearGradient colors={HERO} start={{ x: 0, y: 0 }} end={{ x: 0.6, y: 1 }} style={[card, { padding: 18, gap: 12 }]}>
+      <LinearGradient colors={HERO} start={{ x: 0, y: 0 }} end={{ x: 0.6, y: 1 }} style={[card, tinted(checked || today ? C.live : accentColour('gold')), { padding: 18, gap: 12 }]}>
+        <CardTint color={checked || today ? C.live : accentColour('gold')} radius={R.lg} />
         {checked ? (
           <>
             <View accessibilityRole="alert" style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
@@ -448,7 +451,7 @@ export default function StudentAttendance({ navigation }) {
               <Badge tone="live">Present</Badge>
             </View>
             <Text style={h2}>Already checked in</Text>
-            <Txt muted style={{ marginTop: -6 }}>{METHOD_TEXT[today.method] ?? 'You were'} checked in on {busName(today.fleet_code)} at {time(today.boarded_at)}. There's nothing else to do.</Txt>
+            <Txt muted style={{ marginTop: -6 }}>{`You checked in on ${busName(today.fleet_code)} at ${time(today.boarded_at)}. There's nothing else to do.`}</Txt>
             <Button title="View this trip" variant="ghost" onPress={() => setHistory(today.attendance_id)} />
           </>
         ) : (
@@ -508,7 +511,8 @@ export default function StudentAttendance({ navigation }) {
 
       {/* This month */}
       {entitlement?.active ? (
-        <View style={[card, { paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 16, alignItems: 'center' }]}>
+        <View style={[card, tinted(accentColour('teal')), { paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 16, alignItems: 'center' }]}>
+          <CardTint color={accentColour('teal')} radius={R.lg} />
           <Ring pct={pct} />
           <View style={{ flex: 1, gap: 8 }}>
             <Bar k="To campus" done={up.filter((r) => r.present).length} total={up.length} />

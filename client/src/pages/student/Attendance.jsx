@@ -331,7 +331,7 @@ export default function StudentAttendance() {
               <>
                 <div className="att-hero-top"><span>Boarding check · {tripName(dir)}</span><Badge tone="live">Present</Badge></div>
                 <h2>Already checked in</h2>
-                <p>{`${METHOD_TEXT[today.method] ?? 'You were'} checked in on ${busName(today.fleet_code)} at ${time(today.boarded_at)}. There's nothing else to do.`}</p>
+                <p>{`You checked in on ${busName(today.fleet_code)} at ${time(today.boarded_at)}. There's nothing else to do.`}</p>
               </>
             ) : (
               <>

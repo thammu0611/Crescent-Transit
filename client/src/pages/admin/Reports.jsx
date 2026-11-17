@@ -21,19 +21,19 @@ function EtaAccuracy({ token, q }) {
   if (!data) return <p className="muted">Loading…</p>;
   return (
     <>
-      <div className="kit-stats">
+      <div className="kit-stats three">
         <Stat label="Overall MAE" value={data.overall.maeMin == null ? '—' : `${data.overall.maeMin} min`} tone={data.overall.maeMin != null && data.overall.maeMin <= data.targetMin ? 'live' : 'delayed'} />
         <Stat label="Predictions scored" value={data.overall.n} />
         <Stat label="Target" value={`< ${data.targetMin} min`} />
       </div>
       <p className="muted">Each minute the server logs its prediction for the next three stops; when the bus reaches the stop the error is |actual − predicted|.</p>
-      <div className="cols">
-        <div className="col"><h4>By route</h4><Bars rows={data.byRoute} label={(r) => `${r.key} (${r.n})`} value={(r) => r.maeMin} unit=" min" /></div>
-        <div className="col">
-          <h4>By method</h4><Bars rows={data.byMethod} label={(r) => `${r.key} (${r.n})`} value={(r) => r.maeMin} unit=" min" />
-          <h4>By how far ahead</h4><Bars rows={data.byLead} label={(r) => `${r.key} (${r.n})`} value={(r) => r.maeMin} unit=" min" />
-          <h4>By hour</h4><Bars rows={data.byHour} label={(r) => `${r.key} (${r.n})`} value={(r) => r.maeMin} unit=" min" />
-        </div>
+      <div className="rep-quad">
+        {[['By route', data.byRoute], ['By method', data.byMethod], ['By how far ahead', data.byLead], ['By hour', data.byHour]].map(([title, rows]) => (
+          <section key={title} className={`rep-quad-card${title === 'By hour' ? ' wide' : ''}`}>
+            <h4>{title}</h4>
+            <Bars rows={rows} label={(r) => `${r.key} (${r.n})`} value={(r) => r.maeMin} unit=" min" />
+          </section>
+        ))}
       </div>
     </>
   );
@@ -48,8 +48,13 @@ function AccuracyUpload({ token }) {
     <>
       <p className="muted">Paste the manual register taken on the same trips: one row per student seen on the bus.</p>
       <textarea className="full mono" rows={6} value={csv} onChange={(e) => setCsv(e.target.value)} aria-label="Manual register CSV" />
-      <input type="file" accept=".csv,text/csv" onChange={(e) => e.target.files[0]?.text().then(setCsv)} aria-label="Upload CSV" />
-      <button className="btn primary" disabled={a.busy} onClick={() => a.run(() => api('/api/reports/attendance-accuracy', { token, body: { csv } })).then((r) => r && setResult(r))}>Compare</button>
+      <div className="rep-actions">
+        <label className="btn ghost inline">
+          <Icon name="upload" size={15} />Upload CSV file
+          <input type="file" accept=".csv,text/csv" hidden onChange={(e) => e.target.files[0]?.text().then(setCsv)} />
+        </label>
+        <button className="btn primary inline" disabled={a.busy} onClick={() => a.run(() => api('/api/reports/attendance-accuracy', { token, body: { csv } })).then((r) => r && setResult(r))}>Compare</button>
+      </div>
       <ErrorText>{a.error}</ErrorText>
       {result && (
         <>
@@ -76,7 +81,7 @@ const SECTIONS = [
   { value: 'register', label: 'Attendance register', desc: 'Who boarded, by bus and student', icon: 'list', c: 'navy' },
   { value: 'demand', label: 'Stop demand', desc: 'Busiest stops and hours', icon: 'pin', c: 'teal' },
   { value: 'occupancy', label: 'Occupancy', desc: 'How full each trip ran', icon: 'users', c: 'sky' },
-  { value: 'exceptions', label: 'Exceptions', desc: 'Flagged, overridden or unconfirmed records', icon: 'alert', c: 'rose' },
+  { value: 'exceptions', label: 'Exceptions', desc: 'Flagged or unconfirmed records', icon: 'alert', c: 'rose' },
   { value: 'leakage', label: 'Leakage', desc: 'Rides without a subscription', icon: 'card', c: 'gold' },
   { value: 'eta', label: 'ETA accuracy', desc: 'How close arrival estimates were', icon: 'clock', c: 'violet' },
   { value: 'accuracy', label: 'Attendance accuracy', desc: 'Compare with a manual register', icon: 'check', c: 'green' },
@@ -224,7 +229,7 @@ export default function Reports() {
   const leak = leakage.data;
 
   return (
-    <Page eyebrow="Transport office" title="Reports" subtitle="Registers, demand, occupancy, exceptions and accuracy for any period and route." wide>
+    <Page eyebrow="Transport office" title="Reports" wide>
       <div className="rep-layout">
         {/* Left: the period and route, then the reports to choose from. */}
         <aside className="rep-side">
@@ -308,8 +313,8 @@ export default function Reports() {
           <>
             <div className="kit-stats three">
               <Stat icon="users" label="Boardings" value={demandTotal} />
-              <Stat icon="clock" label="Peak hour" value={peak ? peak.label : '—'} />
-              <Stat icon="pin" label="Busiest stop" value={busiest ? busiest.n : '—'} hint={busiest?.label} />
+              <Stat icon="clock" label={peak ? `Peak hour · ${peak.value} boardings` : 'Peak hour'} value={peak ? `${peak.label}–${String((peak.hour + 1) % 24).padStart(2, '0')}:00` : '—'} />
+              <Stat icon="pin" label={busiest ? `Busiest stop · ${busiest.n} boardings` : 'Busiest stop'} value={busiest ? busiest.label.split(' · ').slice(1).join(' · ') : '—'} hint={busiest?.label} />
             </div>
             <div className="kit-grid-2">
               <Block title="Busiest boarding stops" caption="Top 15 by boardings" actions={<CsvButton title="CSV" onClick={() => csv('/api/reports/demand', 'stop-demand')} />}>
@@ -352,7 +357,7 @@ export default function Reports() {
         {tab === 'exceptions' && (ex == null ? loading : (
           <>
             <div className="kit-stats">
-              <Stat icon="alert" label="Provisional / flagged" value={ex.provisionalOrFlagged.length} tone={ex.provisionalOrFlagged.length ? 'delayed' : ''} />
+              <Stat icon="alert" label="Flagged records" value={ex.provisionalOrFlagged.length} tone={ex.provisionalOrFlagged.length ? 'delayed' : ''} />
               <Stat icon="edit" label="Manual overrides" value={ex.manualOverrides.length} />
               <Stat icon="signal" label="System incidents" value={ex.systemIncidents.length} tone={ex.systemIncidents.length ? 'danger' : ''} />
               <Stat icon="shield" label="Flagged devices" value={ex.flaggedDevices.length} tone={ex.flaggedDevices.length ? 'danger' : ''} />

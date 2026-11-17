@@ -7,6 +7,7 @@ import { useLive } from '../../lib/useLive.js';
 import GreetHeader from '../../components/GreetHeader.jsx';
 import Icon from '../../components/Icon.jsx';
 import RouteMiniMap from '../../components/RouteMiniMap.jsx';
+import { SuggestionsBlock, WeeklyReportBlock } from '../../components/Automations.jsx';
 import { Block, ColumnChart, Donut, Figure, HBars, SERIES, ViewCard, ViewList, dayLabel } from '../../components/adminkit.jsx';
 import { Badge, Empty, ListCard, SearchBox, Segmented, Stat } from '../../components/ui.jsx';
 
@@ -74,7 +75,7 @@ export default function Dashboard() {
         right={(
           <a className="bell" href="#/notices" aria-label="Alerts and incidents">
             <Icon name="bell" size={20} />
-            {k.openIncidents > 0 && <span className="dot-count">{k.openIncidents}</span>}
+            {(k.openReported ?? k.openIncidents) > 0 && <span className="dot-count">{k.openReported ?? k.openIncidents}</span>}
           </a>
         )}
       />
@@ -98,12 +99,25 @@ export default function Dashboard() {
             </div>
             <div className="kit-fleet-big">
               <b className="tabular">{ready ? buses.length : '—'}</b>
-              <span>buses on trip<small>of {tot.buses ?? '—'} in the fleet</small></span>
+              <span>buses on trip<small>{`of ${tot.buses ?? '—'} in the fleet`}</small></span>
             </div>
             <div className="kit-fleet-pills">
               <span><i style={{ background: '#61ce70' }} /> {counts.live ?? 0} live</span>
               <span><i style={{ background: '#b9832a' }} /> {counts.delayed ?? 0} delayed</span>
               <span><i style={{ background: '#8b909b' }} /> {counts.offline ?? 0} offline</span>
+            </div>
+            {/* The buses on the road right now: each opens the fleet map. */}
+            <div className='kit-fleet-buses'>
+              {ready && buses.length === 0 && <p className='kit-fleet-empty'>No bus is on a trip right now.</p>}
+              {[...buses].sort((x, y) => String(x.routeCode).localeCompare(String(y.routeCode), undefined, { numeric: true })).slice(0, 6).map((b) => (
+                <a key={b.busId} className={`kit-fleet-bus ${b.freshness}`} href='#/map' title={b.nearestStop?.name ? `Near ${b.nearestStop.name}` : undefined}>
+                  <i />
+                  <b>{b.routeCode}</b>
+                  <span>{b.nearestStop?.name ? `Near ${b.nearestStop.name}` : b.fleetCode}</span>
+                  <small className='tabular'>{b.freshness === 'offline' ? 'offline' : `${Math.round(b.speedKmh ?? 0)} km/h`}</small>
+                </a>
+              ))}
+              {buses.length > 6 && <a className='kit-fleet-more' href='#/map'>{`+${buses.length - 6} more on the map`}</a>}
             </div>
             <hr />
             <div className="kit-figures light">
@@ -115,11 +129,11 @@ export default function Dashboard() {
 
           <div className="kit-stack">
             <div className="kit-stats two">
-              <Stat icon="users" label="Present today · Inbound / Outbound" value={`${k.presentUpToday} / ${k.presentDownToday}`} tone="live" color="green" />
+              <Stat icon="users" label="Present today · Inbound / Outbound" value={k.presentUpToday == null ? undefined : `${k.presentUpToday} / ${k.presentDownToday ?? 0}`} tone="live" color="green" />
               <Stat icon="card" label="Active passes" value={tot.subscribers} color="gold" />
-              <Stat icon="alert" label="Open incidents" value={k.openIncidents} tone={k.openIncidents ? 'danger' : ''} color="red" />
+              <Stat icon="alert" label={k.openAutomatic ? `Open incidents · ${k.openAutomatic} automatic` : 'Open incidents'} value={k.openReported ?? k.openIncidents} tone={(k.openReported ?? k.openIncidents) ? 'danger' : ''} color="red" />
               <Stat icon="check" label="Awaiting review" value={k.awaitingReview} tone={k.awaitingReview ? 'delayed' : ''} color="violet" />
-              <Stat icon="sparkle" label="Trip rating, 30 days" value={quality.data ? (quality.data.rating == null ? '—' : `${quality.data.rating} / 5`) : null} tone="live" color="teal" />
+              <Stat icon="sparkle" label="Trip rating, 30 days" value={quality.data ? (quality.data.rating == null ? 'None yet' : `${quality.data.rating} / 5`) : null} tone="live" color="teal" />
               <Stat icon="alert" label="Open complaints" value={quality.data?.open_complaints} tone={quality.data?.open_complaints ? 'danger' : ''} color="rose" />
             </div>
           </div>
@@ -134,6 +148,8 @@ export default function Dashboard() {
             </a>
           ))}
         </nav>
+
+        <SuggestionsBlock />
 
         <div className="kit-grid-2">
           <Block
@@ -228,7 +244,7 @@ export default function Dashboard() {
                     <ListCard
                       key={`${a.kind}-${a.at}-${idx}`}
                       href={a.kind === 'incident' ? '#/notices' : '#/trips'}
-                      lead={<span className="kit-row-icon" style={{ background: `color-mix(in srgb, ${kind.color} 12%, transparent)`, color: kind.color }}><Icon name={kind.icon} size={18} /></span>}
+                      lead={<span className="kit-row-icon soft-tint" style={{ color: kind.color }}><Icon name={kind.icon} size={18} /></span>}
                       title={kind.text(a)}
                       lines={[kind.sub(a), dateTime(a.at)]}
                     />
@@ -238,6 +254,8 @@ export default function Dashboard() {
             )}
           </ViewCard>
         </ViewList>
+
+        <WeeklyReportBlock />
       </div>
     </main>
   );
