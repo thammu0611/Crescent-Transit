@@ -4,16 +4,21 @@ import { METHOD_TEXT, dateTime, time } from '../../lib/format.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import { useLive } from '../../lib/useLive.js';
+import { usePolling } from '../../lib/usePolling.js';
 import GreetHeader from '../../components/GreetHeader.jsx';
 import Icon from '../../components/Icon.jsx';
 import RouteMiniMap from '../../components/RouteMiniMap.jsx';
-import { SuggestionsBlock, WeeklyReportBlock } from '../../components/Automations.jsx';
+import { WeeklyReportBlock } from '../../components/Automations.jsx';
 import { Block, ColumnChart, Donut, Figure, HBars, SERIES, ViewCard, ViewList, dayLabel } from '../../components/adminkit.jsx';
 import { Badge, Empty, ListCard, SearchBox, Segmented, Stat } from '../../components/ui.jsx';
 
+// Both live lists open the same page, the list of trips: running ones, or all of them.
+const RUNNING_TRIPS = '#/trips?tab=trips&status=active';
+const ALL_TRIPS = '#/trips?tab=trips';
+
 // The four shortcuts, each in its own colour from the site's palette.
 const SHORTCUTS = [
-  ['#/trips', 'clock', 'Trips', 'Drivers and trip history', 'navy'],
+  [ALL_TRIPS, 'clock', 'Trips', 'Drivers and trip history', 'navy'],
   ['#/attendance', 'check', 'Attendance', 'Bus registers by date', 'sky'],
   ['#/reports', 'chart', 'Reports', 'Charts and exports', 'indigo'],
   ['#/notices', 'bell', 'Announce', 'Post an alert to riders', 'amber'],
@@ -45,18 +50,24 @@ export default function Dashboard() {
   const [tripQuery, setTripQuery] = useState('');
   const [activityQuery, setActivityQuery] = useState('');
 
+  // Figures refresh on their own while the page is open (not while the tab is hidden).
+  usePolling(() => { kpis.reload(); trips.reload(); }, 15000);
+  usePolling(() => overview.reload(), 60000);
   useEffect(() => {
-    const id = setInterval(() => { kpis.reload(); trips.reload(); }, 15000);
-    const slow = setInterval(() => overview.reload(), 60000);
     const socket = getSocket(token);
     const onIncident = () => { kpis.reload(); overview.reload(); };
+    // A student boarding moves today's figures: reload once things settle, not once per student.
+    let soon = null;
+    const onBoarding = () => { soon ??= setTimeout(() => { soon = null; kpis.reload(); trips.reload(); }, 2000); };
     socket.on('incident', onIncident);
-    return () => { clearInterval(id); clearInterval(slow); socket.off('incident', onIncident); };
+    socket.on('attendance:changed', onBoarding);
+    return () => { clearTimeout(soon); socket.off('incident', onIncident); socket.off('attendance:changed', onBoarding); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const k = kpis.data ?? {};
   const o = overview.data;
+  const onBoardNow = trips.data?.reduce((n, t) => n + (Number(t.attendance) || 0), 0);
   const tot = o?.totals ?? {};
   const counts = buses.reduce((c, b) => ({ ...c, [b.freshness]: (c[b.freshness] ?? 0) + 1 }), {});
   const idle = Math.max(0, (tot.buses_active ?? 0) - buses.length);
@@ -123,13 +134,14 @@ export default function Dashboard() {
             <div className="kit-figures light">
               <Figure value={tot.trips_today} label="Trips today" />
               <Figure value={tot.scheduled_today} label="Scheduled" />
+              <Figure value={onBoardNow ?? '—'} label="On board now" />
               <Figure value={k.onTimePct == null ? '—' : `${k.onTimePct}%`} label="On time" />
             </div>
           </section>
 
           <div className="kit-stack">
             <div className="kit-stats two">
-              <Stat icon="users" label="Present today · Inbound / Outbound" value={k.presentUpToday == null ? undefined : `${k.presentUpToday} / ${k.presentDownToday ?? 0}`} tone="live" color="green" />
+              <Stat icon="users" label="Students boarded today" value={k.presentToday} hint={k.presentToday == null ? undefined : `${k.presentUpToday} to college · ${k.presentDownToday} from college`} tone="live" color="green" />
               <Stat icon="card" label="Active passes" value={tot.subscribers} color="gold" />
               <Stat icon="alert" label={k.openAutomatic ? `Open incidents · ${k.openAutomatic} automatic` : 'Open incidents'} value={k.openReported ?? k.openIncidents} tone={(k.openReported ?? k.openIncidents) ? 'danger' : ''} color="red" />
               <Stat icon="check" label="Awaiting review" value={k.awaitingReview} tone={k.awaitingReview ? 'delayed' : ''} color="violet" />
@@ -149,8 +161,6 @@ export default function Dashboard() {
           ))}
         </nav>
 
-        <SuggestionsBlock />
-
         <div className="kit-grid-2">
           <Block
             title={trend === 'present' ? 'Riders, last 7 days' : 'Trips, last 7 days'}
@@ -159,7 +169,7 @@ export default function Dashboard() {
           >
             <ColumnChart data={series} color={trend === 'present' ? 'var(--chart-navy)' : 'var(--chart-green)'} />
           </Block>
-          <Block title="Fleet status" caption="Buses on trip by signal, and active buses waiting" actions={<a className="btn ghost inline" href="#/map"><Icon name="map" size={14} />Fleet map</a>}>
+          <Block title="Bus tracking status" caption="Active buses by GPS signal, and those not on a trip" actions={<a className="btn ghost inline" href="#/map"><Icon name="map" size={14} />Fleet map</a>}>
             {ready && o ? (
               <Donut
                 caption="buses"
@@ -208,7 +218,7 @@ export default function Dashboard() {
           <ViewCard
             icon="bus"
             title="Trips running now"
-            summary={trips.data == null ? 'Loading…' : trips.data.length === 0 ? 'No trips running' : `${trips.data.length} trip${trips.data.length === 1 ? '' : 's'} · ${trips.data.reduce((n, t) => n + (Number(t.attendance) || 0), 0)} riders on board`}
+            summary={trips.data == null ? 'Loading…' : trips.data.length === 0 ? 'No trips running' : `${trips.data.length} trip${trips.data.length === 1 ? '' : 's'} · ${onBoardNow} students on board`}
             badge={trips.data?.some((t) => t.flagged) ? <Badge tone="danger">Flagged</Badge> : null}
             actions={<SearchBox value={tripQuery} onChange={setTripQuery} placeholder="Search route, bus or driver" />}
           >
@@ -217,17 +227,18 @@ export default function Dashboard() {
                 {shownTrips.map((t) => (
                   <ListCard
                     key={t.id}
-                    href="#/trips"
+                    href={RUNNING_TRIPS}
                     tone={t.flagged ? 'alert' : 'live'}
                     lead={<span className="route-code">{t.route_code}</span>}
                     title={t.route_name}
                     lines={[`${t.fleet_code} · ${t.driver_name ?? 'No driver'}`, t.flagged ? t.flag_reason : `Since ${time(t.started_at)}`]}
                     count={t.attendance}
-                    countLabel="RIDERS"
+                    countLabel="ON BOARD"
                   />
                 ))}
               </div>
             )}
+            <a className="btn ghost inline kit-see-all" href={RUNNING_TRIPS}>Open the trips list <Icon name="arrow" size={14} /></a>
           </ViewCard>
 
           <ViewCard
@@ -243,7 +254,7 @@ export default function Dashboard() {
                   return (
                     <ListCard
                       key={`${a.kind}-${a.at}-${idx}`}
-                      href={a.kind === 'incident' ? '#/notices' : '#/trips'}
+                      href={a.kind === 'incident' ? '#/notices' : ALL_TRIPS}
                       lead={<span className="kit-row-icon soft-tint" style={{ color: kind.color }}><Icon name={kind.icon} size={18} /></span>}
                       title={kind.text(a)}
                       lines={[kind.sub(a), dateTime(a.at)]}
@@ -252,6 +263,7 @@ export default function Dashboard() {
                 })}
               </div>
             )}
+            <a className="btn ghost inline kit-see-all" href={ALL_TRIPS}>Open the trips list <Icon name="arrow" size={14} /></a>
           </ViewCard>
         </ViewList>
 

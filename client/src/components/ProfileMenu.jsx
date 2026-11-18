@@ -7,6 +7,7 @@ import { savedTheme, saveTheme } from '../lib/theme.js';
 import { LANGUAGES } from '../../../shared/i18n.js';
 import Icon from './Icon.jsx';
 import PhotoCropper from './PhotoCropper.jsx';
+import { SignOutDialog } from './ui.jsx';
 
 const initials = (name = '') => name.replace(/^(Mr|Mrs|Ms|Dr)\.?\s*/i, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
@@ -20,6 +21,7 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [theme, setTheme] = useState(savedTheme);
+  const [signingOut, setSigningOut] = useState(false);
   const chooseTheme = (next) => {
     setTheme(next);
     saveTheme(next);
@@ -111,10 +113,11 @@ export default function ProfileMenu({ roleLabel, onChangePassword, onSystemHealt
           </div>
           {onSystemHealth && <button type="button" role="menuitem" className="profile-item" onClick={() => { setOpen(false); onSystemHealth(); }}><Icon name="shield" size={16} /> {t('System health')}</button>}
           <button type="button" role="menuitem" className="profile-item" onClick={() => { setOpen(false); onChangePassword(); }}><Icon name="lock" size={16} /> {t('Change password')}</button>
-          <button type="button" role="menuitem" className="profile-item danger" onClick={() => { signOut(); window.location.hash = '#/'; }}><Icon name="logout" size={16} /> {t('Sign out')}</button>
+          <button type="button" role="menuitem" className="profile-item danger" onClick={() => { setOpen(false); setSigningOut(true); }}><Icon name="logout" size={16} /> {t('Sign out')}</button>
         </div>
       )}
       {/* Kept outside the menu: clicking in the dialog closes the menu, not the dialog. */}
+      {signingOut && <SignOutDialog signOut={signOut} onClose={() => setSigningOut(false)} />}
       {picked && <PhotoCropper bitmap={picked} busy={busy} error={error} onSave={save} onCancel={() => { setPicked(null); setError(null); }} />}
     </div>
   );

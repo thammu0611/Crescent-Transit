@@ -20,7 +20,7 @@ import { api, ApiError } from '../lib/api.js';
 import {
   backgroundAvailable, driverGpsRunning, openBatterySettings, openLocationSettings, startDriverGps, stopDriverGps, subscribeDriverGps,
 } from '../lib/driverGps.js';
-import { OCCUPANCY, time } from '../lib/format.js';
+import { METHOD_TEXT, OCCUPANCY, time } from '../lib/format.js';
 import { useNow } from '../lib/hooks.js';
 import { DIRECTION_NAME, PathWalker, projectOnRoute, travelOrder } from '../lib/rules.js';
 import { useServerInfo } from '../lib/serverInfo.js';
@@ -213,7 +213,8 @@ function BoardedList({ token, tripId }) {
   const [data, setData] = useState(null);
   const [username, setUsername] = useState('');
   const [error, setError] = useState(null);
-  const load = useCallback(() => api(`/api/trips/${tripId}/attendance`, { token }).then(setData).catch((e) => setError(e.message)), [token, tripId]);
+  // A good reload clears the last error, so a passing network hiccup does not stay on screen.
+  const load = useCallback(() => api(`/api/trips/${tripId}/attendance`, { token }).then((d) => { setData(d); setError(null); }).catch((e) => setError(e.message)), [token, tripId]);
   useEffect(() => {
     load();
     const id = setInterval(load, 20000);
@@ -241,7 +242,7 @@ function BoardedList({ token, tripId }) {
       {onBoard.length === 0 ? <Txt muted>{t('Nobody recorded yet.')}</Txt> : onBoard.map((r) => (
         <View key={r.attendance_id} style={{ paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: C.line2 }}>
           <Txt bold>{r.full_name} <Txt muted small>{r.register_no ?? r.username}</Txt></Txt>
-          <Txt muted small>{r.method} · {time(r.boarded_at)}{r.boarding_stop ? ` · ${r.boarding_stop}` : ''}</Txt>
+          <Txt muted small>{METHOD_TEXT[r.method] ?? r.method} · {time(r.boarded_at)}{r.boarding_stop ? ` · ${r.boarding_stop}` : ''}</Txt>
         </View>
       ))}
       <Row>
@@ -326,7 +327,7 @@ function StudentList({ token, tripId }) {
                   <View style={{ gap: 6, marginTop: 8 }}>
                     <Row wrap>
                       <Badge tone={st.passActive ? 'live' : 'danger'}>{st.passActive ? t('Bus pass active') : t('No active pass')}</Badge>
-                      {a ? <Badge tone="info">{a.method}{a.boardedAt ? ` · ${time(a.boardedAt)}` : ''}</Badge> : null}
+                      {a ? <Badge tone="info">{METHOD_TEXT[a.method] ?? a.method}{a.boardedAt ? ` · ${time(a.boardedAt)}` : ''}</Badge> : null}
                     </Row>
                     <Txt small>Username: {st.username}</Txt>
                     {st.phone ? (
@@ -781,7 +782,7 @@ export default function DriverApp() {
             <Text accessibilityRole="header" style={{ fontSize: 28, lineHeight: 34, ...F.displayBold, color: C.ink }}>My trip</Text>
           </View>
           <PillIconButton icon="lock" label="Change password" onPress={() => setPassword(true)} />
-          <PillIconButton icon="logout" label="Sign out" onPress={async () => (await confirm('Sign out?', 'You can sign in again any time.', 'Sign out')) && signOut()} />
+          <PillIconButton icon="logout" label="Sign out" onPress={async () => (await confirm('Are you sure you want to log out?', '', 'Yes, Log Out', true)) && signOut()} />
         </View>
 
         {/* Trip status */}
@@ -793,7 +794,7 @@ export default function DriverApp() {
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={{ fontSize: 17, lineHeight: 22, ...F[700], color: C.ink }} numberOfLines={1}>{user.routeName}</Text>
-              <Txt muted small numberOfLines={2}>{runDir === 'DOWN' ? 'From campus' : 'To campus'} · {trip ? (runDir === 'DOWN' ? 'outbound' : 'inbound') : leaves ?? '—'}</Txt>
+              <Txt muted small numberOfLines={2}>{runDir === 'DOWN' ? 'From college' : 'To college'} · {trip ? 'Running now' : leaves ?? '—'}</Txt>
             </View>
             {trip ? <Badge tone="live">{t('On trip')}</Badge> : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, minHeight: 28, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.raised }}>

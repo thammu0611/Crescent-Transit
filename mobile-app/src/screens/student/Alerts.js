@@ -1,17 +1,20 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
+import { isUnread as unreadIn, studentAlerts, unreadCount as countUnread } from '../../../../shared/alerts.js';
 import { Pressable, ScrollView, View } from 'react-native';
 import Icon from '../../components/Icon.js';
-import { accentColour, alpha, Badge, IconBubble, RowTint, Screen, Skeleton, Text, Txt } from '../../components/ui.js';
+import { accentColour, alpha, Badge, ErrorText, IconBubble, RowTint, Screen, Skeleton, Text, Txt } from '../../components/ui.js';
+import { markAlertsRead, useAlertsRead } from '../../lib/alertsRead.js';
 import { api } from '../../lib/api.js';
 import { METHOD_TEXT, thisMonth, time } from '../../lib/format.js';
-import { useAsync, useRefresh } from '../../lib/hooks.js';
+import { useAsync, usePolling, useRefresh } from '../../lib/hooks.js';
 import { routeData, useT } from '../../lib/offline.js';
 import { formatMinutes, parseTime } from '../../lib/schedule.js';
 import { useSession } from '../../lib/session.js';
-import { getJSON, setJSON } from '../../lib/storage.js';
 import { C, F, R, shadow } from '../../theme.js';
 
-const KEY = 'ubts.alertsRead';
+// Longer than this, a closed card shows two lines and "Read more".
+const LONG = 90;
+const More = ({ full }) => <Text style={{ color: C.link, ...F[600], fontSize: 13 }}>{full ? 'Show less' : 'Read more'}</Text>;
 
 // Filters by what the notice is about, not by who sent it.
 const FILTERS = [
@@ -64,8 +67,10 @@ function group(items) {
   return out;
 }
 
-function Thread({ item, unread, stopName, stopTime, onTrack }) {
+function Thread({ item, unread, stopName, stopTime, onTrack, onRead }) {
   const [open, setOpen] = useState(false);
+  const [full, setFull] = useState(false);
+  const toggle = () => { setFull((f) => !f); if (unread) onRead(item.updates.map((u) => String(u.id))); };
   const n = item.latest;
   const all = item.updates;
   const shown = open ? all : all.slice(0, 3);
@@ -86,7 +91,10 @@ function Thread({ item, unread, stopName, stopTime, onTrack }) {
         <Badge tone="delayed">{late ? `Delayed ${late} min` : 'Delayed'}</Badge>
         {at ? <Badge tone="info">At your stop {at}</Badge> : null}
       </View>
-      <Txt style={{ color: C.muted }}>{stopName ? `Affects ${stopName}. ` : ''}{n.message}</Txt>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: full }} onPress={toggle} style={{ gap: 4 }}>
+        <Txt style={{ color: C.muted }} numberOfLines={full ? undefined : 2}>{stopName ? `Affects ${stopName}. ` : ''}{n.message}</Txt>
+        {String(n.message ?? '').length > LONG ? <More full={full} /> : null}
+      </Pressable>
       {all.length > 1 ? (
         <View style={{ padding: 12, borderRadius: 14, backgroundColor: C.raised, gap: 10 }}>
           {shown.map((u, k) => (
@@ -113,10 +121,12 @@ function Thread({ item, unread, stopName, stopTime, onTrack }) {
   );
 }
 
-function Single({ n, unread }) {
+function Single({ n, unread, onRead }) {
   const look = LOOK[n.kind] ?? LOOK.ANNOUNCEMENT;
+  const [full, setFull] = useState(false);
+  const toggle = () => { setFull((f) => !f); if (unread) onRead([String(n.id)]); };
   return (
-    <View style={[card, tinted(accentColour(look.accent)), { flexDirection: 'row', gap: 12, padding: 14, shadowOpacity: 0 }]}>
+    <Pressable accessibilityRole="button" accessibilityState={{ expanded: full }} onPress={toggle} style={({ pressed }) => [card, tinted(accentColour(look.accent)), { flexDirection: 'row', gap: 12, padding: 14, shadowOpacity: 0 }, pressed && { opacity: 0.85 }]}>
       <RowTint color={accentColour(look.accent)} radius={R.lg} />
       <IconBubble name={look.icon} accent={look.accent} size={40} />
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
@@ -125,9 +135,10 @@ function Single({ n, unread }) {
           <Txt muted small style={{ paddingTop: 2 }}>{time(n.created_at)}</Txt>
           {unread ? <Dot /> : null}
         </View>
-        <Txt style={{ color: C.muted }}>{n.message}</Txt>
+        <Txt style={{ color: C.muted }} numberOfLines={full ? undefined : 2}>{n.message}</Txt>
+        {String(n.message ?? '').length > LONG ? <More full={full} /> : null}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -137,25 +148,24 @@ export default function Alerts({ navigation }) {
   const t = useT();
   const entitled = Boolean(entitlement?.active);
   const list = useAsync(() => (entitled ? api('/api/notifications', { token }) : api('/api/notices')), [token, entitled]);
-  const [readAt, setReadAt] = useState(null);
+  const read = useAlertsRead(token);
+  const [markError, setMarkError] = useState(null);
   // Attendance marks become notices too ("Marked present · to campus").
   const marks = useAsync(() => (entitled ? api(`/api/attendance/me?month=${thisMonth()}`, { token }) : Promise.resolve(null)), [token, entitled]);
   const home = useAsync(() => (user?.homeRouteCode ? routeData(`/api/routes/${encodeURIComponent(user.homeRouteCode)}`) : Promise.resolve(null)), [user?.homeRouteCode]);
   const myStop = home.data?.stops?.find((x) => x.seq === user?.homeStopSeq);
   const [filter, setFilter] = useState('all');
   const { refreshing, onRefresh } = useRefresh(list, marks);
-  useEffect(() => { getJSON(KEY, 0).then((v) => setReadAt(Number(v) || 0)); }, []);
-  const all = useMemo(() => {
-    const since = Date.now() - 3 * 86400000;
-    const att = (marks.data?.records ?? []).filter((r) => r.present && new Date(r.boarded_at).getTime() > since).map((r) => ({
-      id: `a${r.attendance_id}`, kind: 'ATTENDANCE', created_at: r.boarded_at, route_code: r.route_code,
-      title: `Marked present · ${r.direction === 'DOWN' ? 'from' : 'to'} campus`,
-      message: `${METHOD_TEXT[r.method] ?? 'Checked in'} on ${String(r.fleet_code ?? '').replace('BSACIST-', 'Bus ')}.`,
-    }));
-    return [...(list.data ?? []), ...att].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  }, [list.data, marks.data]);
-  const isUnread = (n) => readAt != null && new Date(n.created_at).getTime() > readAt;
-  const unreadCount = all.filter(isUnread).length;
+  // New alerts arrive while this screen is open.
+  usePolling(() => { list.reload(); marks.reload(); }, 60000);
+  const all = useMemo(() => studentAlerts(list.data, marks.data?.records, METHOD_TEXT), [list.data, marks.data]);
+  const isUnread = (n) => unreadIn(n, read);
+  const unreadCount = countUnread(all, read);
+  const mark = (body) => {
+    setMarkError(null);
+    markAlertsRead(token, body).catch((err) => setMarkError(`Could not mark as read: ${err.message}`));
+  };
+  const readOne = (ids) => mark({ ids });
   const kinds = FILTERS.find((f) => f.key === filter)?.kinds;
   const items = group(kinds ? all.filter((n) => kinds.includes(n.kind)) : all);
   const count = (f) => (f.kinds ? all.filter((n) => f.kinds.includes(n.kind)).length : all.length);
@@ -164,7 +174,7 @@ export default function Alerts({ navigation }) {
     navigation.setOptions({
       headerRight: unreadCount
         ? () => (
-          <Pressable accessibilityRole="button" hitSlop={10} onPress={() => { const now = Date.now(); setJSON(KEY, now); setReadAt(now); }}>
+          <Pressable accessibilityRole="button" hitSlop={10} onPress={() => mark({ all: true })}>
             <Text style={{ color: C.link, ...F[600], fontSize: 14 }}>{t('Mark all read')}</Text>
           </Pressable>
         )
@@ -189,8 +199,9 @@ export default function Alerts({ navigation }) {
         })}
         <View style={{ width: 8 }} />
       </ScrollView>
+      <ErrorText>{markError}</ErrorText>
       {!entitled && <Txt muted small>Showing the notice board. Route alerts (delays, breakdowns, route changes) come with the subscription.</Txt>}
-      {list.data == null || readAt == null ? <View style={{ gap: 10 }}><Skeleton height={140} /><Skeleton height={80} /><Skeleton height={80} /></View> : items.length === 0 ? (
+      {list.data == null ? <View style={{ gap: 10 }}><Skeleton height={140} /><Skeleton height={80} /><Skeleton height={80} /></View> : items.length === 0 ? (
         <View style={{ alignItems: 'center', gap: 10, paddingVertical: 48, paddingHorizontal: 16 }}>
           <View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: C.navy50, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name={filter === 'safety' ? 'shield' : 'bell'} size={32} color={C.navy} />
@@ -208,8 +219,8 @@ export default function Alerts({ navigation }) {
               <View key={it.id} style={{ gap: 10 }}>
                 {head ? <Txt muted small style={{ ...F[600], marginTop: 4 }}>{t(day)}</Txt> : null}
                 {it.thread
-                  ? <Thread item={it} unread={it.updates.some(isUnread)} stopName={it.latest.route_code === user?.homeRouteCode ? myStop?.name : null} stopTime={it.latest.route_code === user?.homeRouteCode ? parseTime(myStop?.scheduled_time) : null} onTrack={() => navigation.navigate('StudentTabs', { screen: 'Track', params: { routeCode: it.latest.route_code } })} />
-                  : <Single n={it.latest} unread={isUnread(it.latest)} />}
+                  ? <Thread item={it} unread={it.updates.some(isUnread)} stopName={it.latest.route_code === user?.homeRouteCode ? myStop?.name : null} stopTime={it.latest.route_code === user?.homeRouteCode ? parseTime(myStop?.scheduled_time) : null} onTrack={() => navigation.navigate('StudentTabs', { screen: 'Track', params: { routeCode: it.latest.route_code } })} onRead={readOne} />
+                  : <Single n={it.latest} unread={isUnread(it.latest)} onRead={readOne} />}
               </View>
             );
           })}

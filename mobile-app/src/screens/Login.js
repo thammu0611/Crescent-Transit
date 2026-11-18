@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from '../components/Icon.js';
 import {
   Button, Collapsible, ErrorText, LinkButton, NavPill, Notice, RoutePattern, Segmented, Select, Text, TextField,
   Txt,
@@ -86,10 +85,14 @@ function ServerAddress() {
  */
 const FORM_CARD = { backgroundColor: C.paper, borderRadius: R.lg, padding: 18, gap: 14, borderWidth: 1, borderColor: C.dark ? C.glassEdge : 'rgba(255,255,255,0.6)', ...shadowLg, elevation: 0 };
 
-export default function Login({ navigation }) {
+export default function Login({ navigation, route }) {
   const { signIn } = useSession();
   const info = useServerInfo();
-  const [mode, setMode] = useState('signin');
+  // The first screen's Sign in and Sign up buttons open this screen on that choice.
+  const [mode, setMode] = useState(route?.params?.mode === 'register' ? 'register' : 'signin');
+  useEffect(() => {
+    if (route?.params?.mode) setMode(route.params.mode === 'register' ? 'register' : 'signin');
+  }, [route?.params?.mode]);
   const [routes, setRoutes] = useState([]);
   const [stops, setStops] = useState([]);
   const [form, setForm] = useState({ username: '', password: '', fullName: '', email: '', registerNo: '', department: '', routeCode: '', stopSeq: '' });
@@ -148,7 +151,7 @@ export default function Login({ navigation }) {
         {mode === 'forgot' ? <ForgotPassword initial={form.username} onBack={() => setMode('signin')} /> : (
         <>
         <View style={{ backgroundColor: C.glass, borderRadius: R.lg, padding: 6, borderWidth: 1, borderColor: C.dark ? C.glassEdge : 'rgba(255,255,255,0.6)', ...shadowLg }}>
-          <Segmented value={mode} onChange={(m) => { setMode(m); setError(null); }} options={[{ value: 'signin', label: 'Sign in' }, { value: 'register', label: 'Student' }, { value: 'parent', label: 'Parent' }]} />
+          <Segmented value={mode} onChange={(m) => { setMode(m); setError(null); }} options={[{ value: 'signin', label: 'Sign in' }, { value: 'register', label: 'Sign up' }, { value: 'parent', label: 'Parent' }]} />
         </View>
         <View style={FORM_CARD}>
           {mode === 'signin' ? (
@@ -209,10 +212,6 @@ export default function Login({ navigation }) {
         </View>
         </>
         )}
-        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', padding: 14, borderRadius: R.lg, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}>
-          <Icon name="shield" size={18} color={C.gold} />
-          <Txt small style={{ flex: 1, color: 'rgba(255,255,255,0.8)', ...F[600] }}>Your location is compared with the bus and discarded. It is never stored.</Txt>
-        </View>
         {/* The server address is for testers: hidden once a live server answers. */}
         {info === null || info?.demoMode ? <View style={FORM_CARD}><ServerAddress /></View> : null}
         </ScrollView>

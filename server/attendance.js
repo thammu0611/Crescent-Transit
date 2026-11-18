@@ -73,6 +73,12 @@ export class AttendanceService {
 
   notify(userId, event, payload) {
     this.io?.to(`user:${userId}`).emit(event, payload);
+    if (event.startsWith('attendance:')) this.boardingChanged();
+  }
+
+  /** Tells the transport office's screens that today's boarding figures moved (no names in it). */
+  boardingChanged() {
+    this.io?.to('admins').emit('attendance:changed');
   }
 
   // ---- Device binding (doc 9.8) ----------------------------------------------
@@ -664,6 +670,7 @@ export class AttendanceService {
       return { ...existing, alreadyRecorded: true };
     }
     await this.event({ type: 'OVERRIDE', attendanceId: rows[0].attendance_id, tripId: tid, userId: auth.userId, v: null, deviceTs: new Date(at), detail: 'QR check-in' });
+    this.boardingChanged();
     await this.checkCapacity(tid);
     await this.boarding?.resolveFromAttendance(auth.userId, tid);
     return rows[0];

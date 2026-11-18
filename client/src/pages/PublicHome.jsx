@@ -2,12 +2,6 @@ import { api } from '../lib/api.js';
 import { useAsync } from '../lib/useAsync.js';
 import Icon from '../components/Icon.jsx';
 
-const STEPS = [
-  ['route', 'Choose your route', 'Pick your bus and your boarding stop once. Change it any time.'],
-  ['map', 'Track it live', 'See your bus move, how far it is, and when it reaches your stop.'],
-  ['check', 'Confirm with one tap', '“Are you on Bus 118?” — tap Yes and your attendance is recorded.'],
-];
-
 /** The transport office and emergency numbers, one tap to call. */
 function Contacts() {
   const contacts = useAsync(() => api('/api/contacts'), []);
@@ -67,17 +61,17 @@ function PhonePreview() {
 }
 
 export default function PublicHome() {
-  const health = useAsync(() => api('/api/health'), []);
-
   return (
     <div className="landing land">
       <section className="land-hero">
         <div className="land-inner">
           <div className="land-copy">
-            <span className="pill-badge"><span className="pulse" /> {health.data ? `${health.data.liveBuses} buses on trip right now` : 'Live bus tracking'}</span>
             <h1>Know where your bus is. <span className="em">Every minute.</span></h1>
+            <p className="land-lede">One stop for every BSACIST</p>
+            {/* Sign in and Sign up sit together, side by side. */}
             <div className="land-cta">
-              <a className="btn dark" href="#/login">Sign in or register <Icon name="arrow" size={16} /></a>
+              <a className="btn dark" href="#/login">Sign in <Icon name="arrow" size={16} /></a>
+              <a className="btn soft land-register" href="#/register"><Icon name="plus" size={16} /> Sign up</a>
             </div>
           </div>
           <PhonePreview />
@@ -85,30 +79,13 @@ export default function PublicHome() {
       </section>
 
       <div className="page land-body">
-        <section className="how">
-          <span className="section-kicker">How it works</span>
-          <h2>From your stop to campus in three steps</h2>
-          <ol className="steps">
-            {STEPS.map(([icon, title, text], i) => (
-              <li key={title}>
-                <span className="step-n">{i + 1}</span>
-                <span className="step-icon"><Icon name={icon} size={20} /></span>
-                <b>{title}</b>
-                <p>{text}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
         <section className="land-contacts">
-          <span className="section-kicker">Need help?</span>
-          <h2>Transport office and emergency contacts</h2>
+          <h2>Need help?</h2>
           <Contacts />
         </section>
 
         <footer className="land-foot">
-          <span><Icon name="bus" size={15} /> Crescent Transit · B.S. Abdur Rahman Crescent Institute of Science &amp; Technology</span>
-          <span>Transport office <a href="tel:+914422751347">+91 44 2275 1347</a></span>
+          <span>Crescent Transit · B.S. Abdur Rahman Crescent Institute of Science &amp; Technology</span>
         </footer>
       </div>
     </div>

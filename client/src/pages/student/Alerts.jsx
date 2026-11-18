@@ -1,16 +1,25 @@
 import { useMemo, useState } from 'react';
+import { isUnread as unreadIn, studentAlerts, unreadCount as countUnread } from '../../../../shared/alerts.js';
 import Icon from '../../components/Icon.jsx';
-import { Badge } from '../../components/ui.jsx';
+import { Badge, ErrorText } from '../../components/ui.jsx';
+import { markAlertsRead, useAlertsRead } from '../../lib/alertsRead.js';
 import { api } from '../../lib/api.js';
 import { time } from '../../lib/format.js';
 import { formatMinutes, parseTime } from '../../lib/schedule.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
+import { usePolling } from '../../lib/usePolling.js';
 
-const KEY = 'ubts.alertsRead';
-const readAtStored = () => {
-  try { return Number(localStorage.getItem(KEY)) || 0; } catch { return 0; }
-};
+// Longer than this, a closed card shows two lines and "Read more".
+const LONG = 90;
+
+/** Click or Enter/Space opens a card; links and buttons inside it keep their own action. */
+const opener = (onOpen) => ({
+  role: 'button',
+  tabIndex: 0,
+  onClick: (e) => { if (!e.target.closest('a, button')) onOpen(); },
+  onKeyDown: (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); onOpen(); } },
+});
 
 // Filters by what the notice is about, not by who sent it.
 const FILTERS = [
@@ -63,15 +72,17 @@ function group(items) {
   return out;
 }
 
-function Thread({ item, unread, stopName, stopTime }) {
+function Thread({ item, unread, stopName, stopTime, onRead }) {
   const [open, setOpen] = useState(false);
+  const [full, setFull] = useState(false);
+  const toggle = () => { setFull((f) => !f); if (unread) onRead(item.updates.map((u) => String(u.id))); };
   const n = item.latest;
   const all = item.updates;
   const shown = open ? all : all.slice(0, 3);
   const late = delayOf(n);
   const at = stopTime != null && late != null ? formatMinutes(stopTime + late) : null;
   return (
-    <article className="ntf-card ntf-thread">
+    <article className={`ntf-card ntf-thread${full ? ' open' : ''}`} aria-expanded={full} {...opener(toggle)}>
       <div className="ntf-top">
         <span className="ntf-icon amber"><Icon name="clock" size={20} /></span>
         <div className="ntf-text">
@@ -85,6 +96,7 @@ function Thread({ item, unread, stopName, stopTime }) {
         {at ? <Badge tone="info">At your stop {at}</Badge> : null}
       </div>
       <p className="ntf-body">{stopName ? `Affects ${stopName}. ` : ''}{n.message}</p>
+      {String(n.message ?? '').length > LONG && <span className="ntf-more">{full ? 'Show less' : 'Read more'}</span>}
       {all.length > 1 ? (
         <ol className="ntf-updates">
           {shown.map((u, k) => (
@@ -104,14 +116,17 @@ function Thread({ item, unread, stopName, stopTime }) {
   );
 }
 
-function Single({ n, unread }) {
+function Single({ n, unread, onRead }) {
   const look = LOOK[n.kind] ?? LOOK.ANNOUNCEMENT;
+  const [full, setFull] = useState(false);
+  const toggle = () => { setFull((f) => !f); if (unread) onRead([String(n.id)]); };
   return (
-    <article className="ntf-card ntf-single">
+    <article className={`ntf-card ntf-single${full ? ' open' : ''}`} aria-expanded={full} {...opener(toggle)}>
       <span className={`ntf-icon ${look.tone}`}><Icon name={look.icon} size={20} /></span>
       <div className="ntf-text">
         <div className="ntf-line"><b>{n.title}</b><time>{time(n.created_at)}</time>{unread ? <span className="ntf-dot" aria-label="Unread" /> : null}</div>
         <p className="ntf-body">{n.message}</p>
+        {String(n.message ?? '').length > LONG && <span className="ntf-more">{full ? 'Show less' : 'Read more'}</span>}
       </div>
     </article>
   );
@@ -126,28 +141,24 @@ export default function Alerts() {
   const marks = useAsync(() => (entitled ? api(`/api/attendance/me?month=${thisMonth()}`, { token }) : Promise.resolve(null)), [token, entitled]);
   const home = useAsync(() => (user?.homeRouteCode ? api(`/api/routes/${encodeURIComponent(user.homeRouteCode)}`) : Promise.resolve(null)), [user?.homeRouteCode]);
   const myStop = home.data?.stops?.find((x) => x.seq === user?.homeStopSeq);
-  const [readAt, setReadAt] = useState(readAtStored);
+  const read = useAlertsRead(token);
   const [filter, setFilter] = useState('all');
+  const [markError, setMarkError] = useState(null);
+  // New alerts arrive while the page is open.
+  usePolling(() => { list.reload(); marks.reload(); }, 60000);
 
-  const all = useMemo(() => {
-    const since = Date.now() - 3 * 86400000;
-    const att = (marks.data?.records ?? []).filter((r) => r.present && new Date(r.boarded_at).getTime() > since).map((r) => ({
-      id: `a${r.attendance_id}`, kind: 'ATTENDANCE', created_at: r.boarded_at, route_code: r.route_code,
-      title: `Marked present · ${r.direction === 'DOWN' ? 'from' : 'to'} campus`,
-      message: `${METHOD[r.method] ?? 'Checked in'} on ${String(r.fleet_code ?? '').replace('BSACIST-', 'Bus ')}.`,
-    }));
-    return [...(list.data ?? []), ...att].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  }, [list.data, marks.data]);
-  const isUnread = (n) => new Date(n.created_at).getTime() > readAt;
-  const unreadCount = all.filter(isUnread).length;
+  const all = useMemo(() => studentAlerts(list.data, marks.data?.records, METHOD), [list.data, marks.data]);
+  const isUnread = (n) => unreadIn(n, read);
+  const unreadCount = countUnread(all, read);
   const kinds = FILTERS.find((f) => f.key === filter)?.kinds;
   const items = group(kinds ? all.filter((n) => kinds.includes(n.kind)) : all);
   const count = (f) => (f.kinds ? all.filter((n) => f.kinds.includes(n.kind)).length : all.length);
-  const markRead = () => {
-    const t = Date.now();
-    try { localStorage.setItem(KEY, String(t)); } catch { /* per-tab only */ }
-    setReadAt(t);
+  const mark = (body) => {
+    setMarkError(null);
+    markAlertsRead(token, body).catch((err) => setMarkError(`Could not mark as read: ${err.message}`));
   };
+  const markRead = () => mark({ all: true });
+  const readOne = (ids) => mark({ ids });
 
   let lastDay = null;
   return (
@@ -164,6 +175,7 @@ export default function Alerts() {
           </button>
         ))}
       </div>
+      <ErrorText>{markError}</ErrorText>
       {!entitled && <p className="muted">Showing the notice board. Route alerts (delays, breakdowns, route changes) come with the subscription.</p>}
       {list.data == null ? (
         <div className="ntf-list"><div className="skeleton-block" /><div className="skeleton-block short" /></div>
@@ -184,8 +196,8 @@ export default function Alerts() {
               <div key={it.id} className="ntf-item">
                 {head ? <h2 className="ntf-day">{day}</h2> : null}
                 {it.thread
-                  ? <Thread item={it} unread={it.updates.some(isUnread)} stopName={mineRoute ? myStop?.name : null} stopTime={mineRoute ? parseTime(myStop?.scheduled_time) : null} />
-                  : <Single n={it.latest} unread={isUnread(it.latest)} />}
+                  ? <Thread item={it} unread={it.updates.some(isUnread)} stopName={mineRoute ? myStop?.name : null} stopTime={mineRoute ? parseTime(myStop?.scheduled_time) : null} onRead={readOne} />
+                  : <Single n={it.latest} unread={isUnread(it.latest)} onRead={readOne} />}
               </div>
             );
           })}

@@ -8,6 +8,7 @@ import { FEEDBACK_TEXT, LOST_STATUS_TEXT, REQUEST_TEXT } from '../../../../share
 import Icon from '../../components/Icon.jsx';
 import { ViewCard, ViewList } from '../../components/adminkit.jsx';
 import { Badge, Empty, ErrorText, Field, ListCard, Notice, Page, Segmented } from '../../components/ui.jsx';
+import Picker from '../../components/Picker.jsx';
 
 const REQUEST_TONE = { PENDING: 'delayed', APPROVED: 'live', REJECTED: 'danger', CANCELLED: 'offline' };
 
@@ -123,16 +124,25 @@ function RouteChange({ token }) {
         <form onSubmit={send}>
           <div className="grid2">
             <Field label="New route">
-              <select value={form.routeCode} onChange={(e) => setForm((f) => ({ ...f, routeCode: e.target.value, stopSeq: '' }))} required>
-                <option value="">Choose a route</option>
-                {(routes.data ?? []).map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
-              </select>
+              <Picker
+                label="New route"
+                placeholder="Choose a route"
+                required
+                value={form.routeCode}
+                onChange={(v) => setForm((f) => ({ ...f, routeCode: v, stopSeq: '' }))}
+                options={(routes.data ?? []).map((r) => ({ value: r.code, lead: r.code, label: r.name }))}
+              />
             </Field>
             <Field label="New stop">
-              <select value={form.stopSeq} onChange={(e) => setForm((f) => ({ ...f, stopSeq: e.target.value }))} required disabled={!stops.length}>
-                <option value="">Choose a stop</option>
-                {stops.map((s) => <option key={s.seq} value={s.seq}>{s.name}</option>)}
-              </select>
+              <Picker
+                label="New stop"
+                placeholder="Choose a stop"
+                required
+                disabled={!stops.length}
+                value={form.stopSeq}
+                onChange={(v) => setForm((f) => ({ ...f, stopSeq: String(v) }))}
+                options={stops.map((s) => ({ value: s.seq, lead: s.seq, label: s.name, hint: s.scheduled_time ?? undefined }))}
+              />
             </Field>
           </div>
           <Field label="Why do you need the change?"><input value={form.reason} maxLength={300} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} /></Field>

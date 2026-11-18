@@ -3,12 +3,12 @@ import { MapContainer, Polyline, CircleMarker, useMap } from 'react-leaflet';
 import BaseTiles from '../components/BaseTiles.jsx';
 import QRCode from 'qrcode';
 import { api, ApiError } from '../lib/api.js';
-import { OCCUPANCY, time } from '../lib/format.js';
+import { METHOD_TEXT, OCCUPANCY, time } from '../lib/format.js';
 import { useServerInfo } from '../lib/serverInfo.js';
 import { useSession } from '../lib/session.jsx';
 import GreetHeader from '../components/GreetHeader.jsx';
 import Icon from '../components/Icon.jsx';
-import { Badge, ErrorText, Modal, Notice, SearchBox } from '../components/ui.jsx';
+import { Badge, ErrorText, Modal, Notice, SearchBox, SignOutDialog } from '../components/ui.jsx';
 import { ViewCard, ViewList } from '../components/adminkit.jsx';
 import { FoundItem, FuelEntry, PassScanner, PreTripCheck } from '../components/DriverTools.jsx';
 import DayBanner from '../components/DayBanner.jsx';
@@ -124,7 +124,8 @@ function BoardedList({ token, tripId }) {
   const [data, setData] = useState(null);
   const [username, setUsername] = useState('');
   const [error, setError] = useState(null);
-  const load = useCallback(() => api(`/api/trips/${tripId}/attendance`, { token }).then(setData).catch((e) => setError(e.message)), [token, tripId]);
+  // A good reload clears the last error, so a passing network hiccup does not stay on screen.
+  const load = useCallback(() => api(`/api/trips/${tripId}/attendance`, { token }).then((d) => { setData(d); setError(null); }).catch((e) => setError(e.message)), [token, tripId]);
   useEffect(() => {
     load();
     const id = setInterval(load, 20000);
@@ -154,7 +155,7 @@ function BoardedList({ token, tripId }) {
           {onBoard.map((r) => (
             <li key={r.attendance_id}>
               <span>{r.full_name}<small>{r.register_no ?? r.username}</small></span>
-              <span className="muted">{r.method} · {time(r.boarded_at)}{r.boarding_stop ? ` · ${r.boarding_stop}` : ''}</span>
+              <span className="muted">{METHOD_TEXT[r.method] ?? r.method} · {time(r.boarded_at)}{r.boarding_stop ? ` · ${r.boarding_stop}` : ''}</span>
             </li>
           ))}
         </ul>
@@ -176,7 +177,7 @@ function StudentList({ token, tripId }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
-  const load = useCallback(() => api('/api/driver/students', { token }).then(setData).catch((e) => setError(e.message)), [token]);
+  const load = useCallback(() => api('/api/driver/students', { token }).then((d) => { setData(d); setError(null); }).catch((e) => setError(e.message)), [token]);
   useEffect(() => { load(); const id = setInterval(load, 20000); return () => clearInterval(id); }, [load, tripId]);
   const mark = (st) => api('/api/attendance/manual', { token, body: { tripId, username: st.username } }).then(load).catch((e) => setError(e.message));
   const students = data?.students ?? [];
@@ -227,6 +228,7 @@ function StudentList({ token, tripId }) {
 
 export default function DriverApp() {
   const { token, user, signOut } = useSession();
+  const [signingOut, setSigningOut] = useState(false);
   // The simulated bus, the bad-fix buttons and the transmission log are demo tools.
   const demo = Boolean(useServerInfo()?.demoMode);
   const now = useNow(15000);
@@ -541,8 +543,9 @@ export default function DriverApp() {
         <div className="panel login">
           <h2>{t('No bus assigned')}</h2>
           <p className="muted">{t('Ask the transport office to assign a bus to your account.')}</p>
-          <button className="btn ghost" onClick={logout}>Sign out</button>
+          <button className="btn ghost" onClick={() => setSigningOut(true)}>Sign out</button>
         </div>
+        {signingOut && <SignOutDialog signOut={logout} onClose={() => setSigningOut(false)} />}
       </main>
     );
   }

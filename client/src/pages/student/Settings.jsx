@@ -5,9 +5,10 @@ import { api } from '../../lib/api.js';
 import { refreshPlan } from '../../lib/sampler.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
-import { Badge, ErrorText, Field, Notice, Page, Segmented } from '../../components/ui.jsx';
+import { Badge, ErrorText, Field, Notice, Page, Segmented, SignOutDialog } from '../../components/ui.jsx';
 import { ViewCard, ViewList } from '../../components/adminkit.jsx';
 import YourData from '../../components/YourData.jsx';
+import Picker from '../../components/Picker.jsx';
 
 /**
  * The plain-language privacy notice (doc 9.11): what is collected, when, why,
@@ -87,6 +88,7 @@ export default function Settings() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [notify, setNotify] = useState(notificationState);
 
   useEffect(() => {
@@ -173,16 +175,23 @@ export default function Settings() {
           <form onSubmit={saveTravel}>
             <div className="grid2">
               <Field label="Route">
-                <select value={form.homeRouteCode} onChange={(e) => setForm((f) => ({ ...f, homeRouteCode: e.target.value, homeStopSeq: '' }))}>
-                  <option value="">—</option>
-                  {(routes.data ?? []).map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
-                </select>
+                <Picker
+                  label="Route"
+                  placeholder="Choose a route"
+                  value={form.homeRouteCode}
+                  onChange={(v) => setForm((f) => ({ ...f, homeRouteCode: v, homeStopSeq: '' }))}
+                  options={(routes.data ?? []).map((r) => ({ value: r.code, lead: r.code, label: r.name }))}
+                />
               </Field>
               <Field label="Boarding stop">
-                <select value={form.homeStopSeq} onChange={set('homeStopSeq')} disabled={!route.data}>
-                  <option value="">—</option>
-                  {(route.data?.stops ?? []).map((s) => <option key={s.seq} value={s.seq}>{s.seq}. {s.name}{s.scheduled_time ? ` · ${s.scheduled_time}` : ''}</option>)}
-                </select>
+                <Picker
+                  label="Boarding stop"
+                  placeholder="Choose your stop"
+                  disabled={!route.data}
+                  value={form.homeStopSeq}
+                  onChange={(v) => setForm((f) => ({ ...f, homeStopSeq: String(v) }))}
+                  options={(route.data?.stops ?? []).map((s) => ({ value: s.seq, lead: s.seq, label: s.name, hint: s.scheduled_time ?? undefined }))}
+                />
               </Field>
             </div>
             {stop && (
@@ -291,28 +300,12 @@ export default function Settings() {
           <p className="fine-print">To correct your name, register number or department, contact the transport office.</p>
           <div className="btn-row">
             <button className="btn ghost" onClick={() => setChangingPassword(true)}><Icon name="lock" size={15} /> Change password</button>
-            <button className="btn ghost danger-text" onClick={() => { signOut(); window.location.hash = '#/'; }}><Icon name="logout" size={15} /> Sign out</button>
+            <button className="btn ghost danger-text" onClick={() => setSigningOut(true)}><Icon name="logout" size={15} /> Sign out</button>
           </div>
           <p className="fine-print">Changing your password signs you out on every other device.</p>
         </ViewCard>
 
         <YourData />
-
-        <ViewCard icon="phone" title="Help and support" summary="Contacts and common questions">
-          <ul className="contact-list">
-            {(contacts.data ?? []).map((c) => (
-              <li key={c.label}><span>{c.label}</span><a href={`tel:${c.phone.replace(/\s+/g, '')}`}>{c.phone}</a></li>
-            ))}
-          </ul>
-          <details className="settings-details">
-            <summary>I was asked "Did you board?" but I didn't travel</summary>
-            <p className="muted">Answer "No". Nothing is recorded and the reminders stop. If you never travel on some days, set your travel window above.</p>
-          </details>
-          <details className="settings-details">
-            <summary>My attendance looks wrong</summary>
-            <p className="muted">Open Attendance and tap "Dispute" on the trip within 7 days. The transport office reviews it.</p>
-          </details>
-        </ViewCard>
 
         <ViewCard icon="sparkle" title="About" summary="Crescent Transit · Bus Route 2026-2027">
           <dl className="settings-kv">
@@ -321,8 +314,20 @@ export default function Settings() {
             <dt>Access</dt><dd>{entitlement?.required ? <a href="#/pay">Monthly subscription</a> : 'Included for every student'}</dd>
           </dl>
         </ViewCard>
+
+        {/* Last in the list: just the numbers to call. */}
+        <ViewCard icon="phone" title="Help and support" summary="Contact numbers">
+          {contacts.error ? <ErrorText>{`Could not load the contact numbers: ${contacts.error.message}`}</ErrorText> : contacts.data == null ? <div className="skeleton-block short" /> : (
+            <ul className="contact-list">
+              {contacts.data.map((c) => (
+                <li key={c.label}><span>{c.label}</span><a href={`tel:${c.phone.replace(/\s+/g, '')}`}>{c.phone}</a></li>
+              ))}
+            </ul>
+          )}
+        </ViewCard>
       </ViewList>
       {changingPassword && <ChangePassword onClose={() => setChangingPassword(false)} />}
+      {signingOut && <SignOutDialog signOut={signOut} onClose={() => setSigningOut(false)} />}
     </Page>
   );
 }

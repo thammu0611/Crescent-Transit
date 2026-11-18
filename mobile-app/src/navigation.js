@@ -71,7 +71,7 @@ const header = {
 
 function SignOutButton() {
   const { signOut } = useSession();
-  return <PillIconButton icon="logout" label="Sign out" onPress={async () => (await confirm('Sign out?', 'You can sign in again any time.', 'Sign out')) && signOut()} />;
+  return <PillIconButton icon="logout" label="Sign out" onPress={async () => (await confirm('Are you sure you want to log out?', '', 'Yes, Log Out', true)) && signOut()} />;
 }
 
 /** Header buttons for roles without a settings screen: change password, sign out. */
@@ -227,7 +227,7 @@ function MoreMenu({ navigation }) {
       </View>
       <Appearance />
       <Button title="Change password" variant="ghost" icon="lock" onPress={() => setChangingPassword(true)} />
-      <Button title="Sign out" variant="ghost" icon="logout" textStyle={{ color: C.danger }} onPress={async () => (await confirm('Sign out?', '', 'Sign out')) && signOut()} />
+      <Button title="Sign out" variant="ghost" icon="logout" textStyle={{ color: C.danger }} onPress={async () => (await confirm('Are you sure you want to log out?', '', 'Yes, Log Out', true)) && signOut()} />
       <ChangePasswordSheet visible={changingPassword} onClose={() => setChangingPassword(false)} />
     </Screen>
   );

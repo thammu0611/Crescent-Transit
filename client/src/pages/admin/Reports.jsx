@@ -135,8 +135,8 @@ function BusRegister({ group, onRow, onCsv, onClose }) {
         rowKey={(st) => st.username}
         columns={[
           { key: 'name', label: 'Student', render: (st) => <><b>{st.name}</b><small>{[st.reg ?? st.username, st.dept].filter(Boolean).join(' · ')}</small></> },
-          { key: 'up', label: 'Inbound', align: 'right' },
-          { key: 'down', label: 'Outbound', align: 'right' },
+          { key: 'up', label: 'To college', align: 'right' },
+          { key: 'down', label: 'From college', align: 'right' },
           { key: 'present', label: 'Present', align: 'right', render: (st) => `${st.present} of ${st.trips}` },
           { key: 'rate', label: 'Rate', align: 'right', render: (st) => <Badge tone={st.present === st.trips ? 'live' : st.present ? 'delayed' : 'danger'}>{Math.round((st.present / st.trips) * 100)}%</Badge> },
           { key: 'last', label: 'Last boarded', render: (st) => st.last },

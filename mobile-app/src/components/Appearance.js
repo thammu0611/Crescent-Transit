@@ -1,4 +1,6 @@
+import { reloadAppAsync } from 'expo';
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { LANGUAGES } from '../../../shared/i18n.js';
 import { api } from '../lib/api.js';
 import { useT } from '../lib/offline.js';
@@ -10,19 +12,26 @@ import { Segmented } from './ui.js';
 
 /**
  * Language and theme, as a "Preferences" list (Settings, the driver, parents).
- * The theme follows the phone unless set here; a change applies the next time
- * the app opens.
+ * The theme follows the phone unless set here. The app's colours are fixed when it
+ * starts, so picking a theme saves it and restarts the app's screens straight away
+ * (the person stays signed in); waiting for the next launch looked like it did nothing.
  */
 export default function Appearance({ label = 'Preferences' }) {
   const { user, token, refresh } = useSession();
   const t = useT();
   const [theme, setTheme] = useState(null);
-  const [changed, setChanged] = useState(false);
+  const [failed, setFailed] = useState(false);
   useEffect(() => { getJSON(THEME_KEY, 'system').then((v) => setTheme(v === 'light' || v === 'dark' ? v : 'system')); }, []);
-  const chooseTheme = (v) => {
+  const chooseTheme = async (v) => {
+    if (v === theme) return;
     setTheme(v);
-    setChanged(true);
-    setJSON(THEME_KEY, v);
+    await setJSON(THEME_KEY, v);
+    try {
+      if (Platform.OS === 'web') window.location.reload();
+      else await reloadAppAsync('Theme changed');
+    } catch {
+      setFailed(true); // saved: it applies the next time the app opens
+    }
   };
   const chooseLanguage = (language) => api('/api/me/language', { token, method: 'PUT', body: { language } }).then(refresh).catch(() => {});
   return (
@@ -31,7 +40,7 @@ export default function Appearance({ label = 'Preferences' }) {
       <ListRow
         icon="sun"
         title="Theme"
-        summary={changed ? 'Close and reopen the app to see the change.' : 'Follows your phone unless you pick one.'}
+        summary={failed ? 'Saved. Close and reopen the app to see the change.' : 'Follows your phone unless you pick one.'}
         below={theme ? <Segmented value={theme} onChange={chooseTheme} options={[{ value: 'system', label: t('System') }, { value: 'light', label: t('Light') }, { value: 'dark', label: t('Dark') }]} /> : null}
       />
     </ViewList>

@@ -1,16 +1,14 @@
 import QRCode from 'qrcode';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { date } from '../../lib/format.js';
 import { useT } from '../../lib/i18n.js';
-import { PHOTO_CHANGED, readPhoto } from '../../lib/photo.js';
-import PhotoCropper from '../../components/PhotoCropper.jsx';
+import { PHOTO_CHANGED } from '../../lib/photo.js';
 import { useSession } from '../../lib/session.jsx';
 import { useNow } from '../../lib/useNow.js';
 import BrandMark from '../../components/BrandMark.jsx';
-import Icon from '../../components/Icon.jsx';
 import { Avatar } from '../../components/adminkit.jsx';
-import { Badge, ErrorText, Notice, Page } from '../../components/ui.jsx';
+import { Badge, ErrorText, Page } from '../../components/ui.jsx';
 
 const STATUS = {
   ACTIVE: ['live', 'Active'],
@@ -27,8 +25,6 @@ export default function BusPass() {
   const [pass, setPass] = useState(null);
   const [qr, setQr] = useState(null);
   const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
-  const file = useRef(null);
 
   const load = useCallback(async () => {
     try {
@@ -53,42 +49,11 @@ export default function BusPass() {
     return () => clearTimeout(id);
   }, [pass, load]);
 
-  // A chosen picture is placed in the round frame first, then saved.
-  const [picked, setPicked] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const choose = async (e) => {
-    const file = e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    try { setError(null); setPicked(await readPhoto(file)); } catch (err) { setError(err.message); }
-  };
-  const savePhoto = async (photo) => {
-    setSaving(true);
-    try {
-      await api('/api/pass/photo', { token, method: 'PUT', body: { photo } });
-      setPicked(null);
-      setMessage('Photo saved.');
-      window.dispatchEvent(new Event(PHOTO_CHANGED));
-      load();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-  const remove = async () => {
-    await api('/api/pass/photo', { token, method: 'PUT', body: { photo: null } }).catch((err) => setError(err.message));
-    window.dispatchEvent(new Event(PHOTO_CHANGED));
-    load();
-  };
-
   const left = pass ? Math.max(0, Math.round((new Date(pass.expiresAt).getTime() - now) / 1000)) : 0;
   const [tone, label] = STATUS[pass?.status] ?? ['offline', '…'];
   return (
     <Page eyebrow="Student" title={t('Bus pass')}>
       <ErrorText>{error}</ErrorText>
-      <Notice>{message}</Notice>
-      {picked && <PhotoCropper bitmap={picked} busy={saving} error={error} onSave={savePhoto} onCancel={() => setPicked(null)} />}
       {pass == null ? <div className="skeleton-block" /> : (
         <div className="pass-layout">
           <section className="pass-card" aria-label="Digital bus pass">
@@ -115,13 +80,6 @@ export default function BusPass() {
             {qr ? <img className="pass-qr" src={qr} alt="Your bus pass QR code" /> : <div className="skeleton-block" />}
             <div className="pass-meter" aria-hidden="true"><i style={{ width: `${(left / 90) * 100}%` }} /></div>
             <small className="muted tabular">{t('New code in')} {left} {t('seconds')}</small>
-            <div className="btn-row spaced">
-              <button type="button" className="btn ghost inline" onClick={() => file.current.click()}>
-                <Icon name="user" size={15} /> {t(pass.photo ? 'Change photo' : 'Add photo')}
-              </button>
-              {pass.photo && <button type="button" className="btn ghost inline" onClick={remove}>{t('Remove photo')}</button>}
-              <input ref={file} type="file" accept="image/*" hidden onChange={choose} />
-            </div>
           </section>
         </div>
       )}

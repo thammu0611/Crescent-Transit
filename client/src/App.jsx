@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import BrandMark from './components/BrandMark.jsx';
 import PageTranslator from './components/PageTranslator.jsx';
 import RouteBackdrop from './components/RouteBackdrop.jsx';
@@ -18,28 +18,33 @@ import { startSampler, stopSampler } from './lib/sampler.js';
 import Login from './pages/Login.jsx';
 import VerifyEmail from './pages/student/VerifyEmail.jsx';
 import PublicHome from './pages/PublicHome.jsx';
-import LiveMap from './pages/LiveMap.jsx';
-import DriverApp from './pages/DriverApp.jsx';
-import StudentHome from './pages/student/StudentHome.jsx';
-import Subscription from './pages/student/Subscription.jsx';
-import StudentAttendance from './pages/student/Attendance.jsx';
-import Settings from './pages/student/Settings.jsx';
-import Schedule from './pages/student/Schedule.jsx';
-import Alerts from './pages/student/Alerts.jsx';
-import Dashboard from './pages/admin/Dashboard.jsx';
-import Fleet from './pages/admin/Fleet.jsx';
-import RoutesAdmin from './pages/admin/RoutesAdmin.jsx';
-import Trips from './pages/admin/Trips.jsx';
-import AttendanceAdmin from './pages/admin/AttendanceAdmin.jsx';
-import Reports from './pages/admin/Reports.jsx';
-import Notices from './pages/admin/Notices.jsx';
-import BusCare from './pages/admin/BusCare.jsx';
-import ServiceDesk from './pages/admin/ServiceDesk.jsx';
-import Suggestions from './pages/admin/Suggestions.jsx';
+
+// Each page loads when first opened, so nobody downloads the screens of other roles.
+// Once the first screen is up, the rest of that person's pages are fetched quietly (below),
+// so moving between pages stays instant.
+const lazyPage = (load) => { const Page = lazy(load); Page.preload = load; return Page; };
+const LiveMap = lazyPage(() => import('./pages/LiveMap.jsx'));
+const DriverApp = lazyPage(() => import('./pages/DriverApp.jsx'));
+const StudentHome = lazyPage(() => import('./pages/student/StudentHome.jsx'));
+const Subscription = lazyPage(() => import('./pages/student/Subscription.jsx'));
+const StudentAttendance = lazyPage(() => import('./pages/student/Attendance.jsx'));
+const Settings = lazyPage(() => import('./pages/student/Settings.jsx'));
+const Schedule = lazyPage(() => import('./pages/student/Schedule.jsx'));
+const Alerts = lazyPage(() => import('./pages/student/Alerts.jsx'));
+const Dashboard = lazyPage(() => import('./pages/admin/Dashboard.jsx'));
+const Fleet = lazyPage(() => import('./pages/admin/Fleet.jsx'));
+const RoutesAdmin = lazyPage(() => import('./pages/admin/RoutesAdmin.jsx'));
+const Trips = lazyPage(() => import('./pages/admin/Trips.jsx'));
+const AttendanceAdmin = lazyPage(() => import('./pages/admin/AttendanceAdmin.jsx'));
+const Reports = lazyPage(() => import('./pages/admin/Reports.jsx'));
+const Notices = lazyPage(() => import('./pages/admin/Notices.jsx'));
+const BusCare = lazyPage(() => import('./pages/admin/BusCare.jsx'));
+const ServiceDesk = lazyPage(() => import('./pages/admin/ServiceDesk.jsx'));
+const Suggestions = lazyPage(() => import('./pages/admin/Suggestions.jsx'));
 import CommandPalette from './components/CommandPalette.jsx';
-import ParentHome from './pages/parent/ParentHome.jsx';
-import BusPass from './pages/student/Pass.jsx';
-import Services from './pages/student/Services.jsx';
+const ParentHome = lazyPage(() => import('./pages/parent/ParentHome.jsx'));
+const BusPass = lazyPage(() => import('./pages/student/Pass.jsx'));
+const Services = lazyPage(() => import('./pages/student/Services.jsx'));
 // The finance office app is switched off for now. To bring it back, restore
 // these imports and the finance NAV entry below.
 // import Collections from './pages/finance/Collections.jsx';
@@ -52,7 +57,9 @@ import Services from './pages/student/Services.jsx';
 const NAV = {
   guest: [
     ['/', 'Home', PublicHome, 'home'],
+    // Sign in and Sign up open from the first screen's buttons; they are not in the top bar.
     ['/login', 'Sign in', Login, 'arrow'],
+    ['/register', 'Sign up', Login, 'plus'],
   ],
   student: [
     ['/', 'Home', StudentHome, 'home'],
@@ -179,6 +186,13 @@ function Shell() {
   const entry = nav.find(([p]) => p === path) ?? (role === 'guest' && wantsDriver ? NAV.guest[1] : nav[0]);
   const Screen = entry[2];
 
+  // Fetch this person's other pages while the browser is idle, so the next tap has nothing to wait for.
+  useEffect(() => {
+    const run = () => nav.forEach(([, , page]) => page.preload?.().catch(() => {}));
+    const idle = window.requestIdleCallback ? window.requestIdleCallback(run, { timeout: 4000 }) : setTimeout(run, 2500);
+    return () => (window.cancelIdleCallback ? window.cancelIdleCallback(idle) : clearTimeout(idle));
+  }, [role]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     const onScroll = (e) => setScrolled((e.target.scrollTop ?? 0) > 8);
     document.addEventListener('scroll', onScroll, true);
@@ -216,7 +230,7 @@ function Shell() {
           <button className="menu-toggle" aria-expanded={menuOpen} aria-label="Menu" onClick={() => setMenuOpen((o) => !o)}>
             <Icon name="menu" size={22} />
           </button>
-          <MainNav links={nav} activePath={entry[0]} role={role} open={menuOpen}>
+          <MainNav links={role === 'guest' ? nav.filter(([p]) => p === '/') : nav} activePath={entry[0]} role={role} open={menuOpen}>
             {user && !choosing && !verifying && (
               <button type="button" className="cmdk-trigger" onClick={() => setSearching(true)} aria-label={t('Quick search')} title={t('Quick search (Ctrl+K)')}>
                 <Icon name="search" size={16} />
@@ -232,8 +246,8 @@ function Shell() {
           </MainNav>
         </header>
       </div>
-      <div id="main-content" tabIndex={-1} className={`screen${role === 'student' ? ' with-tabs' : ''}`} key={`${role}:${entry[0]}`}>
-        {choosing ? <ChoosePassword /> : verifying ? <VerifyEmail /> : <Screen />}
+      <div id="main-content" tabIndex={-1} className={`screen${role === 'student' ? ' with-tabs' : ''}`} key={`${role}:${entry[2] === Login ? 'auth' : entry[0]}`}>
+        {choosing ? <ChoosePassword /> : verifying ? <VerifyEmail /> : <Suspense fallback={<div className="page-loading" aria-busy="true" />}><Screen /></Suspense>}
       </div>
       {role === 'student' && !verifying && !choosing && (
         <nav className="bottom-tabs" aria-label="Student">

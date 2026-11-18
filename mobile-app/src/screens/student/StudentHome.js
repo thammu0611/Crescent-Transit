@@ -8,9 +8,11 @@ import {
   accentColour, alpha, Avatar, Badge, Button, CardTint, confirm, ErrorText, FadeIn, GradientCard, HeaderIconButton, IconBubble, KV, LivePulse,
   Notice, Screen, SectionTitle, Select, Sheet, Skeleton, Text, TextField, Txt, DirectionBadge,
 } from '../../components/ui.js';
+import { studentAlerts, unreadCount } from '../../../../shared/alerts.js';
+import { useAlertsRead } from '../../lib/alertsRead.js';
 import { api } from '../../lib/api.js';
-import { date, dateTime, etaText, OCCUPANCY, time } from '../../lib/format.js';
-import { useAsync, useLive, useRefresh } from '../../lib/hooks.js';
+import { date, dateTime, etaText, METHOD_TEXT, OCCUPANCY, thisMonth, time } from '../../lib/format.js';
+import { useAsync, useLive, usePolling, useRefresh } from '../../lib/hooks.js';
 import { ageLabel, estimateArrival, haversineMeters, LEAVE_ALERT_M, leavePlan } from '../../lib/rules.js';
 import { requestNotificationPermission, showNotification } from '../../lib/notify.js';
 import { dailyRuns, formatMinutes, greeting } from '../../lib/schedule.js';
@@ -160,11 +162,13 @@ function QuickActions({ items }) {
           accessibilityRole="button"
           accessibilityLabel={q.label}
           onPress={q.onPress}
-          style={({ pressed }) => [{ flex: 1, minHeight: 86, borderRadius: 18, borderWidth: 1, borderColor: alpha(accentColour(q.accent), 0.25), backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 4, overflow: 'hidden' }, pressed && { opacity: 0.8 }]}
+          // Room under the coloured top edge, so the icon never touches it.
+          style={({ pressed }) => [{ flex: 1, minHeight: 92, borderRadius: 18, borderWidth: 1, borderColor: alpha(accentColour(q.accent), 0.25), backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 14, paddingBottom: 10, paddingHorizontal: 4, overflow: 'hidden' }, pressed && { opacity: 0.8 }]}
         >
           <CardTint color={accentColour(q.accent)} />
           <IconBubble name={q.icon} accent={q.accent} size={38} iconSize={20} />
-          <Text style={{ fontSize: 12, lineHeight: 15, minHeight: 30, ...F[600], color: C.ink, textAlign: 'center' }} numberOfLines={2}>{q.label}</Text>
+          {/* One word stays whole on one line (it shrinks a little if it must); two words may wrap. */}
+          <Text style={{ fontSize: 12, lineHeight: 15, minHeight: 30, ...F[600], color: C.ink, textAlign: 'center', alignSelf: 'stretch' }} numberOfLines={String(q.label).trim().includes(' ') ? 2 : 1} adjustsFontSizeToFit minimumFontScale={0.7}>{q.label}</Text>
         </Pressable>
       ))}
     </View>
@@ -306,7 +310,7 @@ export function FeedItem({ n, hot }) {
       <IconBubble name={n.kind === 'ANNOUNCEMENT' ? 'bell' : n.kind === 'ROUTE_CHANGE' ? 'route' : 'alert'} accent={accent} size={38} />
       <View style={{ flex: 1, gap: 2 }}>
         <Txt bold>{n.title}</Txt>
-        <Txt small style={{ color: C.slate }}>{n.message}</Txt>
+        <Txt small style={{ color: C.slate }} numberOfLines={2}>{n.message}</Txt>
         <Txt muted small style={{ fontSize: 12 }}>{dateTime(n.created_at)}{n.route_code ? ` · Route ${n.route_code}` : ''}</Txt>
       </View>
     </View>
@@ -373,7 +377,11 @@ export default function StudentHome({ navigation }) {
   const entitled = Boolean(entitlement?.active);
   const { buses } = useLive(token, routeCode, entitled && Boolean(routeCode));
   const alerts = useAsync(() => (entitled ? api('/api/notifications', { token }) : api('/api/notices')), [token, entitled]);
-  const { refreshing, onRefresh } = useRefresh(routes, route, alerts, refresh);
+  // The bell counts unread notifications: the same list and read marks as the Notifications screen.
+  const marks = useAsync(() => (entitled ? api(`/api/attendance/me?month=${thisMonth()}`, { token }) : Promise.resolve(null)), [token, entitled]);
+  const read = useAlertsRead(token);
+  usePolling(() => { alerts.reload(); marks.reload(); }, 60000);
+  const { refreshing, onRefresh } = useRefresh(routes, route, alerts, marks, refresh);
 
   // The 2 km alert: once per trip, when the bus first comes within range of the stop.
   const homeStop = route.data?.stops.find((st) => st.seq === user?.homeStopSeq);
@@ -402,7 +410,7 @@ export default function StudentHome({ navigation }) {
   const plan = leavePlan(eta, { walkMeters: walk });
   const first = user.name.replace(/^(Mr|Mrs|Ms)\.?\s*/i, '').split(' ')[0];
   const t = useT();
-  const unread = (alerts.data ?? []).length;
+  const unread = unreadCount(studentAlerts(alerts.data, marks.data?.records, METHOD_TEXT), read);
 
   const arm = async (on) => {
     setArmed(on);

@@ -7,6 +7,7 @@ import { useT } from '../../lib/i18n.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import { useLive } from '../../lib/useLive.js';
+import AlertsBell from '../../components/AlertsBell.jsx';
 import GreetHeader from '../../components/GreetHeader.jsx';
 import Icon from '../../components/Icon.jsx';
 import RouteMiniMap from '../../components/RouteMiniMap.jsx';
@@ -97,7 +98,7 @@ function Glance({ route, stopSeq, bus, eta, entitled, loading, month, day }) {
         icon="check"
         label={t('This month')}
         value={entitled ? (present == null ? '…' : `${present} ${t(present === 1 ? 'trip' : 'trips')}`) : '—'}
-        detail={entitled && month ? `${month.upPresent ?? 0} ${t('inbound')} · ${month.downPresent ?? 0} ${t('outbound')}` : 'Attendance'}
+        detail={entitled && month ? `${month.upPresent ?? 0} ${t('to college')} · ${month.downPresent ?? 0} ${t('from college')}` : 'Attendance'}
       />
       <GlanceCard
         href="#/settings"
@@ -398,7 +399,7 @@ export default function StudentHome() {
       <GreetHeader
         nameInTitle
         title={first}
-        right={<a className="bell" href="#/alerts" aria-label="Notifications"><Icon name="bell" size={20} /></a>}
+        right={<AlertsBell />}
         metas={<>
             <span className="greet-meta"><Icon name="pin" size={14} /> {stop ? `${stop.name} · Route ${route.data.code}` : route.data ? 'Choose your stop in Settings' : `Route ${user.homeRouteCode} · ${user.homeRouteName ?? ''}`}</span>
             <span className="greet-meta"><Icon name="clock" size={14} /> {longDate()}</span>

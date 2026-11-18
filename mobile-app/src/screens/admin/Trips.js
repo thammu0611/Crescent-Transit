@@ -19,7 +19,7 @@ import { C, F, R, shadow } from '../../theme.js';
 const TRIP_TONE = { active: 'live', scheduled: 'delayed', completed: 'offline', cancelled: 'danger' };
 const TRIP_TEXT = { active: 'Running', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
 const tripWhen = (t) => (t.status === 'scheduled' ? t.scheduled_for : t.started_at);
-const RUN = { UP: 'Inbound', DOWN: 'Outbound' };
+const RUN = { UP: 'To college', DOWN: 'From college' };
 
 /** Trip replay with a time scrubber, play/pause and 1x/4x/16x (doc B.8). */
 function Replay({ path }) {
@@ -254,7 +254,7 @@ function DriverTrips({ token, driver, onClose }) {
 
       <Row gap={8}>
         <Select style={{ flex: 1 }} label="Period" value={period} onChange={setPeriod} options={PERIODS} />
-        <Select style={{ flex: 1 }} label="Direction" value={run} onChange={setRun} options={[{ value: '', label: 'Both' }, { value: 'UP', label: 'Inbound' }, { value: 'DOWN', label: 'Outbound' }]} />
+        <Select style={{ flex: 1 }} label="Direction" value={run} onChange={setRun} options={[{ value: '', label: 'Both' }, { value: 'UP', label: 'To college' }, { value: 'DOWN', label: 'From college' }]} />
         <Select
           style={{ flex: 1 }}
           label="Status"
@@ -289,7 +289,6 @@ function DriversTab({ token, drivers, onOpen }) {
         <Stat icon="user" label="Drivers" value={list?.length} />
         <Stat icon="bus" label="On trip now" value={list ? sum((d) => (d.on_trip ? 1 : 0)) : null} tone="live" />
         <Stat icon="clock" label="Trips run" value={list ? sum((d) => d.trips_total ?? 0) : null} />
-        <Stat icon="alert" label="Without a bus" value={list ? sum((d) => (d.fleet_code ? 0 : 1)) : null} tone={list && sum((d) => (d.fleet_code ? 0 : 1)) ? 'delayed' : undefined} />
       </StatGrid>
       <Panel title="Drivers" icon="users">
         <SearchBox value={q} onChange={setQ} placeholder="Search driver, bus or route" />
@@ -322,13 +321,21 @@ function DriversTab({ token, drivers, onOpen }) {
 const STATUS_CHIPS = [['active', 'Running'], ['completed', 'Completed'], ['cancelled', 'Cancelled']];
 const isToday = (iso) => iso && new Date(iso).toDateString() === new Date().toDateString();
 
-export default function Trips() {
+export default function Trips({ route }) {
   const { token } = useSession();
   const tabSpace = useTabBarSpace();
   const [tab, setTab] = useState('trips');
   const [status, setStatus] = useState('');
   const [today, setToday] = useState(false);
   const [query, setQuery] = useState('');
+  // The dashboard opens this list: its running trips, or all of them.
+  useEffect(() => {
+    if (route?.params?.at == null) return;
+    setTab('trips');
+    setStatus(route.params.status ?? '');
+    setToday(false);
+    setQuery('');
+  }, [route?.params?.at, route?.params?.status]);
   const [picked, setPicked] = useState([]);
   const [ask, setAsk] = useState(null); // 'end' | 'cancel' for the selected trips
   const trips = useAsync(() => (tab !== 'drivers' ? api('/api/admin/trips', { token }) : Promise.resolve(null)), [tab, token]);
@@ -483,7 +490,7 @@ export default function Trips() {
             />
             <DateField label="When" mode="datetime" value={schedule.when} onChange={(v) => setSchedule((x) => ({ ...x, when: v }))} />
             <Txt bold>Direction</Txt>
-            <Segmented value={schedule.direction ?? ''} onChange={(v) => setSchedule((x) => ({ ...x, direction: v }))} options={[{ value: '', label: 'By time' }, { value: 'UP', label: 'Inbound' }, { value: 'DOWN', label: 'Outbound' }]} />
+            <Segmented value={schedule.direction ?? ''} onChange={(v) => setSchedule((x) => ({ ...x, direction: v }))} options={[{ value: '', label: 'By time' }, { value: 'UP', label: 'To college' }, { value: 'DOWN', label: 'From college' }]} />
             <ErrorText>{a.error}</ErrorText>
             <Button title="Schedule trip" icon="plus" busy={a.busy} onPress={scheduleTrip} />
           </View>

@@ -3,7 +3,7 @@
 // VerifyEmail page. Shown in place of the student tabs while it is required.
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Button, ErrorText, LinkButton, Notice, Panel, Screen, TextField, Txt } from '../../components/ui.js';
+import { Button, confirm as ask, ErrorText, LinkButton, Notice, Panel, Screen, TextField, Txt } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
 import { useSession } from '../../lib/session.js';
 
@@ -98,7 +98,7 @@ export default function VerifyEmail() {
               <LinkButton title="Change email" onPress={() => { setSent(null); setError(null); }} />
             </>
           )}
-          <LinkButton title="Sign out" icon="logout" danger onPress={signOut} />
+          <LinkButton title="Sign out" icon="logout" danger onPress={async () => (await ask('Are you sure you want to log out?', '', 'Yes, Log Out', true)) && signOut()} />
         </View>
       </Panel>
     </Screen>

@@ -220,14 +220,12 @@ function DriversTab({ drivers, onOpen }) {
   const needle = q.trim().toLowerCase();
   const shown = list?.filter((d) => !needle || [d.full_name, d.username, d.fleet_code, d.route_code, d.route_name].some((v) => v && String(v).toLowerCase().includes(needle)));
   const sum = (f) => (list ?? []).reduce((n, d) => n + f(d), 0);
-  const noBus = list ? sum((d) => (d.fleet_code ? 0 : 1)) : null;
   return (
     <>
-      <div className="kit-stats">
+      <div className="kit-stats three">
         <Stat icon="user" label="Drivers" value={list?.length} />
         <Stat icon="bus" label="On trip now" value={list ? sum((d) => (d.on_trip ? 1 : 0)) : null} tone="live" />
         <Stat icon="clock" label="Trips run" value={list ? sum((d) => d.trips_total ?? 0) : null} />
-        <Stat icon="alert" label="Without a bus" value={noBus} tone={noBus ? 'delayed' : ''} />
       </div>
       <Panel title="Drivers" icon="users" actions={<SearchBox value={q} onChange={setQ} placeholder="Search driver, bus or route" />}>
         <ErrorText>{drivers.error?.message}</ErrorText>
@@ -254,8 +252,10 @@ function DriversTab({ drivers, onOpen }) {
 
 export default function Trips() {
   const { token } = useSession();
-  const [tab, setTab] = useState('drivers');
-  const [filter, setFilter] = useState({ status: '', route: '', date: '' });
+  // Links such as #/trips?tab=trips&status=active (from the dashboard) open that list.
+  const linked = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
+  const [tab, setTab] = useState(() => (['drivers', 'trips', 'schedule'].includes(linked.get('tab')) ? linked.get('tab') : 'drivers'));
+  const [filter, setFilter] = useState(() => ({ status: linked.get('status') ?? '', route: '', date: '' }));
   const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v)).toString();
   const trips = useAsync(() => (tab === 'trips' ? api(`/api/admin/trips${q ? `?${q}` : ''}`, { token }) : Promise.resolve(null)), [tab, q, token]);
   const drivers = useAsync(() => api('/api/admin/drivers', { token }), [token]);

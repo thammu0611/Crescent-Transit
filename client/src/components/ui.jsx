@@ -84,13 +84,19 @@ export function Stat({ label, value, tone, hint, icon, color }) {
   // danger) moves to the first colour no earlier card in the row is using.
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || color || STATE_COLOUR[tone]) { if (el) el.dataset.c = own; return; }
-    const before = [];
-    for (let n = el.parentElement?.firstElementChild; n && n !== el; n = n.nextElementSibling) if (n.dataset?.c) before.push(n.dataset.c);
-    el.dataset.c = before.includes(own) ? SPARE_COLOURS.find((c) => !before.includes(c)) ?? own : own;
+    if (!el) return;
+    let next = own;
+    if (!color && !STATE_COLOUR[tone]) {
+      const before = [];
+      for (let n = el.parentElement?.firstElementChild; n && n !== el; n = n.nextElementSibling) if (n.dataset?.c) before.push(n.dataset.c);
+      next = before.includes(own) ? SPARE_COLOURS.find((c) => !before.includes(c)) ?? own : own;
+    }
+    // Written only when it changes (and not by React as well): rewriting it on every render
+    // restyled every card each time live data arrived.
+    if (el.dataset.c !== next) el.dataset.c = next;
   });
   return (
-    <div ref={ref} className={`stat ${tone ?? ''}${icon ? ' with-icon' : ''}`} data-c={own} title={hint}>
+    <div ref={ref} className={`stat ${tone ?? ''}${icon ? ' with-icon' : ''}`} title={hint}>
       {icon && <span className="stat-icon"><Icon name={icon} size={18} /></span>}
       <b>{value ?? '—'}</b>
       <span>{t(label)}</span>
@@ -190,6 +196,38 @@ export function Modal({ title, onClose, children, width = 440 }) {
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** A yes-or-no question in a dialog; the safe answer comes first and has the focus. */
+export function ConfirmDialog({ title, message, cancelLabel = 'Cancel', okLabel = 'OK', danger = false, onCancel, onOk }) {
+  const t = useT();
+  return (
+    <Modal title={t(title)} onClose={onCancel} width={420}>
+      {message && <p className="muted">{t(message)}</p>}
+      <div className="btn-row confirm-actions">
+        {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+        <button type="button" className="btn ghost" onClick={onCancel} autoFocus>{t(cancelLabel)}</button>
+        <button type="button" className={`btn ${danger ? 'danger' : 'dark'}`} onClick={onOk}>{t(okLabel)}</button>
+      </div>
+    </Modal>
+  );
+}
+
+/**
+ * "Are you sure you want to log out?" Cancel keeps the person signed in; "Yes, Log Out"
+ * ends the session and goes back to the first screen.
+ */
+export function SignOutDialog({ onClose, signOut }) {
+  return (
+    <ConfirmDialog
+      title="Are you sure you want to log out?"
+      cancelLabel="Cancel"
+      okLabel="Yes, Log Out"
+      danger
+      onCancel={onClose}
+      onOk={() => { onClose(); signOut(); window.location.hash = '#/'; }}
+    />
   );
 }
 

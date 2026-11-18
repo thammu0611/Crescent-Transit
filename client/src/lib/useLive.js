@@ -20,8 +20,17 @@ export function useLive(token, routeCode, enabled = true) {
     const subscribe = () => socket.emit('subscribe', { route: routeCode || null });
     const onSnapshot = (list) => { setReady(true); setDenied(null); setById(Object.fromEntries(list.map((b) => [b.busId, b]))); };
     const onDenied = ({ code }) => { setReady(true); setDenied(code); setById({}); };
-    const onLocation = (b) => setById((prev) => (!routeCode || b.routeCode === routeCode ? { ...prev, [b.busId]: b } : prev));
-    const onEnded = ({ busId }) => setById((prev) => { const n = { ...prev }; delete n[busId]; return n; });
+    // Positions are gathered and applied together at most once a second: with a whole fleet
+    // reporting, one redraw per position would keep the page busy and make scrolling stutter.
+    let pending = {};
+    let flush = null;
+    const apply = () => { flush = null; const batch = pending; pending = {}; setById((prev) => ({ ...prev, ...batch })); };
+    const onLocation = (b) => {
+      if (routeCode && b.routeCode !== routeCode) return;
+      pending[b.busId] = b;
+      flush ??= setTimeout(apply, 1000);
+    };
+    const onEnded = ({ busId }) => { delete pending[busId]; setById((prev) => { const n = { ...prev }; delete n[busId]; return n; }); };
     socket.on('connect', subscribe);
     socket.on('snapshot', onSnapshot);
     socket.on('live:denied', onDenied);
@@ -29,6 +38,7 @@ export function useLive(token, routeCode, enabled = true) {
     socket.on('bus:trip-ended', onEnded);
     if (socket.connected) subscribe();
     return () => {
+      clearTimeout(flush);
       socket.off('connect', subscribe);
       socket.off('snapshot', onSnapshot);
       socket.off('live:denied', onDenied);

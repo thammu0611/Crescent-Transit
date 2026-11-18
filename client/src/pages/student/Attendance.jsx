@@ -7,7 +7,7 @@ import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
 import { Badge, DirectionBadge, Empty, ErrorText, Field, Modal, Notice } from '../../components/ui.jsx';
-import { Chips } from '../../components/adminkit.jsx';
+import { Chips, DetailView } from '../../components/adminkit.jsx';
 import RateTrip from '../../components/RateTrip.jsx';
 import { useT } from '../../lib/i18n.js';
 
@@ -220,32 +220,49 @@ function CheckIn({ token, user, onDone, mode, setMode }) {
   );
 }
 
-/** A ring with the share of trips counted present. */
+/** A ring with the share of trips counted present, on the navy summary card (as on the phone). */
 function Ring({ pct }) {
-  const r = 34;
+  const r = 42;
   const c = 2 * Math.PI * r;
   return (
-    <svg className="att-ring" viewBox="0 0 84 84" role="img" aria-label={`${pct}% present`}>
-      <circle cx="42" cy="42" r={r} className="track" />
-      <circle cx="42" cy="42" r={r} className="fill" strokeDasharray={`${(pct / 100) * c} ${c}`} transform="rotate(-90 42 42)" />
-      <text x="42" y="42" className="pct">{pct}%</text>
-      <text x="42" y="56" className="lbl">present</text>
+    <svg className="att-sum-ring" viewBox="0 0 96 96" role="img" aria-label={`${pct}% present`}>
+      <circle cx="48" cy="48" r={r} className="track" />
+      {pct > 0 && <circle cx="48" cy="48" r={r} className="fill" strokeDasharray={`${(pct / 100) * c} ${c}`} transform="rotate(-90 48 48)" />}
+      <text x="48" y="45" className="pct">{pct}%</text>
+      <text x="48" y="62" className="lbl">present</text>
     </svg>
   );
 }
 
-function Bar({ k, done, total }) {
+/** One direction's month: trips present out of trips taken, with a bar. */
+function DirTile({ name, done, total }) {
   return (
-    <div className="att-bar">
-      <span><b>{k}</b><em>{done} of {total}</em></span>
+    <div className="att-dir">
+      <small>{name}</small>
+      <b className="tabular">{done}<em>{` of ${total}`}</em></b>
       <i><s style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></i>
+    </div>
+  );
+}
+
+/** Today's morning or evening trip: present (bus and time), waiting for an answer, or not yet. */
+function TodayRow({ dir, rec }) {
+  const present = Boolean(rec?.present);
+  const tone = present ? 'live' : rec ? 'delayed' : 'offline';
+  return (
+    <div className={`att-today-row ${tone}`}>
+      <span className="att-today-icon"><Icon name={present ? 'check' : rec ? 'clock' : 'bus'} size={18} /></span>
+      <span className="att-today-text">
+        <b>{dir === 'DOWN' ? 'Evening · From college' : 'Morning · To college'}</b>
+        <small>{present ? `${busName(rec.fleet_code)} · boarded ${time(rec.boarded_at)}` : rec ? STATUS_TEXT[rec.status] ?? 'Waiting' : 'Not checked in yet'}</small>
+      </span>
+      <Badge tone={tone}>{present ? 'Present' : rec ? 'Pending' : 'Waiting'}</Badge>
     </div>
   );
 }
 
 const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
 const busName = (fleet) => String(fleet ?? '').replace('BSACIST-', 'Bus ');
-const tripName = (dir) => (dir === 'DOWN' ? 'Evening trip' : 'Morning trip');
 
 function DisputeDialog({ token, record, onClose, onDone }) {
   const [reason, setReason] = useState('');
@@ -288,6 +305,7 @@ export default function StudentAttendance() {
   const [run, setRun] = useState('');
   const [mode, setMode] = useState('qr');
   const [checked, setChecked] = useState(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const t = useT();
   const [rating, setRating] = useState(null);
   const rated = useAsync(() => (entitlement?.active ? api('/api/feedback/me', { token }) : Promise.resolve([])), [token, entitlement?.active]);
@@ -297,10 +315,19 @@ export default function StudentAttendance() {
   const records = all.filter((r) => !run || r.direction === run);
   const up = all.filter((r) => r.direction === 'UP');
   const down = all.filter((r) => r.direction === 'DOWN');
-  const pct = all.length ? Math.round((all.filter((r) => r.present).length / all.length) * 100) : 0;
+  const present = all.filter((r) => r.present).length;
+  const pct = all.length ? Math.round((present / all.length) * 100) : 0;
   const disputes = all.filter((r) => r.dispute && !r.dispute.resolution).length;
-  const dir = new Date().getHours() >= 13 ? 'DOWN' : 'UP';
-  const today = month === thisMonth() ? all.find((r) => r.present && r.direction === dir && sameDay(r.boarded_at, Date.now())) : null;
+  // Today's two trips always come from this month, whichever month the history shows.
+  const current = useAsync(() => (entitlement?.active && month !== thisMonth() ? api(`/api/attendance/me?month=${thisMonth()}`, { token }) : Promise.resolve(null)), [token, month, entitlement?.active]);
+  const todayAll = month === thisMonth() ? all : current.data?.records ?? [];
+  const todayOf = (d) => {
+    const mine = todayAll.filter((r) => r.direction === d && sameDay(r.boarded_at, Date.now()));
+    return mine.find((r) => r.present) ?? mine[0] ?? null;
+  };
+  const monthName = new Date(`${month}-01T12:00:00`).toLocaleDateString('en-IN', { month: 'long', year: month.slice(0, 4) === thisMonth().slice(0, 4) ? undefined : 'numeric' });
+  const todayName = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+  const toHistory = () => setHistoryOpen(true);
   const shown = showAll ? records : records.slice(0, 5);
 
   useEffect(() => {
@@ -313,67 +340,87 @@ export default function StudentAttendance() {
     <main className="page app-page att">
       <header className="att-head">
         <h1>{t('Attendance')}</h1>
-        <a className="att-history-link" href="#att-history" onClick={(e) => { e.preventDefault(); document.getElementById('att-history')?.scrollIntoView({ behavior: 'smooth' }); }}>
-          <Icon name="calendar" size={18} /> {t('History')}
-        </a>
+        {/* The full record opens from this small button, as on the phone. */}
+        <button type="button" className="att-history-btn" onClick={toHistory}>
+          <Icon name="calendar" size={16} /> {t('History')}
+        </button>
       </header>
 
       <div className="att-grid">
         <div className="att-left">
-          {/* Boarding check: today's state, as on the phone. */}
-          <section className="att-hero" aria-live="polite">
-            {checked ? (
-              <div className="att-done">
-                <span className="att-done-icon"><Icon name="tick" size={28} /></span>
-                <span><b>{checked.already ? 'Already checked in' : "You're checked in"}</b><small>{checked.bus} · {time(checked.at)} · {checked.how}</small></span>
+          {/* The month at a glance, as on the phone. */}
+          {entitlement?.active ? (
+            <section className="att-sum">
+              <div className="att-sum-top">
+                <div className="att-sum-text">
+                  <small>{monthName.toUpperCase()}</small>
+                  <b className="tabular">{record.data ? present : '—'}<em>{record.data ? ` of ${all.length} trips` : ''}</em></b>
+                  <span>{t('counted present')} {month === thisMonth() ? t('this month') : ''}</span>
+                </div>
+                <Ring pct={pct} />
               </div>
-            ) : today ? (
-              <>
-                <div className="att-hero-top"><span>Boarding check · {tripName(dir)}</span><Badge tone="live">Present</Badge></div>
-                <h2>Already checked in</h2>
-                <p>{`You checked in on ${busName(today.fleet_code)} at ${time(today.boarded_at)}. There's nothing else to do.`}</p>
-              </>
-            ) : (
-              <>
-                <div className="att-hero-top"><span>Boarding check · {tripName(dir)}</span><Badge tone="offline">Waiting</Badge></div>
-                <h2>No check-in yet</h2>
-                <p>When your bus reaches your stop, we'll ask if you're on board. Or scan the code on the driver's phone.</p>
-              </>
+              <div className="att-sum-dirs">
+                <DirTile name={t('To college')} done={up.filter((r) => r.present).length} total={up.length} />
+                <DirTile name={t('From college')} done={down.filter((r) => r.present).length} total={down.length} />
+              </div>
+              {disputes > 0 && (
+                <button type="button" className="att-sum-disputes" onClick={toHistory}>
+                  <Icon name="clock" size={15} /> <span>{disputes} dispute{disputes === 1 ? '' : 's'} under review</span> <Icon name="arrow" size={15} />
+                </button>
+              )}
+            </section>
+          ) : (
+            <section className="panel att-card att-locked">
+              <span className="att-today-icon"><Icon name="lock" size={20} /></span>
+              <b>Your attendance record is part of the subscription</b>
+              <a className="btn primary inline" href="#/pay">Subscribe <Icon name="arrow" size={15} /></a>
+            </section>
+          )}
+
+          {/* Today: both trips of the day. */}
+          <section className="panel att-card" aria-live="polite">
+            <div className="att-card-head"><h2>{t('Today')}</h2><small>{todayName}</small></div>
+            {checked && (
+              <div className="att-checked" role="status">
+                <span className="att-checked-icon"><Icon name="check" size={20} /></span>
+                <span><b>{checked.already ? 'Already checked in' : "You're checked in"}</b><small>{checked.bus} · {time(checked.at)} · {checked.how}</small></span>
+                <button type="button" className="att-checked-close" aria-label="Close" onClick={() => setChecked(null)}><Icon name="x" size={16} /></button>
+              </div>
             )}
+            <div className="att-today-rows">
+              <TodayRow dir="UP" rec={todayOf('UP')} />
+              <TodayRow dir="DOWN" rec={todayOf('DOWN')} />
+            </div>
           </section>
 
-          <div className="att-tabs" role="tablist" aria-label="Ways to check in">
-            {[['gps', 'Auto (GPS)', 'locate'], ['qr', 'Scan QR', 'qr'], ['code', 'Enter code', 'keypad']].map(([k, name, icon]) => (
-              <button key={k} type="button" role="tab" aria-selected={mode === k} className={mode === k ? 'on' : ''} onClick={() => setMode(k)}>
-                <Icon name={icon} size={16} /> {t(name)}
-              </button>
-            ))}
-          </div>
-
-          {mode === 'gps'
-            ? <SamplingStatus token={token} user={user} />
-            : <CheckIn token={token} user={user} mode={mode} setMode={setMode} onDone={(c) => { setChecked(c); record.reload(); }} />}
-
-          {entitlement?.active ? (
-            <section className="att-month">
-              <Ring pct={pct} />
-              <div className="att-bars">
-                <Bar k={t('To campus')} done={up.filter((r) => r.present).length} total={up.length} />
-                <Bar k={t('From campus')} done={down.filter((r) => r.present).length} total={down.length} />
-                {disputes > 0 && <span className="att-disputes"><Icon name="clock" size={15} /> {disputes} dispute{disputes === 1 ? '' : 's'} under review</span>}
-              </div>
-            </section>
-          ) : null}
         </div>
 
+        <div className="att-left">
+          {/* Check in yourself, if the bus did not ask. */}
+          <section className="panel att-card">
+            <div className="att-card-head"><span><h2>{t('Check in')}</h2><small>If the bus didn't ask you, use one of these.</small></span></div>
+            <div className="att-tabs" role="tablist" aria-label="Ways to check in">
+              {[['qr', 'Scan QR', 'qr'], ['code', 'Code', 'keypad'], ['gps', 'Automatic', 'locate']].map(([k, name, icon]) => (
+                <button key={k} type="button" role="tab" aria-selected={mode === k} className={mode === k ? 'on' : ''} onClick={() => setMode(k)}>
+                  <Icon name={icon} size={16} /> {t(name)}
+                </button>
+              ))}
+            </div>
+            {mode === 'gps'
+              ? <SamplingStatus token={token} user={user} />
+              : <CheckIn token={token} user={user} mode={mode} setMode={setMode} onDone={(c) => { setChecked(c); record.reload(); }} />}
+          </section>
+        </div>
+      </div>
+
+      {historyOpen && (
+      <DetailView
+        title={t('History')}
+        subtitle={record.data ? `${record.data.upPresent} ${t('to college')} · ${record.data.downPresent} ${t('from college')} ${t('present')}` : t('My record')}
+        onClose={() => { setHistoryOpen(false); setMonth(thisMonth()); }}
+        actions={<input className="att-month-input" type="month" value={month} onChange={(e) => setMonth(e.target.value)} aria-label="Month" />}
+      >
         <section className="att-history" id="att-history">
-          <div className="att-history-head">
-            <span className="att-history-title">
-              <b>{t('History')}</b>
-              <small>{record.data ? `${record.data.upPresent} ${t('inbound')} · ${record.data.downPresent} ${t('outbound')} ${t('present')}` : t('My record')}</small>
-            </span>
-            <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} aria-label="Month" />
-          </div>
           {!entitlement?.active ? <Empty>Your attendance record is part of the subscription. <a href="#/pay">Subscribe</a>.</Empty> : (
             <>
               <ErrorText>{record.error?.message}</ErrorText>
@@ -382,8 +429,8 @@ export default function StudentAttendance() {
                 onChange={setRun}
                 options={[
                   { value: '', label: t('Both directions'), count: all.length },
-                  { value: 'UP', label: t('To campus'), count: up.length },
-                  { value: 'DOWN', label: t('From campus'), count: down.length },
+                  { value: 'UP', label: t('To college'), count: up.length },
+                  { value: 'DOWN', label: t('From college'), count: down.length },
                 ]}
               />
               {record.data == null ? <div className="skeleton-block" /> : records.length === 0 ? <Empty>No trips recorded this month.</Empty> : (
@@ -421,7 +468,8 @@ export default function StudentAttendance() {
             </>
           )}
         </section>
-      </div>
+      </DetailView>
+      )}
       {rating && <RateTrip trip={rating} onClose={() => setRating(null)} onDone={() => { setRating(null); rated.reload(); }} />}
       {disputing && <DisputeDialog token={token} record={disputing} onClose={() => setDisputing(null)} onDone={() => { setDisputing(null); record.reload(); }} />}
     </main>

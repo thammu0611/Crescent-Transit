@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { api } from '../lib/api.js';
 import { useSession } from '../lib/session.js';
-import { Button, ErrorText, LinkButton, Notice, Panel, PillIconButton, Screen, Sheet, TextField, Txt } from './ui.js';
+import { Button, confirm as ask, ErrorText, LinkButton, Notice, Panel, PillIconButton, Screen, Sheet, TextField, Txt } from './ui.js';
 
 const EMPTY = { current: '', next: '', confirm: '' };
 
@@ -113,7 +113,7 @@ export function ChoosePassword() {
           <TextField label="Confirm new password" icon="lock" value={f.confirm} onChangeText={set('confirm')} autoComplete="new-password" textContentType="newPassword" {...field} onSubmitEditing={submit} />
           <ErrorText>{error}</ErrorText>
           <Button title="Save password" icon="lock" busy={busy} onPress={submit} />
-          <LinkButton title="Sign out" icon="logout" danger onPress={signOut} />
+          <LinkButton title="Sign out" icon="logout" danger onPress={async () => (await ask('Are you sure you want to log out?', '', 'Yes, Log Out', true)) && signOut()} />
         </View>
       </Panel>
     </Screen>

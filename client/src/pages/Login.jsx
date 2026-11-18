@@ -4,19 +4,35 @@ import { api } from '../lib/api.js';
 import { useServerInfo } from '../lib/serverInfo.js';
 import { useSession } from '../lib/session.jsx';
 import Icon from '../components/Icon.jsx';
+import BrandMark from '../components/BrandMark.jsx';
 import { ErrorText, Field, PasswordInput, Segmented } from '../components/ui.jsx';
+
+// #/login opens Sign in and #/register opens Sign up: the first screen's two buttons.
+const wantsRegister = () => window.location.hash.startsWith('#/register');
 
 /** Sign in for every role; self-registration for students. */
 export default function Login() {
   const { signIn } = useSession();
   const info = useServerInfo();
-  const [mode, setMode] = useState('signin');
+  const [mode, setMode] = useState(() => (wantsRegister() ? 'register' : 'signin'));
   const [routes, setRoutes] = useState([]);
   const [stops, setStops] = useState([]);
   const [form, setForm] = useState({ username: '', password: '', fullName: '', email: '', registerNo: '', department: '', routeCode: '', stopSeq: '' });
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  // Switching between Sign in and Sign up keeps this form on screen (no reload).
+  useEffect(() => {
+    const onHash = () => setMode((m) => (wantsRegister() ? (m === 'register' || m === 'parent' ? m : 'register') : (m === 'signin' || m === 'forgot' ? m : 'signin')));
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  const choose = (m) => {
+    setError(null);
+    setMode(m);
+    const hash = m === 'signin' ? '#/login' : '#/register';
+    if (window.location.hash !== hash) window.location.hash = hash;
+  };
 
   useEffect(() => {
     if (mode === 'register' && !routes.length) api('/api/routes').then(setRoutes).catch(() => {});
@@ -50,7 +66,7 @@ export default function Login() {
   return (
     <main className="auth">
       <aside className="auth-side">
-        <span className="auth-logo"><Icon name="bus" size={24} /></span>
+        <span className="auth-logo brand-logo"><BrandMark size={52} /></span>
         <h1>One sign-in for every seat on the fleet.</h1>
         <p>Live buses, schedules, alerts and attendance for the BSACIST transport fleet.</p>
         <ul className="auth-roles">
@@ -66,14 +82,13 @@ export default function Login() {
             </li>
           ))}
         </ul>
-        <p className="auth-note"><Icon name="shield" size={15} /> Your location is compared with the bus and discarded. It is never stored.</p>
       </aside>
       <section className="auth-main">
       {mode === 'forgot' ? <ForgotPassword initial={form.username} onBack={() => setMode('signin')} /> : (
       <form className={`auth-card${mode !== 'signin' ? ' wide' : ''}`} onSubmit={submit}>
         <span className="hero-badge"><Icon name={mode === 'signin' ? 'user' : 'plus'} size={24} /></span>
         <h2 className="auth-title">{mode === 'signin' ? 'Welcome back' : 'Create your account'}</h2>
-        <Segmented value={mode} onChange={setMode} options={[{ value: 'signin', label: 'Sign in' }, { value: 'register', label: 'New student' }, { value: 'parent', label: 'Parent' }]} />
+        <Segmented value={mode} onChange={choose} options={[{ value: 'signin', label: 'Sign in' }, { value: 'register', label: 'Sign up' }, { value: 'parent', label: 'Parent' }]} />
         {mode === 'signin' ? (
           <>
             <p className="muted">Students, drivers and the transport office all sign in here.</p>

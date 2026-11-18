@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // The app's backdrop: a quiet transit map in the app's own colours: a few
 // winding bus routes with their stops (one amber "your
@@ -21,33 +21,63 @@ const STOPS = [
   [318, 300], [338, 488], [1222, 228], [1170, 540],
 ];
 
-// A bus seen from above: body, windscreen and roof, about 30 x 16 px.
-function Bus({ route, dur, begin }) {
+// A bus seen from above: body, windscreen and roof, about 30 x 16 px. Moving, it glides along
+// its route; still, it is parked at a point part-way along it (`at`, 0 to 1).
+function Bus({ route, dur, begin, moving, at }) {
+  const [place, setPlace] = useState(null);
+  useEffect(() => {
+    if (moving) return;
+    const path = document.getElementById(`route-bg-${route}`);
+    if (!path?.getTotalLength) return;
+    const len = path.getTotalLength();
+    const a = path.getPointAtLength(len * at);
+    const b = path.getPointAtLength(Math.min(len, len * at + 4));
+    setPlace({ x: a.x, y: a.y, deg: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI });
+  }, [moving, route, at]);
+  if (!moving && !place) return null;
   return (
-    <g className="route-bg-bus">
+    <g className="route-bg-bus" transform={moving ? undefined : `translate(${place.x} ${place.y}) rotate(${place.deg})`}>
       <rect x="-15" y="-8" width="30" height="16" rx="5" className="body" />
       <rect x="6" y="-6" width="6" height="12" rx="2" className="glass" />
       <rect x="-11" y="-5" width="14" height="10" rx="2" className="roof" />
-      <animateMotion dur={dur} begin={begin} repeatCount="indefinite" rotate="auto">
-        <mpath href={`#route-bg-${route}`} />
-      </animateMotion>
+      {moving && (
+        <animateMotion dur={dur} begin={begin} repeatCount="indefinite" rotate="auto">
+          <mpath href={`#route-bg-${route}`} />
+        </animateMotion>
+      )}
     </g>
   );
 }
 
+// The buses only move on a computer with power to spare: every frame of their motion repaints the
+// whole backdrop under the glass panels, which makes phones and modest laptops stutter.
+const canAnimate = () => {
+  const m = window.matchMedia;
+  if (!m || m('(prefers-reduced-motion: reduce)').matches) return false;
+  return m('(pointer: fine) and (min-width: 1100px)').matches && (navigator.hardwareConcurrency ?? 4) >= 8;
+};
+
 export default function RouteBackdrop() {
-  const [still, setStill] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
+  const [moving, setMoving] = useState(canAnimate);
+  const svg = useRef(null);
   useEffect(() => {
-    const q = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    if (!q) return undefined;
-    const on = () => setStill(q.matches);
-    q.addEventListener('change', on);
-    return () => q.removeEventListener('change', on);
+    const m = window.matchMedia;
+    if (!m) return undefined;
+    const queries = [m('(prefers-reduced-motion: reduce)'), m('(pointer: fine) and (min-width: 1100px)')];
+    const on = () => setMoving(canAnimate());
+    queries.forEach((q) => q.addEventListener('change', on));
+    return () => queries.forEach((q) => q.removeEventListener('change', on));
+  }, []);
+  // A hidden tab stops the motion altogether.
+  useEffect(() => {
+    const on = () => { const el = svg.current; if (!el?.pauseAnimations) return; if (document.hidden) el.pauseAnimations(); else el.unpauseAnimations(); };
+    document.addEventListener('visibilitychange', on);
+    return () => document.removeEventListener('visibilitychange', on);
   }, []);
 
   return (
     <div className="route-bg" aria-hidden="true">
-      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+      <svg ref={svg} viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
         {ROUTES.map((r) => (
           <g key={r.id} className={`route-bg-line ${r.tone}`}>
             <path id={`route-bg-${r.id}`} d={r.d} className="casing" />
@@ -60,8 +90,8 @@ export default function RouteBackdrop() {
             <circle cx={x} cy={y} r={kind ? 5.5 : 4.5} className="dot" />
           </g>
         ))}
-        {!still && <Bus route="r1" dur="46s" begin="0s" />}
-        {!still && <Bus route="r2" dur="58s" begin="-20s" />}
+        <Bus route="r1" dur="46s" begin="0s" moving={moving} at={0.38} />
+        <Bus route="r2" dur="58s" begin="-20s" moving={moving} at={0.62} />
       </svg>
     </div>
   );

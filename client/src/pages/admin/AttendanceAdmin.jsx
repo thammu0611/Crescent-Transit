@@ -10,6 +10,8 @@ import { Badge, Dropdown, Empty, ErrorText, Field, Modal, Notice, Page, Panel, S
 
 const DAY_TONE = { PRESENT: 'live', PARTIAL: 'delayed', ABSENT: 'danger', PENDING: 'delayed' };
 const DAY_TEXT = { PRESENT: 'Present', PARTIAL: 'One way only', ABSENT: 'Absent', PENDING: 'Pending review' };
+// What the review queue holds, in plain words.
+const REVIEW_TEXT = { DISPUTED: 'Disputed by student', PROVISIONAL: 'Not confirmed' };
 const RECORD_TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISIONAL: 'delayed', PROMPTED: 'delayed', DISPUTED: 'delayed', ADJUSTED: 'info', REJECTED: 'offline', VOID: 'danger' };
 const RECORD_TEXT = { ...STATUS_TEXT, REJECTED: 'Said No', PROMPTED: 'Awaiting answer' };
 
@@ -167,8 +169,8 @@ function StudentHistory({ token, student: initial, onClose, onUnbind }) {
         <div className="kit-divider" />
         <div className="kit-figures">
           <Figure value={sm ? (sm.attendancePct == null ? '—' : `${sm.attendancePct}%`) : '…'} label="Attendance" />
-          <Figure value={sm ? `${sm.up.present}/${sm.up.present + sm.up.absent}` : '…'} label="Inbound trips" />
-          <Figure value={sm ? `${sm.down.present}/${sm.down.present + sm.down.absent}` : '…'} label="Outbound trips" />
+          <Figure value={sm ? `${sm.up.present}/${sm.up.present + sm.up.absent}` : '…'} label="To college" />
+          <Figure value={sm ? `${sm.down.present}/${sm.down.present + sm.down.absent}` : '…'} label="From college" />
           <Figure value={sm ? sm.up.absent + sm.down.absent : '…'} label="Trips missed" />
         </div>
         {sm?.lastBoardedAt && <p className="muted" style={{ margin: 0 }}>Last boarded {dateTime(sm.lastBoardedAt)}</p>}
@@ -199,8 +201,8 @@ function StudentHistory({ token, student: initial, onClose, onUnbind }) {
         <div className="att-register">
           <div className="att-head">
             <span>Date</span>
-            <span>Inbound<i> · To college</i></span>
-            <span>Outbound<i> · From college</i></span>
+            <span>To college</span>
+            <span>From college</span>
             <span />
           </div>
           {shown.map((d) => (
@@ -343,7 +345,7 @@ export default function AttendanceAdmin() {
   return (
     <Page eyebrow="Transport office" title="Attendance" subtitle="Pick a bus to see its students and each student's day-by-day record. Registers only; never a student's location." wide>
       <div className="kit-stack">
-        <Segmented value={tab} onChange={setTab} options={[{ value: 'buses', label: 'By bus' }, { value: 'review', label: `Review${queue.data?.length ? ` (${queue.data.length})` : ''}` }, { value: 'tools', label: 'Tools' }]} />
+        <Segmented value={tab} onChange={setTab} options={[{ value: 'buses', label: 'By bus' }, { value: 'review', label: `Review${queue.data?.length ? ` (${queue.data.length})` : ''}` }, { value: 'tools', label: 'Students' }]} />
         <Notice>{a.message}</Notice>
         <ErrorText>{a.error}</ErrorText>
 
@@ -357,7 +359,7 @@ export default function AttendanceAdmin() {
                 rows={queue.data}
                 rowKey={(r) => r.attendance_id}
                 columns={[
-                  { key: 'status', label: 'Type', render: (r) => <Badge tone={r.status === 'DISPUTED' ? 'delayed' : 'offline'}>{r.status}</Badge> },
+                  { key: 'status', label: 'Type', render: (r) => <Badge tone={r.status === 'DISPUTED' ? 'delayed' : 'offline'}>{REVIEW_TEXT[r.status] ?? r.status}</Badge> },
                   { key: 'full_name', label: 'Student', render: (r) => `${r.full_name} (${r.username})` },
                   { key: 'bus', label: 'Bus / trip', render: (r) => `${r.fleet_code} · #${r.trip_id}` },
                   { key: 'boarded_at', label: 'Boarded', render: (r) => dateTime(r.boarded_at) },
@@ -388,7 +390,7 @@ export default function AttendanceAdmin() {
             <div className="col">
               <Panel title="Correct a record" icon="edit">
                 <p className="muted">Mark a student present or absent on a trip, with a reason. Recorded as a manual override.</p>
-                <form onSubmit={(e) => { e.preventDefault(); a.run(() => api('/api/attendance/manual', { token, body: { ...manual, tripId: Number(manual.tripId) } }), 'Saved.'); }}>
+                <form onSubmit={(e) => { e.preventDefault(); a.run(() => api('/api/attendance/manual', { token, body: { ...manual, tripId: Number(manual.tripId) } }), `Saved: ${manual.username} marked ${manual.status === 'PRESENT' ? 'present' : 'absent'} on trip #${manual.tripId}.`).then(queue.reload); }}>
                   <div className="grid2">
                     <Field label="Trip #"><input value={manual.tripId} onChange={(e) => setManual((m) => ({ ...m, tripId: e.target.value }))} inputMode="numeric" required /></Field>
                     <Field label="Username"><input value={manual.username} onChange={(e) => setManual((m) => ({ ...m, username: e.target.value }))} required /></Field>
@@ -399,13 +401,6 @@ export default function AttendanceAdmin() {
                   <Field label="Reason"><input value={manual.reason} onChange={(e) => setManual((m) => ({ ...m, reason: e.target.value }))} required minLength={3} /></Field>
                   <button className="btn primary" disabled={a.busy}>Save</button>
                 </form>
-              </Panel>
-              <Panel title="Scheduled jobs" icon="clock">
-                <p className="muted">Run now instead of waiting: prompt timeouts (every 15 s) and the nightly 23:30 lock and auto-confirm.</p>
-                <div className="btn-row">
-                  <button className="btn ghost" onClick={() => a.run(() => api('/api/admin/jobs/tick', { token, method: 'POST' }), (r) => `Timeouts: ${JSON.stringify(r)}`).then(queue.reload)}>Run timeouts</button>
-                  <button className="btn ghost" onClick={() => a.run(() => api('/api/admin/jobs/nightly', { token, method: 'POST' }), (r) => `Nightly: ${JSON.stringify(r.attendance)}`).then(queue.reload)}>Run nightly</button>
-                </div>
               </Panel>
             </div>
           </div>

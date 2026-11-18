@@ -14,6 +14,8 @@ import { C, F, G, shadow } from '../../theme.js';
 
 const DAY_TONE = { PRESENT: 'live', PARTIAL: 'delayed', ABSENT: 'danger', PENDING: 'delayed' };
 const DAY_TEXT = { PRESENT: 'Present', PARTIAL: 'One way only', ABSENT: 'Absent', PENDING: 'Pending review' };
+// What the review queue holds, in plain words.
+const REVIEW_TEXT = { DISPUTED: 'Disputed by student', PROVISIONAL: 'Not confirmed' };
 const RECORD_TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISIONAL: 'delayed', PROMPTED: 'delayed', DISPUTED: 'delayed', ADJUSTED: 'info', REJECTED: 'offline', VOID: 'danger' };
 const RECORD_TEXT = { ...STATUS_TEXT, REJECTED: 'Said No', PROMPTED: 'Awaiting answer' };
 
@@ -181,8 +183,8 @@ function StudentHistory({ token, student: initial, onClose, onUnbind }) {
         <View style={{ height: 1, backgroundColor: C.line2 }} />
         <Row>
           <Figure value={sm ? (sm.attendancePct == null ? '—' : `${sm.attendancePct}%`) : '…'} label="Attendance" />
-          <Figure value={sm ? `${sm.up.present}/${sm.up.present + sm.up.absent}` : '…'} label="Inbound trips" />
-          <Figure value={sm ? `${sm.down.present}/${sm.down.present + sm.down.absent}` : '…'} label="Outbound trips" />
+          <Figure value={sm ? `${sm.up.present}/${sm.up.present + sm.up.absent}` : '…'} label="To college" />
+          <Figure value={sm ? `${sm.down.present}/${sm.down.present + sm.down.absent}` : '…'} label="From college" />
           <Figure value={sm ? sm.up.absent + sm.down.absent : '…'} label="Missed" />
         </Row>
         {sm?.lastBoardedAt ? <Txt small muted>Last boarded {dateTime(sm.lastBoardedAt)}</Txt> : null}
@@ -190,7 +192,7 @@ function StudentHistory({ token, student: initial, onClose, onUnbind }) {
 
       <Row gap={8}>
         <Select style={{ flex: 1 }} label="Period" value={period} onChange={setPeriod} options={PERIODS} />
-        <Select style={{ flex: 1 }} label="Direction" value={run} onChange={chooseRun} options={[{ value: '', label: 'Both' }, { value: 'up', label: 'Inbound' }, { value: 'down', label: 'Outbound' }]} />
+        <Select style={{ flex: 1 }} label="Direction" value={run} onChange={chooseRun} options={[{ value: '', label: 'Both' }, { value: 'up', label: 'To college' }, { value: 'down', label: 'From college' }]} />
         <Select
           style={{ flex: 1 }}
           label="Status"
@@ -207,8 +209,8 @@ function StudentHistory({ token, student: initial, onClose, onUnbind }) {
         <View style={{ backgroundColor: C.glass, borderRadius: 16, borderWidth: 1, borderColor: C.glassEdge, overflow: 'hidden' }}>
           <Row gap={8} style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
             <Txt small muted style={{ flex: 1 }}>Date</Txt>
-            <Txt small muted style={{ width: 92 }}>Inbound</Txt>
-            <Txt small muted style={{ width: 92 }}>Outbound</Txt>
+            <Txt small muted style={{ width: 92 }}>To college</Txt>
+            <Txt small muted style={{ width: 92 }}>From college</Txt>
           </Row>
           {shown.map((d) => (
             <Pressable key={d.date} accessibilityRole="button" onPress={() => setOpenDay(d)} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.line2 }, pressed && { opacity: 0.7 }]}>
@@ -372,13 +374,13 @@ export default function AttendanceAdmin() {
 
   const saveManual = () => {
     if (!/^\d+$/.test(manual.tripId) || !manual.username.trim() || manual.reason.trim().length < 3) return a.setError('Trip number, username and a reason (3+ characters) are required.');
-    a.run(() => api('/api/attendance/manual', { token, body: { ...manual, tripId: Number(manual.tripId) } }), 'Saved.');
+    a.run(() => api('/api/attendance/manual', { token, body: { ...manual, tripId: Number(manual.tripId) } }), `Saved: ${manual.username} marked ${manual.status === 'PRESENT' ? 'present' : 'absent'} on trip #${manual.tripId}.`).then(queue.reload);
   };
 
   return (
     <Screen refreshing={refreshing} onRefresh={onRefresh}>
       <PageHead icon="check" colors={G.emerald} eyebrow="Transport office" title="Attendance" subtitle="Pick a bus to see its students and each student's day-by-day record. Admins see registers, never where a student is." />
-      <Segmented value={tab} onChange={setTab} options={[{ value: 'buses', label: 'By bus' }, { value: 'review', label: `Review${queue.data?.length ? ` (${queue.data.length})` : ''}` }, { value: 'tools', label: 'Tools' }]} />
+      <Segmented value={tab} onChange={setTab} options={[{ value: 'buses', label: 'By bus' }, { value: 'review', label: `Review${queue.data?.length ? ` (${queue.data.length})` : ''}` }, { value: 'tools', label: 'Students' }]} />
       <Notice>{a.message}</Notice>
       <ErrorText>{a.error}</ErrorText>
 
@@ -397,7 +399,7 @@ export default function AttendanceAdmin() {
                   title={`${r.full_name} (${r.username})`}
                   subtitle={`${r.fleet_code} · #${r.trip_id} · ${dateTime(r.boarded_at)}`}
                   tone={r.status === 'DISPUTED' ? 'delayed' : 'offline'}
-                  right={<View style={{ gap: 4, alignItems: 'flex-end' }}><Badge tone={r.status === 'DISPUTED' ? 'delayed' : 'offline'}>{r.status}</Badge>{r.flagged ? <Badge tone="danger">{r.flag_reason ?? 'flagged'}</Badge> : null}</View>}
+                  right={<View style={{ gap: 4, alignItems: 'flex-end' }}><Badge tone={r.status === 'DISPUTED' ? 'delayed' : 'offline'}>{REVIEW_TEXT[r.status] ?? r.status}</Badge>{r.flagged ? <Badge tone="danger">{r.flag_reason ?? 'flagged'}</Badge> : null}</View>}
                   onPress={() => setOpen(r)}
                 >
                   <LinkButton title="Review" onPress={() => setOpen(r)} />
@@ -437,14 +439,6 @@ export default function AttendanceAdmin() {
               </ItemCard>
             )}
           />
-
-          <Panel title="Scheduled jobs" icon="clock">
-            <Txt muted small>Run now instead of waiting: prompt timeouts (every 15 s) and the nightly 23:30 lock and auto-confirm.</Txt>
-            <Row gap={10}>
-              <Button small variant="ghost" title="Run timeouts" style={{ flex: 1 }} onPress={() => a.run(() => api('/api/admin/jobs/tick', { token, method: 'POST' }), (r) => `Timeouts: ${JSON.stringify(r)}`).then(queue.reload)} />
-              <Button small variant="ghost" title="Run nightly" style={{ flex: 1 }} onPress={() => a.run(() => api('/api/admin/jobs/nightly', { token, method: 'POST' }), (r) => `Nightly: ${JSON.stringify(r.attendance)}`).then(queue.reload)} />
-            </Row>
-          </Panel>
         </>
       )}
 

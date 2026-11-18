@@ -82,7 +82,7 @@ export function sendTable(req, res, rows, filename, columns) {
   if (req.query.format === 'csv') {
     res.set('content-type', 'text/csv; charset=utf-8');
     res.set('content-disposition', `attachment; filename="${filename}.csv"`);
-    // Exports read as the screens do: Inbound and Outbound, not the stored UP and DOWN.
+    // Exports read as the screens do: To college and From college, not the stored UP and DOWN.
     const readable = rows.map((r) => (r.direction ? { ...r, direction: DIRECTION_NAME[r.direction] ?? r.direction } : r));
     return res.send(toCsv(readable, columns));
   }

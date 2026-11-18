@@ -267,7 +267,7 @@ export default function ParentHome() {
           <Button title="Change password" icon="lock" variant="ghost" onPress={() => setPassword(true)} />
           <Appearance />
           <YourData />
-          <Button title="Sign out" icon="logout" variant="danger" onPress={async () => (await confirm('Sign out?', 'You can sign in again any time.', 'Sign out')) && signOut()} />
+          <Button title="Sign out" icon="logout" variant="danger" onPress={async () => (await confirm('Are you sure you want to log out?', '', 'Yes, Log Out', true)) && signOut()} />
           <ChangePasswordSheet visible={password} onClose={() => setPassword(false)} />
         </DetailModal>
       ) : null}

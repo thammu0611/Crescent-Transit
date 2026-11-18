@@ -4,7 +4,7 @@ import { ListRow, ViewCard, ViewList } from '../../components/adminkit.js';
 import { ChangePasswordSheet } from '../../components/ChangePassword.js';
 import Icon from '../../components/Icon.js';
 import {
-  Avatar, Badge, Button, Collapsible, confirm, ErrorText, IconBubble, KV, Notice, PageHead, Screen, Select, Text, TextField, Txt,
+  Avatar, Badge, Button, Collapsible, confirm, ErrorText, IconBubble, KV, Notice, PageHead, Screen, Select, Skeleton, Text, TextField, Txt,
 } from '../../components/ui.js';
 import { api } from '../../lib/api.js';
 import { useAsync } from '../../lib/hooks.js';
@@ -298,30 +298,27 @@ export default function Settings({ navigation }) {
 
       <YourData />
 
-      <ViewCard icon="phone" title="Help and support" summary="Contacts and common questions">
-        <View style={{ gap: 2 }}>
-          {(contacts.data ?? []).map((c, i) => (
-            <Pressable accessibilityRole="button" key={c.label} onPress={() => call(c.phone)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: C.line2, opacity: pressed ? 0.6 : 1 })}>
-              <Txt style={{ flex: 1 }}>{c.label}</Txt>
-              <Text style={{ color: C.red600, ...F[700] }}>{c.phone}</Text>
-              <Icon name="phone" size={15} color={C.red600} />
-            </Pressable>
-          ))}
-        </View>
-        <Collapsible title={'Asked "Did you board?" but didn\'t travel'}>
-          <Txt muted small>Answer "No". Nothing is recorded and the reminders stop. If you never travel at some times, set "When you travel" above.</Txt>
-        </Collapsible>
-        <Collapsible title="My attendance looks wrong">
-          <Txt muted small>Open Attendance and tap "Dispute" on the trip within 7 days. The transport office reviews it.</Txt>
-        </Collapsible>
-      </ViewCard>
-
       <ViewCard icon="sparkle" title="About" summary="Crescent Transit · Bus Route 2026-2027">
         <View style={{ gap: 6 }}>
           <KV k="App" v="Crescent Transit · Bus Tracker" />
           <KV k="Timetable" v="BSACIST Bus Route 2026-2027" />
           <KV k="Access" v={entitlement?.required ? 'Monthly subscription' : 'Included for every student'} />
         </View>
+      </ViewCard>
+
+      {/* Last in the list: just the numbers to call. */}
+      <ViewCard icon="phone" title="Help and support" summary="Contact numbers">
+        {contacts.error ? <ErrorText>{`Could not load the contact numbers: ${contacts.error.message}`}</ErrorText> : contacts.data == null ? <Skeleton /> : (
+          <View style={{ gap: 2 }}>
+            {contacts.data.map((c, i) => (
+              <Pressable accessibilityRole="button" accessibilityLabel={`Call ${c.label}, ${c.phone}`} key={c.label} onPress={() => call(c.phone)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: C.line2, opacity: pressed ? 0.6 : 1 })}>
+                <Txt style={{ flex: 1 }}>{c.label}</Txt>
+                <Text style={{ color: C.red600, ...F[700] }}>{c.phone}</Text>
+                <Icon name="phone" size={15} color={C.red600} />
+              </Pressable>
+            ))}
+          </View>
+        )}
       </ViewCard>
       </ViewList>
 
@@ -331,7 +328,7 @@ export default function Settings({ navigation }) {
         icon="logout"
         style={{ marginTop: 6, borderColor: 'rgba(160,32,34,0.28)' }}
         textStyle={{ color: C.danger }}
-        onPress={async () => (await confirm('Sign out?', 'You can sign in again any time.', 'Sign out')) && signOut()}
+        onPress={async () => (await confirm('Are you sure you want to log out?', '', 'Yes, Log Out', true)) && signOut()}
       />
       <ChangePasswordSheet visible={changingPassword} onClose={() => setChangingPassword(false)} />
     </Screen>

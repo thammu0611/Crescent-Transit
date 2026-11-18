@@ -7,7 +7,7 @@ import { Chips, DetailModal } from '../../components/adminkit.js';
 import Icon from '../../components/Icon.js';
 import RateTrip from '../../components/RateTrip.js';
 import {
-  accentColour, alpha, Badge, Button, CardTint, DataList, DirectionBadge, Empty, ErrorText, ItemCard, LinkButton, MonthPicker, Row, Screen,
+  accentColour, alpha, Badge, Button, DataList, DirectionBadge, Empty, ErrorText, ItemCard, LinkButton, MonthPicker, Row, Screen,
   Segmented, Select, Sheet, Text, TextField, Txt,
 } from '../../components/ui.js';
 import { api, ApiError, getSocket } from '../../lib/api.js';
@@ -19,11 +19,10 @@ import { refreshPlan, requestNewOtp, setSource, submitOtp, useSampler } from '..
 import { useServerInfo } from '../../lib/serverInfo.js';
 import { useSession } from '../../lib/session.js';
 import { getJSON, setJSON } from '../../lib/storage.js';
-import { C, F, R, shadow } from '../../theme.js';
+import { C, F, G, R, shadow } from '../../theme.js';
 
 const QUEUE_KEY = 'ubts.qrQueue';
 const TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISIONAL: 'delayed', PROMPTED: 'delayed', DISPUTED: 'delayed', ADJUSTED: 'offline', REJECTED: 'offline', VOID: 'offline' };
-const HERO = C.dark ? ['#1F3157', '#18233A'] : ['#EEF1F6', '#FFFFFF'];
 const busName = (fleet) => String(fleet ?? '').replace('BSACIST-', 'Bus ');
 const tripName = (dir) => (dir === 'DOWN' ? 'Evening trip' : 'Morning trip');
 const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
@@ -31,11 +30,10 @@ const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateStrin
 const label = { margin: 0, fontSize: 13, lineHeight: 18, ...F[500], color: C.muted };
 const h2 = { fontSize: 20, lineHeight: 26, ...F.display, color: C.ink };
 const card = { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 1, borderColor: C.line2, ...shadow };
-// A coloured card's border and clipping (the wash and edge come from CardTint / RowTint).
-const tinted = (colour) => ({ borderColor: alpha(colour, 0.25), overflow: 'hidden' });
 
 /** The automatic (GPS) check-in: what it needs, and whether it is running. */
-function AutoPanel({ token, user, navigation }) {
+function AutoPanel({ token, user, navigation, bare = false }) {
+  const box = (pad) => (bare ? { gap: pad } : [card, { padding: 16, gap: pad }]);
   const s = useSampler();
   const demo = Boolean(useServerInfo()?.demoMode);
   const [otp, setOtp] = useState('');
@@ -45,7 +43,7 @@ function AutoPanel({ token, user, navigation }) {
     [s.plan?.subscribed, user.homeRouteCode, token],
   );
   const p = s.plan;
-  if (!p) return <View style={[card, { padding: 16, gap: 10 }]}><Txt muted>Checking…</Txt><ErrorText>{s.error}</ErrorText><Button title="Refresh" variant="ghost" small onPress={refreshPlan} /></View>;
+  if (!p) return <View style={box(10)}><Txt muted>Checking…</Txt><ErrorText>{s.error}</ErrorText><Button title="Refresh" variant="ghost" small onPress={refreshPlan} /></View>;
   const checks = [
     ...(p.subscribed ? [] : [['Subscription', false, <LinkButton key="a" title="Subscribe" onPress={() => navigation.navigate('Subscription')} />]]),
     ['Location consent', p.consent, <LinkButton key="b" title="Give consent in Settings" onPress={() => navigation.navigate('Profile')} />],
@@ -54,7 +52,7 @@ function AutoPanel({ token, user, navigation }) {
   ];
   const allOk = checks.every((c) => c[1]);
   return (
-    <View style={[card, { padding: 16, gap: 12 }]}>
+    <View style={box(12)}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <Text style={{ fontSize: 16, ...F[600], color: C.ink, flex: 1 }}>{allOk ? 'Your phone checks you in' : 'Automatic check-in is paused'}</Text>
         <Badge tone={allOk ? 'live' : 'offline'}>{allOk ? 'Active' : 'Paused'}</Badge>
@@ -168,35 +166,62 @@ function ScanViewport({ onScan, error, onRetry }) {
   );
 }
 
-/** A ring with the share of trips counted present. */
-function Ring({ pct }) {
-  const r = 32;
+const GOLD = '#F7BC31';
+const ON_NAVY = 'rgba(255,255,255,0.72)';
+
+/** A ring with the share of trips counted present, drawn on the navy summary card. */
+function Ring({ pct, size = 92, stroke = 9 }) {
+  const r = (size - stroke) / 2;
+  const c = size / 2;
   const len = 2 * Math.PI * r;
   return (
-    <View style={{ width: 76, height: 76 }}>
-      <Svg width={76} height={76} viewBox="0 0 76 76">
-        <Circle cx={38} cy={38} r={r} fill="none" stroke={C.raised} strokeWidth={8} />
-        {pct > 0 ? <Circle cx={38} cy={38} r={r} fill="none" stroke={C.live} strokeWidth={8} strokeLinecap="round" strokeDasharray={`${(len * pct) / 100} ${len}`} transform="rotate(-90 38 38)" /> : null}
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Circle cx={c} cy={c} r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={stroke} />
+        {pct > 0 ? <Circle cx={c} cy={c} r={r} fill="none" stroke={GOLD} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${(len * pct) / 100} ${len}`} transform={`rotate(-90 ${c} ${c})`} /> : null}
       </Svg>
       <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 17, lineHeight: 20, ...F.displayBold, color: C.ink }}>{pct}%</Text>
-        <Text style={{ fontSize: 10, lineHeight: 12, ...F[500], color: C.faint }}>present</Text>
+        <Text style={{ fontSize: 22, lineHeight: 26, ...F.displayBold, color: '#fff', fontVariant: ['tabular-nums'] }}>{pct}%</Text>
+        <Text style={{ fontSize: 11, lineHeight: 13, ...F[500], color: ON_NAVY }}>present</Text>
       </View>
     </View>
   );
 }
 
-const Bar = ({ k, done, total }) => (
-  <View style={{ gap: 6 }}>
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-      <Text style={label}>{k}</Text>
-      <Text style={{ fontSize: 13, lineHeight: 18, ...F[600], color: C.ink }}>{done} of {total}</Text>
+/** One direction's month on the summary card: trips present out of trips taken, with a bar. */
+function DirTile({ name, done, total }) {
+  return (
+    <View style={{ flex: 1, minWidth: 0, padding: 12, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', gap: 6 }}>
+      <Text style={{ color: ON_NAVY, fontSize: 12.5, lineHeight: 16, ...F[500] }} numberOfLines={1}>{name}</Text>
+      <Text style={{ color: '#fff', fontSize: 22, lineHeight: 26, ...F.displayBold, fontVariant: ['tabular-nums'] }}>
+        {done}<Text style={{ fontSize: 13, ...F[500], color: 'rgba(255,255,255,0.6)' }}>{` of ${total}`}</Text>
+      </Text>
+      <View style={{ height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.14)', overflow: 'hidden' }}>
+        <View style={{ width: `${total ? (done / total) * 100 : 0}%`, height: 5, borderRadius: 3, backgroundColor: GOLD }} />
+      </View>
     </View>
-    <View style={{ height: 6, borderRadius: 3, backgroundColor: C.raised, overflow: 'hidden' }}>
-      <View style={{ width: `${total ? (done / total) * 100 : 0}%`, height: 6, borderRadius: 3, backgroundColor: C.navy }} />
+  );
+}
+
+/** Today's morning or evening trip: present (bus, time, how), waiting for an answer, or not yet. */
+function TodayRow({ dir, rec, first }) {
+  const present = Boolean(rec?.present);
+  const tone = present ? C.live : rec ? C.delayed : C.muted;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: first ? 0 : 1, borderTopColor: C.line2 }}>
+      <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: alpha(tone, 0.14), alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={present ? 'check' : rec ? 'clock' : 'bus'} size={19} color={tone} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        <Txt bold numberOfLines={1}>{dir === 'DOWN' ? 'Evening · From college' : 'Morning · To college'}</Txt>
+        <Txt muted small numberOfLines={1}>
+          {present ? `${busName(rec.fleet_code)} · boarded ${time(rec.boarded_at)}` : rec ? STATUS_TEXT[rec.status] ?? 'Waiting' : 'Not checked in yet'}
+        </Txt>
+      </View>
+      <Badge tone={present ? 'live' : rec ? 'delayed' : 'offline'}>{present ? 'Present' : rec ? 'Pending' : 'Waiting'}</Badge>
     </View>
-  </View>
-);
+  );
+}
 
 function DisputeDialog({ token, record, onClose, onDone }) {
   const [reason, setReason] = useState('');
@@ -244,7 +269,7 @@ function History({ token, entitlement, navigation, onClose, focusId }) {
   const all = record.data?.records ?? [];
   const records = all.filter((r) => !run || r.direction === run);
   return (
-    <DetailModal title="History" subtitle={record.data ? `${record.data.upPresent} ${t('inbound')} · ${record.data.downPresent} ${t('outbound')} ${t('present')}` : null} onClose={onClose} refreshing={refreshing} onRefresh={onRefresh}>
+    <DetailModal title="History" subtitle={record.data ? `${record.data.upPresent} ${t('to college')} · ${record.data.downPresent} ${t('from college')} ${t('present')}` : null} onClose={onClose} refreshing={refreshing} onRefresh={onRefresh}>
       <MonthPicker value={month} onChange={setMonth} />
       {!entitlement?.active ? (
         <View style={{ alignItems: 'center' }}>
@@ -259,8 +284,8 @@ function History({ token, entitlement, navigation, onClose, focusId }) {
             onChange={setRun}
             options={[
               { value: '', label: t('Both directions'), count: all.length },
-              { value: 'UP', label: t('Inbound · To college'), count: all.filter((r) => r.direction === 'UP').length },
-              { value: 'DOWN', label: t('Outbound · From college'), count: all.filter((r) => r.direction === 'DOWN').length },
+              { value: 'UP', label: t('To college'), count: all.filter((r) => r.direction === 'UP').length },
+              { value: 'DOWN', label: t('From college'), count: all.filter((r) => r.direction === 'DOWN').length },
             ]}
           />
           <DataList
@@ -400,137 +425,132 @@ export default function StudentAttendance({ navigation }) {
   const present = all.filter((r) => r.present).length;
   const pct = all.length ? Math.round((present / all.length) * 100) : 0;
   const disputes = all.filter((r) => r.dispute && !r.dispute.resolution).length;
-  const dir = new Date().getHours() >= 13 ? 'DOWN' : 'UP';
-  const today = all.find((r) => r.present && r.direction === dir && sameDay(r.boarded_at, Date.now()));
+  const todayOf = (d) => {
+    const mine = all.filter((r) => r.direction === d && sameDay(r.boarded_at, Date.now()));
+    return mine.find((r) => r.present) ?? mine[0] ?? null;
+  };
+  const monthName = new Date().toLocaleDateString('en-IN', { month: 'long' });
+  const todayName = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
 
   return (
     <Screen safeTop refreshing={refreshing} onRefresh={onRefresh}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <Text accessibilityRole="header" style={{ fontSize: 28, lineHeight: 34, ...F.displayBold, color: C.ink, flexShrink: 1 }} numberOfLines={1}>Attendance</Text>
-        <Pressable accessibilityRole="button" onPress={() => setHistory(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 }}>
-          <Icon name="calendar" size={18} color={C.navy} />
+        <Pressable accessibilityRole="button" onPress={() => setHistory(true)} hitSlop={6} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line }, pressed && { opacity: 0.8 }]}>
+          <Icon name="calendar" size={16} color={C.navy} />
           <Text style={{ color: C.navy, fontSize: 14, ...F[600] }}>History</Text>
         </Pressable>
       </View>
 
-      {/* Boarding check */}
-      <LinearGradient colors={HERO} start={{ x: 0, y: 0 }} end={{ x: 0.6, y: 1 }} style={[card, tinted(checked || today ? C.live : accentColour('gold')), { padding: 18, gap: 12 }]}>
-        <CardTint color={checked || today ? C.live : accentColour('gold')} radius={R.lg} />
+      {/* This month, at a glance */}
+      {entitlement?.active ? (
+        <LinearGradient colors={G.navy} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: R.lg, padding: 18, gap: 16, overflow: 'hidden', ...shadow }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+            <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+              <Text style={{ color: ON_NAVY, fontSize: 13, ...F[600], letterSpacing: 0.4 }}>{monthName.toUpperCase()}</Text>
+              <Text style={{ color: '#fff', fontSize: 30, lineHeight: 36, ...F.displayBold, fontVariant: ['tabular-nums'] }}>
+                {record.data ? present : '—'}<Text style={{ fontSize: 15, ...F[500], color: ON_NAVY }}>{record.data ? ` of ${all.length} trips` : ''}</Text>
+              </Text>
+              <Text style={{ color: ON_NAVY, fontSize: 13, lineHeight: 18, ...F[500] }}>counted present this month</Text>
+            </View>
+            <Ring pct={pct} />
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <DirTile name="To college" done={up.filter((r) => r.present).length} total={up.length} />
+            <DirTile name="From college" done={down.filter((r) => r.present).length} total={down.length} />
+          </View>
+          {disputes ? (
+            <Pressable accessibilityRole="button" onPress={() => setHistory(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36, paddingHorizontal: 12, borderRadius: 12, backgroundColor: 'rgba(247,188,49,0.14)' }}>
+              <Icon name="clock" size={15} color={GOLD} />
+              <Text style={{ fontSize: 13, ...F[600], color: GOLD, flex: 1 }}>{disputes} dispute{disputes === 1 ? '' : 's'} under review</Text>
+              <Icon name="arrow" size={15} color={GOLD} />
+            </Pressable>
+          ) : null}
+        </LinearGradient>
+      ) : (
+        <View style={[card, { padding: 18, gap: 12, alignItems: 'center' }]}>
+          <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: C.navy50, alignItems: 'center', justifyContent: 'center' }}><Icon name="lock" size={22} color={C.navy} /></View>
+          <Txt bold style={{ textAlign: 'center' }}>Your attendance record is part of the subscription</Txt>
+          <Button title="Subscribe" icon="arrow" onPress={() => navigation.navigate('Subscription')} />
+        </View>
+      )}
+
+      {/* Today: the boarding question when there is one, and both trips of the day */}
+      <View style={[card, { padding: 16, gap: 4 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+          <Text style={h2}>Today</Text>
+          <Txt muted small>{todayName}</Txt>
+        </View>
         {checked ? (
-          <>
-            <View accessibilityRole="alert" style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.emerald50, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={30} color={C.live} strokeWidth={2.6} /></View>
-              <View style={{ flex: 1 }}>
-                <Text style={h2}>{checked.already ? 'Already checked in' : "You're checked in"}</Text>
-                <Text style={label}>{checked.bus} · {time(checked.at)} · {checked.how}</Text>
-              </View>
+          <View accessibilityRole="alert" style={{ flexDirection: 'row', gap: 12, alignItems: 'center', padding: 12, borderRadius: 14, backgroundColor: alpha(C.live, 0.12), marginBottom: 4 }}>
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: C.live, alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={22} color="#fff" strokeWidth={2.6} /></View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Txt bold>{checked.already ? 'Already checked in' : "You're checked in"}</Txt>
+              <Txt muted small>{checked.bus} · {time(checked.at)} · {checked.how}</Txt>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <Txt muted small style={{ flex: 1 }}>Wrong bus? You can dispute it from History.</Txt>
-              <Pressable accessibilityRole="button" onPress={() => { setChecked(null); setHistory(true); }} hitSlop={8}><Text style={{ color: C.navy, fontSize: 14, ...F[600] }}>History</Text></Pressable>
-            </View>
-          </>
-        ) : prompt ? (
-          <>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={() => setChecked(null)} hitSlop={10}><Icon name="x" size={18} color={C.muted} /></Pressable>
+          </View>
+        ) : null}
+        {prompt ? (
+          <View style={{ padding: 14, borderRadius: 14, backgroundColor: alpha(accentColour('gold'), 0.12), borderWidth: 1, borderColor: alpha(accentColour('gold'), 0.3), gap: 10, marginBottom: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
               <Text style={label}>Boarding check · {tripName(prompt.direction)}</Text>
               <Badge tone="live">Bus at your stop</Badge>
             </View>
             <Text style={h2}>Are you on {busName(prompt.fleetCode)}?</Text>
-            <Text style={[label, { marginTop: -6 }]}>{[prompt.stopName ?? prompt.routeName, time(prompt.boardedAt)].filter(Boolean).join(' · ')}</Text>
+            <Text style={[label, { marginTop: -4 }]}>{[prompt.stopName ?? prompt.routeName, time(prompt.boardedAt)].filter(Boolean).join(' · ')}</Text>
             <ErrorText>{error}</ErrorText>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Button title="Yes, I'm on board" icon="check" disabled={answering} onPress={() => answer('YES')} style={{ flex: 1 }} />
               <Button title="Not today" variant="ghost" disabled={answering} onPress={() => answer('NO')} />
             </View>
-          </>
-        ) : today ? (
-          <>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <Text style={label}>Boarding check · {tripName(dir)}</Text>
-              <Badge tone="live">Present</Badge>
-            </View>
-            <Text style={h2}>Already checked in</Text>
-            <Txt muted style={{ marginTop: -6 }}>{`You checked in on ${busName(today.fleet_code)} at ${time(today.boarded_at)}. There's nothing else to do.`}</Txt>
-            <Button title="View this trip" variant="ghost" onPress={() => setHistory(today.attendance_id)} />
-          </>
-        ) : (
-          <>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <Text style={label}>Boarding check · {tripName(dir)}</Text>
-              <Badge tone="offline">Waiting</Badge>
-            </View>
-            <Text style={h2}>No check-in yet</Text>
-            <Txt muted style={{ marginTop: -6 }}>When your bus reaches your stop, we'll ask if you're on board. Or scan the code on the driver's phone.</Txt>
-          </>
-        )}
-      </LinearGradient>
-
-      {/* Ways to check in */}
-      <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 4, padding: 4, borderRadius: 14, backgroundColor: C.raised, borderWidth: 1, borderColor: C.line2 }}>
-        {[['gps', 'Auto (GPS)', 'locate'], ['qr', 'Scan QR', 'qr'], ['code', 'Enter code', 'keypad']].map(([k, name, icon]) => {
-          const sel = method === k;
-          const fg = sel ? C.ink : C.muted;
-          return (
-            <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: sel }} onPress={() => { setMethod(k); setError(null); }}
-              style={{ flex: 1, height: 44, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: sel ? (C.dark ? '#2B3A5C' : C.card) : 'transparent', ...(sel ? shadow : null) }}>
-              <Icon name={icon} size={16} color={fg} />
-              <Text style={{ fontSize: 13.5, ...F[600], color: fg }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
-            </Pressable>
-          );
-        })}
+          </View>
+        ) : null}
+        <TodayRow dir="UP" rec={todayOf('UP')} first />
+        <TodayRow dir="DOWN" rec={todayOf('DOWN')} />
       </View>
 
-      {method === 'gps' ? <AutoPanel token={token} user={user} navigation={navigation} /> : null}
-      {method === 'qr' ? (
-        <>
-          <ScanViewport error={scanError} onRetry={() => setScanError(null)} onScan={(payload) => checkIn({ payload })} />
-          <Pressable accessibilityRole="button" onPress={() => setMethod('code')}
-            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card }, pressed && { opacity: 0.8 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-              <Icon name="keypad" size={18} color={C.muted} />
-              <Text style={{ fontSize: 15, ...F[600], color: C.ink, flexShrink: 1 }}>No camera? Enter the 6-digit code</Text>
-            </View>
-            <Icon name="arrow" size={18} color={C.faint} />
-          </Pressable>
-        </>
-      ) : null}
-      {method === 'code' ? (
-        <View style={[card, { padding: 16, gap: 12 }]}>
-          <Txt muted small>Type the route and the 6-digit code shown under the QR on the driver's phone.</Txt>
-          <Row>
-            <TextField label="Route" value={routeCode} onChangeText={setRouteCode} style={{ flex: 1 }} autoCapitalize="characters" />
-            <TextField label="Code" value={code} onChangeText={(v) => setCode(v.replace(/\D/g, ''))} keyboardType="number-pad" maxLength={6} style={{ flex: 1.3 }} />
-          </Row>
-          <ErrorText>{error}</ErrorText>
-          <Button title="Check in" icon="check" onPress={typed} />
+      {/* Check in yourself, if the bus did not ask */}
+      <View style={[card, { padding: 16, gap: 12 }]}>
+        <View style={{ gap: 2 }}>
+          <Text style={h2}>Check in</Text>
+          <Txt muted small>If the bus didn't ask you, use one of these.</Txt>
         </View>
-      ) : null}
-      {message ? <Txt muted small>{message}</Txt> : null}
-      {queue.length > 0 ? <Txt muted small>{queue.length} scan(s) waiting for the network.</Txt> : null}
-
-      {/* This month */}
-      {entitlement?.active ? (
-        <View style={[card, tinted(accentColour('teal')), { paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 16, alignItems: 'center' }]}>
-          <CardTint color={accentColour('teal')} radius={R.lg} />
-          <Ring pct={pct} />
-          <View style={{ flex: 1, gap: 8 }}>
-            <Bar k="To campus" done={up.filter((r) => r.present).length} total={up.length} />
-            <Bar k="From campus" done={down.filter((r) => r.present).length} total={down.length} />
-            {disputes ? (
-              <Pressable accessibilityRole="button" onPress={() => setHistory(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 28 }}>
-                <Icon name="clock" size={15} color={C.delayed} />
-                <Text style={{ fontSize: 13, ...F[600], color: C.delayed, flex: 1 }}>{disputes} dispute{disputes === 1 ? '' : 's'} under review</Text>
+        <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 4, padding: 4, borderRadius: 14, backgroundColor: C.raised, borderWidth: 1, borderColor: C.line2 }}>
+          {[['qr', 'Scan QR', 'qr'], ['code', 'Code', 'keypad'], ['gps', 'Automatic', 'locate']].map(([k, name, icon]) => {
+            const sel = method === k;
+            const fg = sel ? C.ink : C.muted;
+            return (
+              <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: sel }} onPress={() => { setMethod(k); setError(null); }}
+                style={{ flex: 1, height: 42, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: sel ? (C.dark ? '#2B3A5C' : C.card) : 'transparent', ...(sel ? shadow : null) }}>
+                <Icon name={icon} size={16} color={fg} />
+                <Text style={{ fontSize: 13.5, ...F[600], color: fg }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
               </Pressable>
-            ) : null}
-          </View>
+            );
+          })}
         </View>
-      ) : (
-        <View style={[card, { padding: 16, gap: 8, alignItems: 'center' }]}>
-          <Txt muted style={{ textAlign: 'center' }}>Your attendance record is part of the subscription.</Txt>
-          <LinkButton title="Subscribe" onPress={() => navigation.navigate('Subscription')} />
-        </View>
-      )}
+
+        {method === 'qr' ? (
+          <>
+            <ScanViewport error={scanError} onRetry={() => setScanError(null)} onScan={(payload) => checkIn({ payload })} />
+            <Txt muted small style={{ textAlign: 'center' }}>No camera? Use "Code" and type the 6 digits under the QR.</Txt>
+          </>
+        ) : null}
+        {method === 'code' ? (
+          <>
+            <Txt muted small>Type the route and the 6-digit code shown under the QR on the driver's phone.</Txt>
+            <Row>
+              <TextField label="Route" value={routeCode} onChangeText={setRouteCode} style={{ flex: 1 }} autoCapitalize="characters" />
+              <TextField label="Code" value={code} onChangeText={(v) => setCode(v.replace(/\D/g, ''))} keyboardType="number-pad" maxLength={6} style={{ flex: 1.3 }} />
+            </Row>
+            <ErrorText>{prompt ? null : error}</ErrorText>
+            <Button title="Check in" icon="check" onPress={typed} />
+          </>
+        ) : null}
+        {method === 'gps' ? <AutoPanel token={token} user={user} navigation={navigation} bare /> : null}
+        {message ? <Txt muted small>{message}</Txt> : null}
+        {queue.length > 0 ? <Badge tone="delayed">{`${queue.length} scan${queue.length === 1 ? '' : 's'} waiting for the network`}</Badge> : null}
+      </View>
 
       {history ? <History token={token} entitlement={entitlement} navigation={navigation} focusId={typeof history === 'number' ? history : null} onClose={() => setHistory(null)} /> : null}
     </Screen>

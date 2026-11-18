@@ -5,6 +5,7 @@ import { useAsync } from '../lib/useAsync.js';
 import { prettyTime } from '../lib/schedule.js';
 import Icon from './Icon.jsx';
 import { ErrorText } from './ui.jsx';
+import Picker from './Picker.jsx';
 
 /**
  * "Select your route": chosen once, changeable any time in Settings. Every day
@@ -65,10 +66,13 @@ export default function SelectRoute({ onDone, compact = false }) {
           <p className="stops-line">{route.data.stops.map((s) => s.name).join('  ·  ')}</p>
           <label className="field">
             <span>Your boarding stop</span>
-            <select value={stopSeq} onChange={(e) => setStopSeq(e.target.value)}>
-              <option value="">Choose your stop</option>
-              {route.data.stops.map((s) => <option key={s.seq} value={s.seq}>{s.name} · {prettyTime(s.scheduled_time)}</option>)}
-            </select>
+            <Picker
+              label="Your boarding stop"
+              placeholder="Choose your stop"
+              value={stopSeq}
+              onChange={(v) => setStopSeq(String(v))}
+              options={route.data.stops.map((s) => ({ value: s.seq, lead: s.seq, label: s.name, hint: prettyTime(s.scheduled_time) }))}
+            />
           </label>
         </div>
       )}

@@ -11,6 +11,7 @@ import { useSession } from '../lib/session.jsx';
 import { useNow } from '../lib/useNow.js';
 import { ageLabel, freshnessOf } from '../../../shared/freshness.js';
 import { estimateArrival } from '../../../shared/eta.js';
+import Picker from '../components/Picker.jsx';
 
 const CAMPUS = { lat: 12.8737, lng: 80.0823 };
 const STATE_LABEL = { live: 'Live', delayed: 'Delayed', offline: 'Offline' };
@@ -159,20 +160,23 @@ export default function LiveMap() {
           </div>
           <label className="field">
             <span>Route</span>
-            <select value={routeCode} onChange={(e) => { setRouteCode(e.target.value); setSelectedBusId(null); setStopSeq(null); }}>
-              <option value="">All {routes.length} routes</option>
-              {routes.map((r) => (
-                <option key={r.code} value={r.code}>{r.code} · {r.name}</option>
-              ))}
-            </select>
+            <Picker
+              label="Route"
+              value={routeCode}
+              onChange={(v) => { setRouteCode(v); setSelectedBusId(null); setStopSeq(null); }}
+              options={[{ value: '', label: `All ${routes.length} routes` }, ...routes.map((r) => ({ value: r.code, lead: r.code, label: r.name }))]}
+            />
           </label>
           {route && (
             <label className="field">
               <span>Estimate arrival at</span>
-              <select value={stopSeq ?? ''} onChange={(e) => setStopSeq(e.target.value ? Number(e.target.value) : null)}>
-                <option value="">Choose a stop</option>
-                {route.stops.map((s) => <option key={s.seq} value={s.seq}>{s.seq}. {s.name}</option>)}
-              </select>
+              <Picker
+                label="Estimate arrival at"
+                placeholder="Choose a stop"
+                value={stopSeq ?? ''}
+                onChange={(v) => setStopSeq(v === '' ? null : Number(v))}
+                options={route.stops.map((s) => ({ value: s.seq, lead: s.seq, label: s.name, hint: s.scheduled_time ?? undefined }))}
+              />
             </label>
           )}
           {error && <p className="error">{error}</p>}

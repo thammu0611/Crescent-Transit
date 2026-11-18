@@ -115,3 +115,183 @@ html[lang='ta'] .glance-value, html[lang='ta'] .stat > b, html[lang='ta'] .stat-
   font-size: clamp(17px, 1.6vw, 22px) !important; line-height: 1.2 !important; overflow-wrap: break-word;
 }
 html[lang='ta'] .glance-label, html[lang='ta'] .glance-detail { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+
+/* ---- Smoothness: nothing repaints the screen while it sits still --------------------------- */
+/* The backdrop's dashed route stays still: animating it repainted the whole screen every frame. */
+.route-bg-line .line, .route-bg-line.dashed .line, .route-bg-line.gold .line { animation: none !important; }
+/* "Live" dots breathe with opacity only, which the graphics chip does without repainting
+   (the old ring animated box-shadow, a repaint every frame on every page). */
+@keyframes dot-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.pulse, .glance-live, .pill-badge .pulse, .conn.on::before, .badge.live::before {
+  animation: dot-breathe 2s ease-in-out infinite !important; box-shadow: none !important;
+}
+/* Phones and tablets skip the frosted-glass blur: it is redrawn on every scroll and is the most
+   expensive effect on a phone's graphics chip. Panels keep their colour and stay readable. */
+@media (pointer: coarse), (max-width: 900px) {
+  *, *::before, *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}
+/* A page still loading its code shows a quiet placeholder instead of a blank flash. */
+.page-loading { min-height: 60vh; }
+
+/* "Open the trips list" under the dashboard's live lists. */
+.kit-see-all { margin-top: 12px; align-self: flex-start; }
+
+/* Notifications: a closed card shows two lines of its message; opening it shows all. */
+.ntf-card[role='button'] { cursor: pointer; }
+.ntf-card[role='button']:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ntf-card:not(.open) .ntf-body {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.ntf-more { align-self: flex-start; margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--link, var(--accent)); }
+/* The bell's unread count on the student home. */
+.bell { position: relative; }
+
+/* Yes-or-no dialogs (sign out): two equal buttons, side by side. */
+.confirm-actions { display: flex; gap: 10px; margin-top: 14px; }
+.confirm-actions { align-items: stretch; }
+.confirm-actions .btn { flex: 1; justify-content: center; margin: 0 !important; transform: none; }
+
+/* First screen: one short line under the headline, and Sign in beside Sign up
+   at every width (two equal buttons on a phone rather than a stack). */
+.land-lede { margin: 0; }
+.land-cta .btn { justify-content: center; }
+@media (max-width: 560px) {
+  .land-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .land-cta .btn { width: auto; padding: 0 12px; }
+}
+
+/* The sign-in page shows the app's own logo, as in the top bar. */
+.auth-logo.brand-logo { background: none !important; padding: 0; overflow: hidden; }
+.auth-logo.brand-logo .brand-icon { width: 100%; height: 100%; border-radius: inherit; display: block; }
+
+/* First screen contact tiles: the phone icon in a navy circle, visible on the white tile
+   (another rule makes .contact-avatar white-on-white for the navy sign-in panel). */
+.contact-tiles .contact-avatar { background: rgba(28, 49, 94, 0.10) !important; color: #1c315e !important; border: 1.5px solid rgba(28, 49, 94, 0.18) !important; }
+html[data-theme='dark'] .contact-tiles .contact-avatar { background: rgba(247, 188, 49, 0.14) !important; color: #f7bc31 !important; border-color: rgba(247, 188, 49, 0.3) !important; }
+
+/* Student home, two columns: both end at the same line. The columns stretch to the
+   taller one and the journey card takes up the difference (one column: no change). */
+.app-grid { align-items: stretch !important; }
+.app-grid > .app-col { display: flex; flex-direction: column; }
+.app-grid > .app-col > .home-journey { flex: 1 0 auto; display: flex; flex-direction: column; }
+/* The stops spread evenly down the taller card (each row grows the same, up to a limit,
+   and the list sits in the middle), so it never ends in an empty block. */
+.app-grid .home-journey .journey { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.app-grid .home-journey .journey li { flex: 1 1 0; min-height: 40px; max-height: 60px; padding: 0; align-items: stretch; }
+.app-grid .home-journey .journey li > time { align-self: center; }
+.app-grid .home-journey .journey li:not(:last-child) > span::after { top: calc(50% + 8px); height: calc(100% - 16px); }
+
+/* ---- Student attendance (web), laid out as on the phone ------------------------------- */
+.att-sum {
+  display: flex; flex-direction: column; gap: 16px; padding: 20px; border-radius: 22px; color: #fff;
+  background: linear-gradient(135deg, #1c315e, #142548); box-shadow: 0 14px 34px rgba(20, 37, 72, 0.22);
+}
+html[data-theme='dark'] .att-sum { background: linear-gradient(135deg, #1f3157, #18233a); border: 1px solid rgba(255, 255, 255, 0.08); }
+.att-sum-top { display: flex; align-items: center; gap: 16px; }
+.att-sum-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.att-sum-text small { font-size: 12.5px; font-weight: 600; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.72); }
+.att-sum-text b { font: 700 34px/1.1 var(--display); color: #fff; }
+.att-sum-text b em, .att-dir b em { font: 500 15px var(--font); font-style: normal; color: rgba(255, 255, 255, 0.7); }
+.att-sum-text span { font-size: 13.5px; color: rgba(255, 255, 255, 0.72); }
+.att-sum-ring { width: 96px; height: 96px; flex-shrink: 0; }
+.att-sum-ring .track { fill: none; stroke: rgba(255, 255, 255, 0.14); stroke-width: 9; }
+.att-sum-ring .fill { fill: none; stroke: #f7bc31; stroke-width: 9; stroke-linecap: round; }
+.att-sum-ring .pct { fill: #fff; font: 700 21px var(--display); text-anchor: middle; dominant-baseline: middle; }
+.att-sum-ring .lbl { fill: rgba(255, 255, 255, 0.72); font: 500 11px var(--font); text-anchor: middle; }
+.att-sum-dirs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.att-dir { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); }
+.att-dir small { font-size: 12.5px; color: rgba(255, 255, 255, 0.72); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.att-dir b { font: 700 22px/1.15 var(--display); color: #fff; }
+.att-dir i { display: block; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+.att-dir i s { display: block; height: 100%; border-radius: 3px; background: #f7bc31; text-decoration: none; }
+.att-sum-disputes { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border: 0; border-radius: 12px; background: rgba(247, 188, 49, 0.14); color: #f7bc31; font: 600 13px var(--font); cursor: pointer; text-align: left; }
+.att-sum-disputes span { flex: 1; }
+
+.att-card { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px !important; margin: 0 !important; }
+.att-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.att-card-head > span { display: flex; flex-direction: column; gap: 2px; }
+.att-card-head h2 { margin: 0; font: 700 20px/1.3 var(--display); color: var(--ink); }
+.att-card-head small { font-size: 13px; color: var(--muted); }
+.att-card .att-tabs { margin: 0; }
+.att-today-rows { display: flex; flex-direction: column; }
+.att-today-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line-2, rgba(127, 127, 127, 0.15)); }
+.att-today-row:first-child { border-top: 0; }
+.att-today-icon { width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: rgba(139, 144, 155, 0.14); color: var(--muted); }
+.att-today-row.live .att-today-icon { background: rgba(35, 122, 54, 0.14); color: var(--live, #237a36); }
+.att-today-row.delayed .att-today-icon { background: rgba(185, 131, 42, 0.14); color: var(--delayed, #b9832a); }
+.att-today-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.att-today-text b { font-size: 15px; font-weight: 700; color: var(--ink); }
+.att-today-text small { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.att-checked { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: rgba(35, 122, 54, 0.12); }
+.att-checked-icon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: var(--live, #237a36); color: #fff; }
+.att-checked > span:nth-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.att-checked small { color: var(--muted); font-size: 13px; }
+.att-checked-close { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 6px; }
+.att-locked { align-items: center; text-align: center; }
+@media (max-width: 380px) { .att-sum-ring { width: 80px; height: 80px; } .att-sum-text b { font-size: 28px; } }
+
+/* Narrow phones: the five tab labels ("Attendance" is the longest) fit whole. */
+@media (max-width: 400px) {
+  html:not([lang='ta']) .bottom-tabs a { font-size: 10.5px !important; letter-spacing: -0.01em; padding-left: 2px; padding-right: 2px; }
+}
+
+/* Student attendance (web): two columns of cards, History behind a small button. */
+@media (min-width: 961px) { .att .att-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.att-history-btn {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 19px;
+  border: 1px solid var(--line, rgba(127, 127, 127, 0.25)); background: var(--card); color: var(--accent, #1c315e);
+  font: 600 14px var(--font); cursor: pointer;
+}
+.att-history-btn:hover { border-color: var(--accent, #1c315e); }
+html[data-theme='dark'] .att-history-btn { color: #f7bc31; }
+.kit-detail .att-history { margin: 0; }
+.att-month-input { min-height: 38px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--line, rgba(127, 127, 127, 0.25)); background: var(--card); color: var(--ink); font: 500 14px var(--font); }
+
+/* ---- Picker: routes and stops in the app's own style (not the browser's plain list) ---- */
+.picker { position: relative; min-width: 0; }
+.picker-btn {
+  width: 100%; display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px 0 12px; margin: 0;
+  border-radius: 14px; border: 1px solid var(--glass-line-soft, rgba(28, 49, 94, 0.14)); background: var(--glass-fill-strong, #fff);
+  color: var(--ink); font: 500 15px/1.2 var(--font); text-align: left; cursor: pointer; box-shadow: inset 0 1px 2px rgba(20, 37, 72, 0.06);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.picker-btn:hover:not(:disabled) { border-color: rgba(28, 49, 94, 0.3); }
+.picker-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.picker-btn:focus-visible, .picker.is-open .picker-btn { outline: none; border-color: var(--accent, #1c315e); box-shadow: 0 0 0 3px rgba(28, 49, 94, 0.14); }
+html[data-theme='dark'] .picker-btn:focus-visible, html[data-theme='dark'] .picker.is-open .picker-btn { border-color: #f7bc31; box-shadow: 0 0 0 3px rgba(247, 188, 49, 0.18); }
+.picker-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker-value.placeholder { color: var(--muted); }
+.picker-chevron { flex-shrink: 0; color: var(--muted); transition: transform 0.2s; }
+.picker.is-open .picker-chevron { transform: rotate(180deg); }
+.picker-lead {
+  flex-shrink: 0; min-width: 28px; height: 26px; padding: 0 7px; border-radius: 8px; display: inline-grid; place-items: center;
+  background: rgba(28, 49, 94, 0.08); color: #1c315e; font: 700 12.5px/1 var(--font); font-variant-numeric: tabular-nums;
+}
+html[data-theme='dark'] .picker-lead { background: rgba(247, 188, 49, 0.14); color: #f7bc31; }
+.picker-menu {
+  position: fixed; z-index: 4000; display: flex; flex-direction: column; gap: 6px; padding: 6px;
+  background: #fff; border: 1px solid rgba(28, 49, 94, 0.12); border-radius: 16px; box-shadow: 0 18px 44px rgba(20, 37, 72, 0.22);
+  animation: picker-in 0.12s ease-out;
+}
+html[data-theme='dark'] .picker-menu { background: #18233a; border-color: rgba(255, 255, 255, 0.12); box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5); }
+@keyframes picker-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .picker-menu { animation: none; } }
+.picker-menu ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; outline: none; min-height: 0; flex: 1; overscroll-behavior: contain; }
+.picker-menu li { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border-radius: 10px; cursor: pointer; color: var(--ink); }
+.picker-menu li.active { background: rgba(28, 49, 94, 0.07); }
+html[data-theme='dark'] .picker-menu li.active { background: rgba(255, 255, 255, 0.07); }
+.picker-menu li[aria-selected='true'] b { color: #1c315e; }
+html[data-theme='dark'] .picker-menu li[aria-selected='true'] b { color: #f7bc31; }
+.picker-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.picker-text b { font-weight: 600; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker-text small { font-size: 12.5px; color: var(--muted); }
+.picker-tick { flex-shrink: 0; color: #1c315e; }
+html[data-theme='dark'] .picker-tick { color: #f7bc31; }
+.picker-search { flex-shrink: 0; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; border-radius: 10px; background: rgba(127, 127, 127, 0.1); color: var(--muted); }
+.picker-search input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; outline: none; padding: 0 !important; min-height: 0 !important; font: 500 14px var(--font); color: var(--ink); }
+.picker-empty { color: var(--muted); cursor: default !important; }
+.picker-required { position: absolute; left: 50%; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }

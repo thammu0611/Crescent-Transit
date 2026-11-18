@@ -1,4 +1,6 @@
+import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { getSocket } from './api.js';
 import { freshnessOf } from './rules.js';
 
@@ -67,6 +69,28 @@ export function useAction() {
   return { busy, error, message, run, setError, setMessage };
 }
 
+/**
+ * Run `fn` every `ms` while this screen is showing and the app is open. A screen
+ * behind another one, or an app in the background, makes no requests; coming back
+ * to it fetches straight away if its figures are old. The data on screen stays
+ * while it reloads.
+ */
+export function usePolling(fn, ms, enabled = true) {
+  const latest = useRef(fn);
+  latest.current = fn;
+  const last = useRef(Date.now()); // the screen has just loaded its data
+  const focused = useIsFocused();
+  useEffect(() => {
+    if (!enabled || !focused) return undefined;
+    const run = () => { last.current = Date.now(); latest.current(); };
+    const stale = () => Date.now() - last.current > Math.min(ms, 10000);
+    if (stale()) run(); // back on this screen after a while
+    const id = setInterval(() => { if (AppState.currentState === 'active') run(); }, ms);
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active' && stale()) run(); });
+    return () => { clearInterval(id); sub.remove(); };
+  }, [ms, enabled, focused]);
+}
+
 /** Pull-to-refresh over several useAsync results. */
 export function useRefresh(...loaders) {
   const [refreshing, setRefreshing] = useState(false);
@@ -101,8 +125,17 @@ export function useLive(token, routeCode, enabled = true) {
     const onDisconnect = () => setConnected(false);
     const onSnapshot = (list) => { setReady(true); setDenied(null); setById(Object.fromEntries(list.map((b) => [b.busId, b]))); };
     const onDenied = ({ code }) => { setReady(true); setDenied(code); setById({}); };
-    const onLocation = (b) => setById((prev) => (!routeCode || b.routeCode === routeCode ? { ...prev, [b.busId]: b } : prev));
-    const onEnded = ({ busId }) => setById((prev) => { const n = { ...prev }; delete n[busId]; return n; });
+    // Positions are gathered and applied together at most once a second, so a whole fleet
+    // reporting does not redraw the screen many times a second and stall scrolling.
+    let pending = {};
+    let flush = null;
+    const apply = () => { flush = null; const batch = pending; pending = {}; setById((prev) => ({ ...prev, ...batch })); };
+    const onLocation = (b) => {
+      if (routeCode && b.routeCode !== routeCode) return;
+      pending[b.busId] = b;
+      flush ??= setTimeout(apply, 1000);
+    };
+    const onEnded = ({ busId }) => { delete pending[busId]; setById((prev) => { const n = { ...prev }; delete n[busId]; return n; }); };
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('snapshot', onSnapshot);
@@ -111,6 +144,7 @@ export function useLive(token, routeCode, enabled = true) {
     socket.on('bus:trip-ended', onEnded);
     if (socket.connected) onConnect();
     return () => {
+      clearTimeout(flush);
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('snapshot', onSnapshot);

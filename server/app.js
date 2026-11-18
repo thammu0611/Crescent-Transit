@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { createRequire } from 'node:module';
 import express from 'express';
 import { Server as SocketServer } from 'socket.io';
@@ -449,6 +450,30 @@ export async function createServer(db, config, { mailer = createMailer(config) }
     res.json({ user: await loadProfile(db, req.auth.userId) });
   });
 
+  /**
+   * Which notifications the person has read. PUT { all: true } marks everything read
+   * ("Mark all read"); PUT { ids: [...] } marks single notifications read when opened.
+   */
+  const alertsRead = async (userId) => {
+    const { rows } = await db.query('SELECT alerts_read_at, alerts_read_ids FROM users WHERE id = $1', [userId]);
+    return { readAt: rows[0]?.alerts_read_at ?? null, readIds: rows[0]?.alerts_read_ids ?? [] };
+  };
+  app.get('/api/me/alerts-read', anyUser, async (req, res) => res.json(await alertsRead(req.auth.userId)));
+  app.put('/api/me/alerts-read', anyUser, async (req, res) => {
+    if (req.body?.all === true) {
+      await db.query("UPDATE users SET alerts_read_at = now(), alerts_read_ids = '{}' WHERE id = $1", [req.auth.userId]);
+      return res.json(await alertsRead(req.auth.userId));
+    }
+    const ids = req.body?.ids;
+    if (!Array.isArray(ids) || !ids.length || ids.length > 100 || !ids.every((x) => typeof x === 'string' && /^[A-Za-z0-9:_-]{1,40}$/.test(x))) {
+      throw new HttpError(400, 'Send { all: true } or { ids: [...] } (up to 100 notification ids)');
+    }
+    const now = await alertsRead(req.auth.userId);
+    const kept = [...now.readIds.filter((x) => !ids.includes(x)), ...ids].slice(-300);
+    await db.query('UPDATE users SET alerts_read_ids = $2 WHERE id = $1', [req.auth.userId, kept]);
+    res.json({ readAt: now.readAt, readIds: kept });
+  });
+
   /** Problem reporting and SOS stay free for everyone signed in (doc 8.4). */
   app.post('/api/problems', anyUser, async (req, res) => {
     res.status(201).json(await reportIncident(req.auth, req.body, 'student'));
@@ -838,7 +863,32 @@ export async function createServer(db, config, { mailer = createMailer(config) }
     // Vite fingerprints everything in assets/ (index-Dil6IWEn.js): safe to
     // cache for a year, so a returning phone loads the app from its cache.
     // index.html itself is always revalidated so a new build shows up.
-    app.use('/assets', express.static(path.join(config.clientDist, 'assets'), { immutable: true, maxAge: '1y', index: false }));
+    // Text files go out compressed (Brotli, or gzip for older browsers): a phone downloads about a
+    // quarter of the bytes. Each file is compressed once and kept in memory, since a fingerprinted
+    // file never changes under its name.
+    const assetDir = path.join(config.clientDist, 'assets');
+    const packed = new Map();
+    app.use('/assets', (req, res, next) => {
+      const accept = String(req.headers['accept-encoding'] ?? '');
+      const encoding = /\bbr\b/.test(accept) ? 'br' : /\bgzip\b/.test(accept) ? 'gzip' : null;
+      if (!encoding || !/\.(js|css|svg|json|txt|map)$/.test(req.path)) return next();
+      const file = path.join(assetDir, path.normalize(req.path).replace(/^[/\\]+/, ''));
+      if (!file.startsWith(assetDir + path.sep)) return next();
+      const key = `${encoding}:${file}`;
+      let body = packed.get(key);
+      if (!body) {
+        let raw;
+        try { raw = fs.readFileSync(file); } catch { return next(); }
+        body = encoding === 'br'
+          ? zlib.brotliCompressSync(raw, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9 } })
+          : zlib.gzipSync(raw, { level: 9 });
+        packed.set(key, body);
+      }
+      res.type(path.extname(file));
+      res.set({ 'Content-Encoding': encoding, 'Cache-Control': 'public, max-age=31536000, immutable', Vary: 'Accept-Encoding' });
+      return res.end(body);
+    });
+    app.use('/assets', express.static(assetDir, { immutable: true, maxAge: '1y', index: false }));
     app.use(express.static(config.clientDist, { setHeaders: (res, file) => { if (file.endsWith('.html')) res.set('Cache-Control', 'no-cache'); } }));
     app.get('/{*splat}', (_req, res) => res.sendFile(path.join(config.clientDist, 'index.html')));
   }

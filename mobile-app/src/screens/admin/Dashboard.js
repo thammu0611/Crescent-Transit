@@ -9,12 +9,11 @@ import {
 } from '../../components/ui.js';
 import { api, getSocket } from '../../lib/api.js';
 import { METHOD_TEXT, dateTime, time } from '../../lib/format.js';
-import { useAsync, useLive, useRefresh } from '../../lib/hooks.js';
+import { useAsync, useLive, usePolling, useRefresh } from '../../lib/hooks.js';
 import { greeting } from '../../lib/schedule.js';
 import { useSession } from '../../lib/session.js';
 import { ACCENT, C, F, shadow } from '../../theme.js';
 import MyAvatar from '../../components/MyAvatar.js';
-import { SuggestionsCard } from '../../components/Automations.js';
 
 const titleCase = (k) => k.replaceAll('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
@@ -83,18 +82,26 @@ export default function Dashboard({ navigation }) {
   const [tripQuery, setTripQuery] = useState('');
   const [activityQuery, setActivityQuery] = useState('');
 
+  // Figures refresh on their own while this screen is showing and the app is open.
+  usePolling(() => { kpis.reload(); trips.reload(); }, 15000);
+  usePolling(() => overview.reload(), 60000);
   useEffect(() => {
-    const id = setInterval(() => { kpis.reload(); trips.reload(); }, 15000);
-    const slow = setInterval(() => overview.reload(), 60000);
     const socket = getSocket(token);
     const onIncident = () => { kpis.reload(); overview.reload(); };
+    // A student boarding moves today's figures: reload once things settle, not once per student.
+    let soon = null;
+    const onBoarding = () => { soon ??= setTimeout(() => { soon = null; kpis.reload(); trips.reload(); }, 2000); };
     socket.on('incident', onIncident);
-    return () => { clearInterval(id); clearInterval(slow); socket.off('incident', onIncident); };
+    socket.on('attendance:changed', onBoarding);
+    return () => { clearTimeout(soon); socket.off('incident', onIncident); socket.off('attendance:changed', onBoarding); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const k = kpis.data ?? {};
   const o = overview.data;
+  const onBoardNow = trips.data?.reduce((n, t) => n + (Number(t.attendance) || 0), 0);
+  // Both live lists open the same screen, the list of trips.
+  const openTrips = (status) => navigation.navigate('Trips', { status: status ?? '', at: Date.now() });
   const has = (query, values) => !query.trim() || values.some((v) => v && String(v).toLowerCase().includes(query.trim().toLowerCase()));
   const shownTrips = trips.data?.filter((t) => has(tripQuery, [t.route_code, t.route_name, t.fleet_code, t.driver_name]));
   const shownActivity = o?.activity.filter((a) => has(activityQuery, [ACTIVITY[a.kind].text(a), ACTIVITY[a.kind].sub(a)]));
@@ -111,7 +118,7 @@ export default function Dashboard({ navigation }) {
         <Kpi icon="bus" accent="navy" label="Buses on trip" value={ready ? buses.length : null} note={`of ${tot.buses ?? '—'}`} onPress={() => navigation.navigate('FleetMap')} />
         <Kpi icon="signal" accent="emerald" label="Live now" value={ready ? counts.live ?? 0 : null} note="GPS < 30 s" onPress={() => navigation.navigate('FleetMap')} />
         <Kpi icon="clock" accent="amber" label="Delayed" value={ready ? counts.delayed ?? 0 : null} note={counts.offline ? `${counts.offline} offline` : 'signal late'} tone={counts.delayed ? C.delayed : undefined} onPress={() => navigation.navigate('FleetMap')} />
-        <Kpi icon="check" accent="emerald" label="Attendance" value={k.presentUpToday == null ? null : `${k.presentUpToday}/${k.presentDownToday}`} note="in / out today" onPress={() => navigation.navigate('AttendanceAdmin')} />
+        <Kpi icon="users" accent="emerald" label="Students boarded today" value={k.presentToday} note={onBoardNow ? `${onBoardNow} on board now` : k.presentToday == null ? undefined : `${k.presentUpToday} to · ${k.presentDownToday} from college`} onPress={() => navigation.navigate('AttendanceAdmin')} />
         <Kpi icon="alert" accent="danger" label="Open incidents" value={k.openReported ?? k.openIncidents} note={k.openAutomatic ? `+${k.openAutomatic} automatic` : undefined} tone={(k.openReported ?? k.openIncidents) ? C.danger : undefined} onPress={() => navigation.navigate('Notices')} />
         <Kpi icon="card" accent="navy" label="Active passes" value={tot.subscribers} note={tot.subscribers === 1 ? 'student' : 'students'} onPress={() => navigation.navigate('Reports')} />
       </View>
@@ -123,11 +130,9 @@ export default function Dashboard({ navigation }) {
         </Pressable>
       ) : null}
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button title="Trips today" variant="ghost" icon="clock" onPress={() => navigation.navigate('Trips')} style={{ flex: 1 }} />
+        <Button title="Trips today" variant="ghost" icon="clock" onPress={() => openTrips()} style={{ flex: 1 }} />
         <Button title="Announce" variant="ghost" icon="bell" onPress={() => navigation.navigate('Notices')} style={{ flex: 1 }} />
       </View>
-
-      <SuggestionsCard onSeeAll={() => navigation.navigate('Suggestions')} />
 
       <Block
         title={trend === 'present' ? 'Riders, last 7 days' : 'Trips, last 7 days'}
@@ -137,7 +142,7 @@ export default function Dashboard({ navigation }) {
         <ColumnChart data={series} color={trend === 'present' ? C.navy : C.emerald} />
       </Block>
 
-      <Block title="Fleet status" caption="Buses on trip by signal, and active buses waiting">
+      <Block title="Bus tracking status" caption="Active buses by GPS signal, and those not on a trip">
         {ready && o ? (
           <Donut
             caption="buses"
@@ -177,7 +182,7 @@ export default function Dashboard({ navigation }) {
       <ViewCard
         icon="bus"
         title="Trips running now"
-        summary={trips.data == null ? 'Loading…' : trips.data.length === 0 ? 'No trips running' : `${trips.data.length} trip${trips.data.length === 1 ? '' : 's'} · ${trips.data.reduce((n, t) => n + (Number(t.attendance) || 0), 0)} riders on board`}
+        summary={trips.data == null ? 'Loading…' : trips.data.length === 0 ? 'No trips running' : `${trips.data.length} trip${trips.data.length === 1 ? '' : 's'} · ${onBoardNow} students on board`}
         badge={trips.data?.some((t) => t.flagged) ? <Badge tone="danger">Flagged</Badge> : null}
       >
         {(close) => (<>
@@ -190,11 +195,11 @@ export default function Dashboard({ navigation }) {
             title={t.route_name}
             lines={[`${t.fleet_code} · ${t.driver_name ?? 'No driver'}`, t.flagged ? t.flag_reason : `Since ${time(t.started_at)}`]}
             count={t.attendance}
-            countLabel="RIDERS"
-            onPress={() => { close(); navigation.navigate('Trips'); }}
+            countLabel="ON BOARD"
+            onPress={() => { close(); openTrips('active'); }}
           />
         ))}
-        <LinkButton title="All trips" icon="arrow" onPress={() => { close(); navigation.navigate('Trips'); }} />
+        <LinkButton title="Open the trips list" icon="arrow" onPress={() => { close(); openTrips('active'); }} />
         </>)}
       </ViewCard>
 
@@ -203,6 +208,7 @@ export default function Dashboard({ navigation }) {
         title="Recent activity"
         summary={o == null ? 'Loading…' : o.activity.length ? `${ACTIVITY[o.activity[0].kind].text(o.activity[0])} · ${dateTime(o.activity[0].at)}` : 'No activity yet'}
       >
+        {(close) => (<>
         <SearchBox value={activityQuery} onChange={setActivityQuery} placeholder="Search route, bus or person" />
         {o == null ? <Skeleton /> : shownActivity.length === 0 ? <Txt muted>{activityQuery ? 'No activity matches.' : 'No activity yet.'}</Txt> : shownActivity.map((a, idx) => {
           const kind = ACTIVITY[a.kind];
@@ -212,9 +218,12 @@ export default function Dashboard({ navigation }) {
               lead={<View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: `${kind.color}1f`, alignItems: 'center', justifyContent: 'center' }}><Icon name={kind.icon} size={18} color={kind.color} /></View>}
               title={kind.text(a)}
               lines={[kind.sub(a), dateTime(a.at)]}
+              onPress={() => { close(); if (a.kind === 'incident') navigation.navigate('Notices'); else openTrips(); }}
             />
           );
         })}
+        <LinkButton title="Open the trips list" icon="arrow" onPress={() => { close(); openTrips(); }} />
+        </>)}
       </ViewCard>
 
     </Screen>

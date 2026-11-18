@@ -161,8 +161,15 @@ export const GlassBackdrop = memo(function GlassBackdrop({ offset = 0, top = -of
   );
 });
 
-/** Real frosted glass behind a surface (header, tab bar, sheets). */
+/**
+ * Frosted glass behind a surface (header, tab bar, sheets). iPhones blur natively and cheaply;
+ * on Android a live blur is redrawn every frame and makes scrolling stutter on budget phones,
+ * so there the surface gets a near-solid tint instead, which looks the same over the soft backdrop.
+ */
 export function Frost({ tint = C.dark ? 'dark' : 'light', intensity = 50, style }) {
+  if (Platform.OS === 'android') {
+    return <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint === 'dark' ? 'rgba(13,21,36,0.94)' : 'rgba(250,250,251,0.95)' }, style]} />;
+  }
   return (
     <BlurView
       pointerEvents="none"
@@ -288,7 +295,7 @@ export function GradientCard({ colors = G.navy, style, children, orbs = true, ra
  */
 export function useTabBarSpace() {
   const barHeight = useContext(BottomTabBarHeightContext);
-  // The docked bar's measured height already includes the safe area.
+  // The floating bar reports its height plus the gap below it (which covers the safe area).
   return barHeight ? barHeight + 12 : 0;
 }
 
@@ -672,6 +679,9 @@ const BTN = {
   ghost: { bg: C.raised, fg: C.ink, border: C.line },
   soft: { bg: C.navy50, fg: C.dark ? C.navy : C.red600, border: 'transparent' },
   light: { bg: C.card, fg: C.ink, border: C.line },
+  // On the navy hero, as on the website's first screen: the red Sign in and an outlined partner beside it.
+  hero: { bg: '#A02022', fg: '#fff' },
+  onDark: { bg: 'rgba(255,255,255,0.10)', fg: '#fff', border: 'rgba(255,255,255,0.35)' },
 };
 
 export function Button({ title: name, onPress, variant = 'primary', icon, disabled, busy, small, style, textStyle }) {

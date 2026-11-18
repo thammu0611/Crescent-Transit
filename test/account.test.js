@@ -78,3 +78,29 @@ test('responses carry browser hardening headers and API data is not cached', asy
   assert.equal(r.headers.get('cache-control'), 'no-store');
   assert.equal(r.headers.get('x-powered-by'), null);
 });
+
+test('notifications read on one device stay read on every device', async () => {
+  const s = await t.newStudent();
+  const start = await t.call('/api/me/alerts-read', { token: s.token });
+  assert.equal(start.status, 200);
+  assert.deepEqual(start.body, { readAt: null, readIds: [] });
+
+  // Opening single notifications marks just those read, without repeats.
+  const one = await t.call('/api/me/alerts-read', { token: s.token, method: 'PUT', body: { ids: ['12', 'a7'] } });
+  assert.equal(one.status, 200);
+  assert.deepEqual(one.body.readIds, ['12', 'a7']);
+  const again = await t.call('/api/me/alerts-read', { token: s.token, method: 'PUT', body: { ids: ['12'] } });
+  assert.deepEqual(again.body.readIds, ['a7', '12']);
+
+  // "Mark all read" sets the time and clears the single ones it now covers.
+  const all = await t.call('/api/me/alerts-read', { token: s.token, method: 'PUT', body: { all: true } });
+  assert.equal(all.status, 200);
+  assert.ok(all.body.readAt);
+  assert.deepEqual(all.body.readIds, []);
+  assert.deepEqual((await t.call('/api/me/alerts-read', { token: s.token })).body, all.body);
+
+  // Nonsense is refused, and the endpoint needs a signed-in user.
+  assert.equal((await t.call('/api/me/alerts-read', { token: s.token, method: 'PUT', body: { ids: ['bad id!'] } })).status, 400);
+  assert.equal((await t.call('/api/me/alerts-read', { token: s.token, method: 'PUT', body: {} })).status, 400);
+  assert.equal((await t.call('/api/me/alerts-read')).status, 401);
+});

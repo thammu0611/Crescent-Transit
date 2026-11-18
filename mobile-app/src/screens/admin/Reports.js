@@ -124,8 +124,8 @@ function BusRegister({ group, onRow, onCsv, onClose, visible }) {
         keyOf={(st) => st.username}
         columns={[
           { key: 'name', label: 'Student', flex: 1.8, render: (st) => <View><Txt small bold numberOfLines={1}>{st.name}</Txt><Txt small muted numberOfLines={1}>{st.reg ?? st.username}</Txt></View> },
-          { key: 'up', label: 'Inbound', flex: 0.8, align: 'right', render: (st) => `${st.up}` },
-          { key: 'down', label: 'Outbound', flex: 0.9, align: 'right', render: (st) => `${st.down}` },
+          { key: 'up', label: 'To college', flex: 0.8, align: 'right', render: (st) => `${st.up}` },
+          { key: 'down', label: 'From college', flex: 0.9, align: 'right', render: (st) => `${st.down}` },
           { key: 'rate', label: 'Rate', flex: 0.9, align: 'right', render: (st) => <Badge tone={st.present === st.trips ? 'live' : st.present ? 'delayed' : 'danger'}>{`${Math.round((st.present / st.trips) * 100)}%`}</Badge> },
         ]}
       />

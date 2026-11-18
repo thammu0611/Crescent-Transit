@@ -795,3 +795,9 @@ CREATE TABLE IF NOT EXISTS contact_notices (
   kind          TEXT NOT NULL,
   PRIMARY KEY (contact_id, attendance_id, kind)
 );
+
+-- Which notifications the person has read: everything up to alerts_read_at ("Mark all
+-- read"), plus single ones opened since (newest 300 ids). Kept on the server so the
+-- unread count is the same on the web and the phone.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS alerts_read_at  TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS alerts_read_ids TEXT[] NOT NULL DEFAULT '{}';

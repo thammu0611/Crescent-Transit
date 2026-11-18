@@ -1,6 +1,7 @@
-// The tab bar (2026 redesign): docked to the bottom edge on the surface colour
-// with a hairline on top. The current tab's icon sits on a soft accent pill and
-// its label turns bold accent; the icon springs up a little as it becomes active.
+// The tab bar, as on the website at phone width: a rounded glass bar floating a
+// little above the bottom edge and in from the sides, with a soft shadow. The current
+// tab's icon sits on a soft accent pill and its label turns bold accent; the icon
+// springs up a little as it becomes active.
 // Badges (options.tabBarBadge) are a red count, or a dot for `true`.
 import { BottomTabBarHeightCallbackContext } from '@react-navigation/bottom-tabs';
 import { useContext, useEffect, useState } from 'react';
@@ -11,7 +12,9 @@ import { C, F } from '../theme.js';
 import Icon from './Icon.js';
 import { Frost, translated, useLanguage } from './ui.js';
 
-const PAD = 8;
+const PAD = 6;
+// The bar floats this far in from the sides and up from the bottom (above the safe area).
+const INSET = 12;
 const ICON_ON = C.navy;
 const ICON_OFF = C.muted;
 // Tamil words run wider than the same length in English.
@@ -97,7 +100,8 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
   const insets = useSafeAreaInsets();
   const reportHeight = useContext(BottomTabBarHeightCallbackContext);
   const screen = useWindowDimensions().width;
-  const tabW = (screen - PAD * 2) / state.routes.length;
+  const tabW = (screen - INSET * 2 - PAD * 2) / state.routes.length;
+  const lift = Math.max(insets.bottom, INSET);
   const language = useLanguage();
   const labelOf = (route) => { const o = descriptors[route.key].options; return tabLabel(language, o.tabBarLabel ?? o.title ?? route.name); };
   // One size for the whole bar, set by the label that needs the most room.
@@ -105,9 +109,11 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
 
   return (
     <View
-      style={[s.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}
-      onLayout={(e) => reportHeight?.(e.nativeEvent.layout.height)}
+      style={[s.float, { bottom: lift }]}
+      // Screens keep their last lines clear of the bar: its height and the gap below it.
+      onLayout={(e) => reportHeight?.(e.nativeEvent.layout.height + lift)}
     >
+      <View style={s.bar}>
       <Frost intensity={60} />
       {state.routes.map((route, i) => {
         const { options } = descriptors[route.key];
@@ -134,18 +140,24 @@ export default function GlassTabBar({ state, descriptors, navigation, icons }) {
           />
         );
       })}
+      </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  bar: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 8, paddingHorizontal: PAD,
-    flexDirection: 'row',
-    backgroundColor: C.dark ? 'rgba(18,28,48,0.72)' : 'rgba(255,255,255,0.70)',
-    borderTopWidth: 1, borderTopColor: C.glassEdge, overflow: 'hidden',
+  // The shadow sits on the outer view (a clipped view would cut it off on iOS).
+  float: {
+    position: 'absolute', left: INSET, right: INSET, borderRadius: 28,
+    shadowColor: '#0B1430', shadowOpacity: C.dark ? 0.45 : 0.18, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 12,
+    // Android draws the shadow only under a view with a background.
+    backgroundColor: C.dark ? 'rgba(24,35,58,0.94)' : 'rgba(255,255,255,0.96)',
   },
-  tab: { flex: 1, minWidth: 0, minHeight: 52, paddingHorizontal: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  bar: {
+    flexDirection: 'row', paddingVertical: 7, paddingHorizontal: PAD, borderRadius: 28, overflow: 'hidden',
+    borderWidth: 1, borderColor: C.dark ? 'rgba(255,255,255,0.12)' : 'rgba(28,49,94,0.10)',
+  },
+  tab: { flex: 1, minWidth: 0, minHeight: 50, paddingHorizontal: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 4 },
   pill: { width: 56, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   pillOn: { backgroundColor: C.navy50 },
   label: { maxWidth: '100%', textAlign: 'center', letterSpacing: 0, ...F.nav },
