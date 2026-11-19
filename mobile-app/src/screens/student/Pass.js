@@ -158,6 +158,17 @@ export default function BusPass({ navigation }) {
             </View>
           </LinearGradient>
 
+          {/* An expired pass says so and leads straight to renewing it. */}
+          {pass.status === 'EXPIRED' ? (
+            <View accessibilityRole="alert" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: C.danger50, borderWidth: 1, borderColor: 'rgba(181,40,42,0.25)' }}>
+              <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                <Txt bold>{t('Your pass has expired')}</Txt>
+                <Txt muted small>{t('Renew to use the bus and live tracking again.')}</Txt>
+              </View>
+              <Button title={t('Renew')} variant="hero" icon="arrow" onPress={() => navigation.navigate('Subscription')} />
+            </View>
+          ) : null}
+
           <View style={{ backgroundColor: '#fff', borderRadius: 24, padding: 20, alignItems: 'center', gap: 14, borderWidth: 1, borderColor: C.line2, ...(bright ? { shadowColor: '#fff', shadowOpacity: 0.6, shadowRadius: 24, shadowOffset: { width: 0, height: 0 } } : null) }}>
             <View accessibilityLabel={t('Show this code to the driver')}>
               <QRCode value={pass.code} size={bright ? 200 : 170} ecl="L" color="#0F172A" backgroundColor="#ffffff" />

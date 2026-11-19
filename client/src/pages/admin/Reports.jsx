@@ -6,6 +6,7 @@ import { useAction, useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
 import { Block, Chips, ColumnChart, DetailView, HBars, dayLabel } from '../../components/adminkit.jsx';
 import { Badge, Empty, ErrorText, Field, ListCard, Modal, Page, SearchBox, Stat, Table, YesNo, DirectionBadge } from '../../components/ui.jsx';
+import { Select } from '../../components/Picker.jsx';
 
 const STATUS_TONE = { CONFIRMED: 'live', ON_BOARD: 'live', COMPLETED: 'live', PROVISIONAL: 'delayed', PROMPTED: 'delayed', DISPUTED: 'delayed', ADJUSTED: 'offline', REJECTED: 'offline', VOID: 'danger' };
 const statusText = (s) => s.replace('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
@@ -243,10 +244,10 @@ export default function Reports() {
               </div>
             )}
             <Field label="Route">
-              <select value={range.route} onChange={(e) => setRange((r) => ({ ...r, route: e.target.value }))}>
+              <Select value={range.route} onChange={(e) => setRange((r) => ({ ...r, route: e.target.value }))}>
                 <option value="">All routes</option>
                 {(routes.data ?? []).map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
-              </select>
+              </Select>
             </Field>
           </section>
           <nav className="rep-menu" aria-label="Reports">

@@ -10,6 +10,7 @@ import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import { useLive } from '../../lib/useLive.js';
 import { useNow } from '../../lib/useNow.js';
+import { Select } from '../../components/Picker.jsx';
 
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -143,10 +144,9 @@ export default function Schedule() {
           <div className="sch-card-head">
             <p>Route {r.code} · {r.name}</p>
             <label className="sch-change">
-              Change
-              <select value={code} onChange={(e) => setCode(e.target.value)} aria-label="Route">
+              <Select bare trigger="Change" value={code} onChange={(e) => setCode(e.target.value)} aria-label="Route">
                 {(routes.data ?? []).map((x) => <option key={x.code} value={x.code}>Route {x.code} · {x.name}</option>)}
-              </select>
+              </Select>
             </label>
           </div>
           {special?.no_service ? (

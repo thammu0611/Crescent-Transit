@@ -8,6 +8,7 @@ import { dayText } from '../../components/DayBanner.jsx';
 import { DIRECTION_TEXT } from '../../../../shared/direction.js';
 import { HBars } from '../../components/adminkit.jsx';
 import { Badge, Dropdown, Empty, ErrorText, Field, ListCard, Modal, Page, Panel, Segmented, Stat } from '../../components/ui.jsx';
+import { Select } from '../../components/Picker.jsx';
 
 const stars = (n) => `${'★'.repeat(n)}${'☆'.repeat(5 - n)}`;
 const REQUEST_TONE = { PENDING: 'delayed', APPROVED: 'live', REJECTED: 'danger', CANCELLED: 'offline' };
@@ -172,9 +173,9 @@ function Calendar({ token }) {
           <div className="grid2">
             <Field label="Date"><input type="date" value={form.day} onChange={set('day')} required /></Field>
             <Field label="Kind">
-              <select value={form.kind} onChange={set('kind')}>
+              <Select value={form.kind} onChange={set('kind')}>
                 {Object.entries(DAY_KIND_TEXT).map(([k, v]) => <option key={k} value={k}>{v}{k === 'HOLIDAY' ? ' (no buses)' : ''}</option>)}
-              </select>
+              </Select>
             </Field>
           </div>
           <Field label="Name"><input value={form.title} maxLength={80} required minLength={2} onChange={set('title')} placeholder="e.g. Pongal" /></Field>

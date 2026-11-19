@@ -526,9 +526,13 @@ export class BillingService {
   async reconcile(month, settlementCsv) {
     const range = monthRange(month);
     if (!range) throw new HttpError(400, 'month must be YYYY-MM');
-    const lines = parseCsv(settlementCsv);
-    if (!lines.length) throw new HttpError(400, 'The settlement report is empty');
-    if (!('payment_id' in lines[0] || 'entity_id' in lines[0])) throw new HttpError(400, 'Settlement report needs an entity_id or payment_id column');
+    const text = String(settlementCsv ?? '').trim();
+    if (!text) throw new HttpError(400, 'The settlement report is empty');
+    // A month with no payments has a report with its column row and nothing under it:
+    // that still reconciles (any payment of ours is then missing at the gateway).
+    const header = text.split(/\r?\n/)[0].toLowerCase().split(',').map((h) => h.trim());
+    if (!header.includes('payment_id') && !header.includes('entity_id')) throw new HttpError(400, 'Settlement report needs an entity_id or payment_id column');
+    const lines = parseCsv(text);
 
     const gatewayPayments = new Map();
     const gatewayRefunds = new Set();

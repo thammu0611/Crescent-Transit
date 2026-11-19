@@ -7,6 +7,7 @@ import Icon from '../../components/Icon.jsx';
 import { DIRECTION_TEXT } from '../../../../shared/direction.js';
 import { Avatar, Chips, DetailView, Figure } from '../../components/adminkit.jsx';
 import { Badge, Dropdown, Empty, ErrorText, Field, Modal, Notice, Page, Panel, SearchBox, Segmented, Stat, Table, YesNo, DirectionBadge } from '../../components/ui.jsx';
+import { Select } from '../../components/Picker.jsx';
 
 const DAY_TONE = { PRESENT: 'live', PARTIAL: 'delayed', ABSENT: 'danger', PENDING: 'delayed' };
 const DAY_TEXT = { PRESENT: 'Present', PARTIAL: 'One way only', ABSENT: 'Absent', PENDING: 'Pending review' };
@@ -396,7 +397,7 @@ export default function AttendanceAdmin() {
                     <Field label="Username"><input value={manual.username} onChange={(e) => setManual((m) => ({ ...m, username: e.target.value }))} required /></Field>
                   </div>
                   <Field label="Mark">
-                    <select value={manual.status} onChange={(e) => setManual((m) => ({ ...m, status: e.target.value }))}><option value="PRESENT">Present</option><option value="ABSENT">Absent (void)</option></select>
+                    <Select value={manual.status} onChange={(e) => setManual((m) => ({ ...m, status: e.target.value }))}><option value="PRESENT">Present</option><option value="ABSENT">Absent (void)</option></Select>
                   </Field>
                   <Field label="Reason"><input value={manual.reason} onChange={(e) => setManual((m) => ({ ...m, reason: e.target.value }))} required minLength={3} /></Field>
                   <button className="btn primary" disabled={a.busy}>Save</button>

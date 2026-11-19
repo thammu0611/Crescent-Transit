@@ -6,6 +6,7 @@ import { useSession } from '../lib/session.jsx';
 import Icon from '../components/Icon.jsx';
 import BrandMark from '../components/BrandMark.jsx';
 import { ErrorText, Field, PasswordInput, Segmented } from '../components/ui.jsx';
+import { Select } from '../components/Picker.jsx';
 
 // #/login opens Sign in and #/register opens Sign up: the first screen's two buttons.
 const wantsRegister = () => window.location.hash.startsWith('#/register');
@@ -137,16 +138,16 @@ export default function Login() {
             </div>
             <div className="grid2">
               <Field label="Your route">
-                <select value={form.routeCode} onChange={set('routeCode')}>
+                <Select value={form.routeCode} onChange={set('routeCode')}>
                   <option value="">Choose later</option>
                   {routes.map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
-                </select>
+                </Select>
               </Field>
               <Field label="Your stop">
-                <select value={form.stopSeq} onChange={set('stopSeq')} disabled={!stops.length}>
+                <Select value={form.stopSeq} onChange={set('stopSeq')} disabled={!stops.length}>
                   <option value="">—</option>
                   {stops.map((s) => <option key={s.seq} value={s.seq}>{s.seq}. {s.name}</option>)}
-                </select>
+                </Select>
               </Field>
             </div>
           </>

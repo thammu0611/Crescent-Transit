@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../lib/api.js';
 import { rupees } from '../lib/format.js';
 import { ErrorText, Modal } from './ui.jsx';
+import { Select } from './Picker.jsx';
 
 /**
  * The payment step (doc 8.3 step 4). With Razorpay keys configured this opens
@@ -83,11 +84,11 @@ export default function Checkout({ order, onClose, onDone }) {
         <summary>Failure testing</summary>
         <label className="field">
           <span>Webhook delivery</span>
-          <select value={webhook} onChange={(e) => setWebhook(e.target.value)}>
+          <Select value={webhook} onChange={(e) => setWebhook(e.target.value)}>
             <option value="deliver">Deliver normally</option>
             <option value="twice">Deliver twice (duplicate)</option>
             <option value="drop">Never arrives (reconciliation repairs it)</option>
-          </select>
+          </Select>
         </label>
       </details>
       <ErrorText>{error}</ErrorText>

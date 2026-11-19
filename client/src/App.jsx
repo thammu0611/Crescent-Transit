@@ -45,12 +45,11 @@ import CommandPalette from './components/CommandPalette.jsx';
 const ParentHome = lazyPage(() => import('./pages/parent/ParentHome.jsx'));
 const BusPass = lazyPage(() => import('./pages/student/Pass.jsx'));
 const Services = lazyPage(() => import('./pages/student/Services.jsx'));
-// The finance office app is switched off for now. To bring it back, restore
-// these imports and the finance NAV entry below.
-// import Collections from './pages/finance/Collections.jsx';
-// import Payments from './pages/finance/Payments.jsx';
-// import FinanceStudents from './pages/finance/FinanceStudents.jsx';
-// import Reconcile from './pages/finance/Reconcile.jsx';
+// The finance office: collections, payments, students and reconciliation.
+const Collections = lazyPage(() => import('./pages/finance/Collections.jsx'));
+const Payments = lazyPage(() => import('./pages/finance/Payments.jsx'));
+const FinanceStudents = lazyPage(() => import('./pages/finance/FinanceStudents.jsx'));
+const Reconcile = lazyPage(() => import('./pages/finance/Reconcile.jsx'));
 
 // Five roles, five entirely different sets of screens (doc section 4).
 // [path, label, screen, icon]
@@ -88,27 +87,13 @@ const NAV = {
     ['/reports', 'Reports', Reports, 'list'],
     ['/suggestions', 'Suggestions', Suggestions, 'sparkle'],
   ],
-  // finance: [
-  //   ['/', 'Collections', Collections, 'wallet'],
-  //   ['/payments', 'Payments', Payments, 'card'],
-  //   ['/students', 'Students', FinanceStudents, 'users'],
-  //   ['/reconcile', 'Reconciliation', Reconcile, 'shield'],
-  // ],
-  finance: [['/', 'Finance office', FinanceOff, 'wallet']],
+  finance: [
+    ['/', 'Collections', Collections, 'wallet'],
+    ['/payments', 'Payments', Payments, 'card'],
+    ['/students', 'Students', FinanceStudents, 'users'],
+    ['/reconcile', 'Reconciliation', Reconcile, 'shield'],
+  ],
 };
-
-/** What a finance account sees while the finance app is switched off. */
-function FinanceOff() {
-  return (
-    <main className="center-page">
-      <section className="panel finance-off">
-        <span className="hero-badge"><Icon name="wallet" size={24} /></span>
-        <h2>The finance office app is switched off</h2>
-        <p className="muted">Collections, payments and reconciliation are not available right now. Sign out with the button at the top right, or contact the transport office.</p>
-      </section>
-    </main>
-  );
-}
 
 const FALLBACK_CONTACTS = [{ label: 'Transport office', phone: '+91 44 2275 1347' }, { label: 'Campus security (24 h)', phone: '+91 44 2275 1350' }];
 
@@ -134,6 +119,7 @@ const TABS = {
   admin: [['/', 'Dashboard', 'chart'], ['/map', 'Fleet map', 'map'], ['/trips', 'Trips', 'clock'], ['/attendance', 'Attendance', 'check'], ['more', 'More', 'menu']],
   driver: [['/', 'My trip', 'bus'], ['account', 'Account', 'user']],
   parent: [['/', 'My children', 'users'], ['account', 'Account', 'user']],
+  finance: [['/', 'Collections', 'wallet'], ['/payments', 'Payments', 'card'], ['/students', 'Students', 'users'], ['/reconcile', 'Reconcile', 'shield'], ['account', 'Account', 'user']],
 };
 export const OPEN_ACCOUNT = 'ubts:open-account';
 

@@ -17,6 +17,7 @@ import { PathWalker } from '../../../shared/geo.js';
 import { projectOnRoute } from '../../../shared/eta.js';
 import { DIRECTIONS, DIRECTION_PATH, DIRECTION_TEXT, travelOrder } from '../../../shared/direction.js';
 import { useNow } from '../lib/useNow.js';
+import { Select } from '../components/Picker.jsx';
 
 const MAX_BUFFER = 200;
 
@@ -632,25 +633,25 @@ export default function DriverApp() {
             {!trip && (
               <label>
                 <span>{t('This trip')}</span>
-                <select value={direction} onChange={(e) => setPicked(e.target.value)}>
+                <Select value={direction} onChange={(e) => setPicked(e.target.value)}>
                   {DIRECTIONS.map((d) => <option key={d} value={d}>{t(DIRECTION_TEXT[d])}</option>)}
-                </select>
+                </Select>
               </label>
             )}
             <label>
               <span>{t('Location')}</span>
-              <select value={source} onChange={(e) => pickSource(e.target.value)}>
+              <Select value={source} onChange={(e) => pickSource(e.target.value)}>
                 <option value="tracker">{t('Bus GPS tracker')}</option>
                 <option value="gps">{tracker ? t('Phone GPS (backup)') : t('Phone GPS')}</option>
                 {demo && <option value="simulate">Simulate along route</option>}
-              </select>
+              </Select>
             </label>
             {!useTracker && (
               <label>
                 <span>{t('Send every')}</span>
-                <select value={intervalS} onChange={(e) => setIntervalS(Number(e.target.value))}>
+                <Select value={intervalS} onChange={(e) => setIntervalS(Number(e.target.value))}>
                   {[5, 10, 15].map((s) => <option key={s} value={s}>{s} s</option>)}
-                </select>
+                </Select>
               </label>
             )}
           </div>

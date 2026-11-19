@@ -17,6 +17,7 @@ import { haversineMeters } from '../../../../shared/geo.js';
 import { DIRECTION_TEXT } from '../../../../shared/direction.js';
 import { estimateArrival, LEAVE_ALERT_M, leavePlan } from '../../../../shared/eta.js';
 import { ageLabel } from '../../../../shared/freshness.js';
+import { Select } from '../../components/Picker.jsx';
 
 /** Metres as "1.2 km" or "350 m", as in the phone app. */
 const km = (m) => (m == null ? '—' : m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`);
@@ -279,12 +280,12 @@ function ReportProblem({ token, user, onClose }) {
   return (
     <Modal title="Report a problem" onClose={onClose}>
       <Field label="What happened">
-        <select value={kind} onChange={(e) => setKind(e.target.value)}>
+        <Select value={kind} onChange={(e) => setKind(e.target.value)}>
           <option value="DELAY">Bus delayed</option>
           <option value="MISSING_BUS">Bus did not come</option>
           <option value="LOST_AND_FOUND">Lost and found</option>
           <option value="OTHER">Something else</option>
-        </select>
+        </Select>
       </Field>
       <Field label="Details"><input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Optional" /></Field>
       <Notice>{done}</Notice>
@@ -302,9 +303,9 @@ function RouteCard({ routes, route, routeCode, setRouteCode, stopSeq, bus, eta, 
     <section className="route-card">
       <label className="route-pick">
         <Icon name="bus" size={20} />
-        <select value={routeCode} onChange={(e) => setRouteCode(e.target.value)} aria-label="Route">
+        <Select bare value={routeCode} onChange={(e) => setRouteCode(e.target.value)} aria-label="Route">
           {routes.map((r) => <option key={r.code} value={r.code}>Route no. {r.code} · {r.name}</option>)}
-        </select>
+        </Select>
         <Icon name="down" size={18} />
       </label>
       <span className="route-card-label">Next bus time</span>

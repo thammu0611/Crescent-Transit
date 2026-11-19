@@ -6,7 +6,7 @@ import {
   Text, Txt,
 } from '../../components/ui.js';
 import { api, download } from '../../lib/api.js';
-import { dateTime, monthName, rupees, thisMonth } from '../../lib/format.js';
+import { PAY_STATUS, dateTime, monthName, rupees, thisMonth, words } from '../../lib/format.js';
 import { useAsync, useRefresh } from '../../lib/hooks.js';
 import { useSession } from '../../lib/session.js';
 import { C, F, G, shadow } from '../../theme.js';
@@ -85,7 +85,7 @@ export default function Collections({ navigation }) {
           <Text style={{ fontSize: 34, ...F.display, color: C.ink }}>{c?.subscribersInMonth ?? '—'}</Text>
           <View style={{ flex: 1 }}>
             <Txt small>of <Txt small bold>{c?.breakEvenSubscribers ?? '—'}</Txt> subscribers needed to cover the running cost</Txt>
-            <Txt muted small>₹12,700 ÷ ₹58.58 per subscriber after fees (doc 8.9)</Txt>
+            <Txt muted small>₹12,700 ÷ ₹58.58 per subscriber after fees</Txt>
           </View>
         </Row>
         <View style={{ height: 10, borderRadius: 5, backgroundColor: C.line2 }}>
@@ -100,7 +100,7 @@ export default function Collections({ navigation }) {
             <Icon name={p.status === 'CAPTURED' ? 'check' : p.status === 'REFUNDED' ? 'swap' : 'clock'} size={15} color={C.navy} />
             <View style={{ flex: 1 }}>
               <Txt bold>{p.full_name} · {rupees(p.amount_paise)}</Txt>
-              <Txt small>{p.plan_code} · {p.method ?? 'pending'} · {p.status.toLowerCase()}{p.receipt_no ? ` · ${p.receipt_no}` : ''}</Txt>
+              <Txt small>{p.plan_code} · {words(p.method ?? 'pending')} · {PAY_STATUS[p.status] ?? words(p.status)}{p.receipt_no ? ` · ${p.receipt_no}` : ''}</Txt>
               <Txt small muted>{dateTime(p.paid_at ?? p.created_at)}</Txt>
             </View>
           </View>

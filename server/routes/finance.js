@@ -36,11 +36,22 @@ export function financeRouter({ db, config, billing, gateway, jobs }) {
     res.json(await billing.refund(intParam(req.params.id, 'id'), req.auth, req.body?.reason, req.ip));
   });
 
+  /** Every bus with its route, so students can be shown bus by bus (no locations). */
+  r.get('/buses', async (_req, res) => {
+    const { rows } = await db.query(
+      `SELECT b.id, b.fleet_code, b.status, r.code AS route_code, r.name AS route_name
+         FROM buses b LEFT JOIN routes r ON r.id = b.route_id
+        ORDER BY r.code NULLS LAST, b.fleet_code`,
+    );
+    res.json(rows);
+  });
+
   r.get('/students', async (req, res) => {
     const today = localDate(new Date(), config.timeZone);
     const q = req.query.q ? String(req.query.q).slice(0, 50) : null;
     const { rows } = await db.query(
-      `SELECT u.id, u.username, u.full_name, u.email, u.register_no, u.department, u.status, r.code AS route_code,
+      `SELECT u.id, u.username, u.full_name, u.email, u.register_no, u.department, u.status, r.code AS route_code, r.name AS route_name,
+              (SELECT b.fleet_code FROM buses b WHERE b.route_id = u.home_route_id ORDER BY b.id LIMIT 1) AS fleet_code,
               (SELECT max(valid_to) FROM subscriptions s WHERE s.user_id = u.id AND s.status = 'ACTIVE') AS paid_until,
               (SELECT count(*)::int FROM payments p WHERE p.user_id = u.id AND p.status = 'CAPTURED') AS payments
          FROM users u LEFT JOIN routes r ON r.id = u.home_route_id

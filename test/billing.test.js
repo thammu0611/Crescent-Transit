@@ -233,3 +233,33 @@ test('a suspended account cannot sign in or use its old token', async () => {
   await t.call(`/api/finance/users/${s.user.id}/unsuspend`, { token: finance, body: { reason: 'Cleared' } });
   assert.equal((await t.call('/api/me', { token: s.token })).status, 200);
 });
+
+test('reconciliation: a month with no payments reconciles; an empty file is refused', async () => {
+  const finance = await t.login('finance');
+  const header = 'entity_id,type,payment_id,order_id,amount,fee,tax,method,created_at';
+  const quiet = await t.call('/api/finance/reconcile', { token: finance, body: { month: '2020-01', csv: header } });
+  assert.equal(quiet.status, 200);
+  assert.deepEqual([quiet.body.gatewayRows, quiet.body.systemRows, quiet.body.matched, quiet.body.exceptions.length], [0, 0, 0, 0]);
+  assert.equal((await t.call('/api/finance/reconcile', { token: finance, body: { month: '2020-01', csv: '  ' } })).status, 400);
+  assert.equal((await t.call('/api/finance/reconcile', { token: finance, body: { month: '2020-01', csv: 'amount,fee' } })).status, 400, 'needs a payment id column');
+});
+
+test('finance students list says which bus each student rides', async () => {
+  const s = await t.newStudent('118');
+  const finance = await t.login('finance');
+  const list = (await t.call(`/api/finance/students?q=${s.username}`, { token: finance })).body;
+  assert.equal(list.length, 1);
+  assert.equal(list[0].route_code, '118');
+  assert.ok(list[0].route_name, 'route name');
+  assert.match(list[0].fleet_code ?? '', /118/, 'the bus on that route');
+});
+
+test('finance sees every bus with its route, and students cannot', async () => {
+  const finance = await t.login('finance');
+  const r = await t.call('/api/finance/buses', { token: finance });
+  assert.equal(r.status, 200);
+  assert.ok(r.body.length >= 1, 'buses listed');
+  assert.ok(r.body.every((b) => b.fleet_code && 'route_code' in b && !('lat' in b)), 'bus and route only, no location');
+  const s = await t.newStudent('118');
+  assert.equal((await t.call('/api/finance/buses', { token: s.token })).status, 403);
+});

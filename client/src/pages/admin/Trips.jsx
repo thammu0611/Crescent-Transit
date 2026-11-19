@@ -9,6 +9,7 @@ import Icon from '../../components/Icon.jsx';
 import { DIRECTION_TEXT } from '../../../../shared/direction.js';
 import { Avatar, DetailView, Figure, duration, isoDay } from '../../components/adminkit.jsx';
 import { Badge, Dropdown, Empty, ErrorText, Field, ListCard, Modal, Notice, Page, Panel, RowActions, SearchBox, Segmented, Stat, Table } from '../../components/ui.jsx';
+import { Select } from '../../components/Picker.jsx';
 
 const TRIP_TONE = { active: 'live', scheduled: 'delayed', completed: 'offline', cancelled: 'danger' };
 const TRIP_TEXT = { active: 'Running', scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled' };
@@ -283,9 +284,9 @@ export default function Trips() {
           <Panel title={`Trips (${trips.data?.length ?? '…'})`} icon="list">
             <div className="form-row filters-row">
               <Field label="Status">
-                <select value={filter.status} onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value }))}>
+                <Select value={filter.status} onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value }))}>
                   <option value="">All statuses</option><option value="active">Running</option><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option>
-                </select>
+                </Select>
               </Field>
               <Field label="Route code"><input value={filter.route} onChange={(e) => setFilter((f) => ({ ...f, route: e.target.value }))} placeholder="e.g. 118" /></Field>
               <Field label="Date"><input type="date" value={filter.date} onChange={(e) => setFilter((f) => ({ ...f, date: e.target.value }))} /></Field>
@@ -322,18 +323,18 @@ export default function Trips() {
             <p className="muted">The trip appears in the driver's app; their Start Trip runs it.</p>
             <form className="form-row" onSubmit={(e) => { e.preventDefault(); a.run(() => api('/api/admin/trips', { token, body: { fleetCode: schedule.fleetCode, scheduledFor: new Date(schedule.when).toISOString(), direction: schedule.direction || undefined } }), "Trip scheduled. The driver's Start Trip will run it.").then(trips.reload); }}>
               <Field label="Bus">
-                <select value={schedule.fleetCode} onChange={(e) => setSchedule((s) => ({ ...s, fleetCode: e.target.value }))} required>
+                <Select value={schedule.fleetCode} onChange={(e) => setSchedule((s) => ({ ...s, fleetCode: e.target.value }))} required>
                   <option value="">Choose a bus</option>
                   {(buses.data ?? []).filter((b) => b.route_code && b.driver_name).map((b) => <option key={b.id} value={b.fleet_code}>{b.fleet_code} · route {b.route_code} · {b.driver_name}</option>)}
-                </select>
+                </Select>
               </Field>
               <Field label="When"><input type="datetime-local" value={schedule.when} onChange={(e) => setSchedule((s) => ({ ...s, when: e.target.value }))} required /></Field>
               <Field label="Direction">
-                <select value={schedule.direction ?? ''} onChange={(e) => setSchedule((s) => ({ ...s, direction: e.target.value }))}>
+                <Select value={schedule.direction ?? ''} onChange={(e) => setSchedule((s) => ({ ...s, direction: e.target.value }))}>
                   <option value="">By the time chosen</option>
                   <option value="UP">{DIRECTION_TEXT.UP}</option>
                   <option value="DOWN">{DIRECTION_TEXT.DOWN}</option>
-                </select>
+                </Select>
               </Field>
               <button className="btn primary inline" disabled={a.busy}><Icon name="plus" size={14} />Schedule trip</button>
             </form>

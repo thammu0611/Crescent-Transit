@@ -7,6 +7,7 @@ import { PHOTO_CHANGED } from '../../lib/photo.js';
 import { useSession } from '../../lib/session.jsx';
 import { useNow } from '../../lib/useNow.js';
 import BrandMark from '../../components/BrandMark.jsx';
+import Icon from '../../components/Icon.jsx';
 import { Avatar } from '../../components/adminkit.jsx';
 import { Badge, ErrorText, Page } from '../../components/ui.jsx';
 
@@ -74,6 +75,13 @@ export default function BusPass() {
               <div><dt>{t('Your stop')}</dt><dd>{pass.stopName ?? '—'}</dd></div>
               <div><dt>{t('Valid till')}</dt><dd>{pass.validTo ? date(pass.validTo) : t('No expiry')}</dd></div>
             </dl>
+            {/* An expired pass says so and leads straight to renewing it. */}
+            {pass.status === 'EXPIRED' && (
+              <div className="pass-renew" role="status">
+                <span><b>{t('Your pass has expired')}</b><small>{t('Renew to use the bus and live tracking again.')}</small></span>
+                <a className="btn red inline" href="#/pay">{t('Renew')} <Icon name="arrow" size={15} /></a>
+              </div>
+            )}
           </section>
           <section className="panel pass-code">
             <p className="pass-hint">{t('Show this code to the driver')}</p>

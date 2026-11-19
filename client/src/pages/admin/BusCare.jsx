@@ -7,6 +7,7 @@ import { DetailView, Figure } from '../../components/adminkit.jsx';
 import Icon from '../../components/Icon.jsx';
 import { readDocument } from '../../../../shared/docscan.js';
 import { Badge, Dropdown, Empty, ErrorText, Field, ListCard, Notice, Page, Panel, Segmented, Stat, Table } from '../../components/ui.jsx';
+import { Select } from '../../components/Picker.jsx';
 
 const DOC_TEXT = { INSURANCE: 'Insurance', FITNESS: 'Fitness certificate', PERMIT: 'Permit', PUC: 'PUC' };
 const DOC_TONE = { OK: 'live', SOON: 'delayed', EXPIRED: 'danger', MISSING: 'offline' };
@@ -113,10 +114,10 @@ function DocumentDrop({ onRead }) {
                 {f.status === 'unknown' && (
                   <small className="doc-ask">
                     Which document is this?{' '}
-                    <select defaultValue="" onChange={(e) => e.target.value && choose(f.id, e.target.value)} aria-label="Document kind">
+                    <Select defaultValue="" onChange={(e) => e.target.value && choose(f.id, e.target.value)} aria-label="Document kind">
                       <option value="">Choose…</option>
                       {Object.entries(KIND_TEXT).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
+                    </Select>
                   </small>
                 )}
               </span>
@@ -320,10 +321,10 @@ function Fuel({ token }) {
       <Panel title="Add a fuel entry" icon="plus">
         <form className="form-row" onSubmit={add}>
           <Field label="Bus">
-            <select value={form.fleetCode} onChange={set('fleetCode')} required>
+            <Select value={form.fleetCode} onChange={set('fleetCode')} required>
               <option value="">Choose a bus</option>
               {(buses.data ?? []).map((b) => <option key={b.id} value={b.fleet_code}>{b.fleet_code}</option>)}
-            </select>
+            </Select>
           </Field>
           <Field label="Odometer (km)"><input type="number" min="0" value={form.odometerKm} onChange={set('odometerKm')} required /></Field>
           <Field label="Litres"><input type="number" min="0" step="0.01" value={form.litres} onChange={set('litres')} required /></Field>

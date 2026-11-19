@@ -7,6 +7,7 @@ import { useAction, useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
 import TrackersTab from './Trackers.jsx';
 import { Badge, ErrorText, Field, PasswordInput, Modal, Notice, Page, Panel, RowActions, SearchBox, Segmented, Table } from '../../components/ui.jsx';
+import { Select } from '../../components/Picker.jsx';
 
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
@@ -35,15 +36,15 @@ function BusForm({ token, bus, routes, onClose, onSaved }) {
           <Field label="Type"><input value={f.busType} onChange={set('busType')} /></Field>
           <Field label="Capacity"><input type="number" min={1} max={120} value={f.capacity} onChange={set('capacity')} /></Field>
           <Field label="Route">
-            <select value={f.routeCode} onChange={set('routeCode')}>
+            <Select value={f.routeCode} onChange={set('routeCode')}>
               <option value="">Unassigned</option>
               {routes.map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
-            </select>
+            </Select>
           </Field>
           <Field label="Status">
-            <select value={f.status} onChange={set('status')}>
+            <Select value={f.status} onChange={set('status')}>
               <option value="active">Active</option><option value="maintenance">Maintenance</option><option value="inactive">Inactive</option>
-            </select>
+            </Select>
           </Field>
         </div>
         <ErrorText>{a.error}</ErrorText>
@@ -72,15 +73,15 @@ function DriverForm({ token, driver, buses, onClose, onSaved }) {
           <Field label="Full name"><input value={f.fullName} onChange={set('fullName')} required /></Field>
           <Field label="Phone"><input value={f.phone} onChange={set('phone')} /></Field>
           <Field label="Assigned bus">
-            <select value={f.fleetCode} onChange={set('fleetCode')}>
+            <Select value={f.fleetCode} onChange={set('fleetCode')}>
               <option value="">None</option>
               {buses.map((b) => <option key={b.id} value={b.fleet_code}>{b.fleet_code}{b.driver_username && b.driver_username !== driver?.username ? ` (${b.driver_username})` : ''}</option>)}
-            </select>
+            </Select>
           </Field>
           <Field label={driver ? 'Reset to a temporary password (optional)' : 'Temporary password'} hint="The driver chooses their own at first sign-in" icon="lock"><PasswordInput value={f.password} onChange={set('password')} minLength={8} required={!driver} autoComplete="new-password" /></Field>
           {driver && (
             <Field label="Status">
-              <select value={f.status} onChange={set('status')}><option value="active">Active</option><option value="suspended">Suspended</option></select>
+              <Select value={f.status} onChange={set('status')}><option value="active">Active</option><option value="suspended">Suspended</option></Select>
             </Field>
           )}
         </div>

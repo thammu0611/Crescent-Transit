@@ -10,6 +10,7 @@ import { Badge, DirectionBadge, Empty, ErrorText, Field, Modal, Notice } from '.
 import { Chips, DetailView } from '../../components/adminkit.jsx';
 import RateTrip from '../../components/RateTrip.jsx';
 import { useT } from '../../lib/i18n.js';
+import { Select } from '../../components/Picker.jsx';
 
 const QUEUE_KEY = 'ubts.qrQueue';
 const readQueue = () => {
@@ -79,10 +80,10 @@ function SamplingStatus({ token, user }) {
       {p.shouldSample && !s.otp && (
         <>
           <Field label="Location source">
-            <select value={s.source === 'ride' ? `ride:${s.rideBusId}` : 'gps'} onChange={(e) => (e.target.value === 'gps' ? setSource('gps') : setSource('ride', Number(e.target.value.split(':')[1])))}>
+            <Select value={s.source === 'ride' ? `ride:${s.rideBusId}` : 'gps'} onChange={(e) => (e.target.value === 'gps' ? setSource('gps') : setSource('ride', Number(e.target.value.split(':')[1])))}>
               <option value="gps">This phone's location</option>
               {demo && (buses.data ?? []).map((b) => <option key={b.busId} value={`ride:${b.busId}`}>Demo: ride along with {b.fleetCode}</option>)}
-            </select>
+            </Select>
           </Field>
           <p className="muted">
             One reading every {p.intervalS} s, only in your travel window. It is compared with the bus and discarded - never stored.
@@ -282,10 +283,10 @@ function DisputeDialog({ token, record, onClose, onDone }) {
       <p className="muted">{record.fleet_code} · {dateTime(record.boarded_at)} · currently {STATUS_TEXT[record.status]}</p>
       <form onSubmit={send}>
         <Field label="I was">
-          <select value={claimedPresent ? 'yes' : 'no'} onChange={(e) => setClaimedPresent(e.target.value === 'yes')}>
+          <Select value={claimedPresent ? 'yes' : 'no'} onChange={(e) => setClaimedPresent(e.target.value === 'yes')}>
             <option value="yes">On this bus</option>
             <option value="no">Not on this bus</option>
-          </select>
+          </Select>
         </Field>
         <Field label="What is wrong?"><textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} required minLength={5} /></Field>
         <ErrorText>{error}</ErrorText>

@@ -8,6 +8,7 @@ import { useAction, useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
 import { Badge, ErrorText, Field, Modal, Notice, Panel } from '../../components/ui.jsx';
 import { haversineMeters } from '../../../../shared/geo.js';
+import { Select } from '../../components/Picker.jsx';
 
 const stopIcon = (n) => L.divIcon({ className: '', html: `<div class="stop-pin">${n}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] });
 
@@ -90,9 +91,9 @@ export default function RoutesAdmin() {
     <main className="live-layout">
       <aside className="sidebar">
         <Panel title="Routes" icon="route" actions={<button className="btn ghost" onClick={() => setEditing('new')}><Icon name="plus" size={14} />New route</button>}>
-          <select className="full" value={routeId ?? ''} onChange={(e) => setRouteId(Number(e.target.value))} aria-label="Route">
+          <Select className="full" value={routeId ?? ''} onChange={(e) => setRouteId(Number(e.target.value))} aria-label="Route">
             {(routes.data ?? []).map((r) => <option key={r.id} value={r.id}>{r.code} · {r.name}{r.active ? '' : ' (inactive)'}</option>)}
-          </select>
+          </Select>
           {route && (
             <>
               <div className="chips">

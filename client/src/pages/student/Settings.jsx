@@ -8,7 +8,7 @@ import { useAsync } from '../../lib/useAsync.js';
 import { Badge, ErrorText, Field, Notice, Page, Segmented, SignOutDialog } from '../../components/ui.jsx';
 import { ViewCard, ViewList } from '../../components/adminkit.jsx';
 import YourData from '../../components/YourData.jsx';
-import Picker from '../../components/Picker.jsx';
+import Picker, { Select } from '../../components/Picker.jsx';
 
 /**
  * The plain-language privacy notice (doc 9.11): what is collected, when, why,
@@ -209,10 +209,10 @@ export default function Settings() {
               </Field>
             )}
             <Field label="Language">
-              <select value={form.language} onChange={set('language')}>
+              <Select value={form.language} onChange={set('language')}>
                 <option value="en">English</option>
                 <option value="ta">தமிழ் (Tamil)</option>
-              </select>
+              </Select>
             </Field>
             <button className="btn primary" disabled={busy}>Save travel details</button>
           </form>

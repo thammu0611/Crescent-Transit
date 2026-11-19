@@ -5,7 +5,7 @@ import {
   Select, Sheet, TextField, Txt,
 } from '../../components/ui.js';
 import { api, download } from '../../lib/api.js';
-import { dateTime, rupees, thisMonth } from '../../lib/format.js';
+import { PAY_STATUS, dateTime, rupees, thisMonth, words } from '../../lib/format.js';
 import { useAction, useAsync, useRefresh } from '../../lib/hooks.js';
 import { useSession } from '../../lib/session.js';
 import { G } from '../../theme.js';
@@ -54,7 +54,7 @@ export default function Payments() {
           label="Status"
           value={status}
           onChange={setStatus}
-          options={[{ value: '', label: 'All statuses' }, { value: 'CAPTURED', label: 'Captured' }, { value: 'CREATED', label: 'Pending' }, { value: 'FAILED', label: 'Failed' }, { value: 'REFUNDED', label: 'Refunded' }]}
+          options={[{ value: '', label: 'All statuses' }, { value: 'CAPTURED', label: 'Paid' }, { value: 'CREATED', label: 'Pending' }, { value: 'FAILED', label: 'Failed' }, { value: 'REFUNDED', label: 'Refunded' }]}
         />
         <Button
           small
@@ -71,12 +71,12 @@ export default function Payments() {
           rows={list.data}
           keyOf={(r) => r.payment_id}
           render={(r) => (
-            <ItemCard title={`${r.full_name} · ${rupees(r.amount_paise)}`} subtitle={`${r.username} · ${r.department ?? '—'}`} right={<Badge tone={TONE[r.status]}>{r.status}</Badge>}>
+            <ItemCard title={`${r.full_name} · ${rupees(r.amount_paise)}`} subtitle={`${r.username} · ${r.department ?? '—'}`} right={<Badge tone={TONE[r.status]}>{PAY_STATUS[r.status] ?? words(r.status)}</Badge>}>
               <KV k="Created" v={dateTime(r.created_at)} />
               <KV k="Plan" v={r.plan_code} />
-              <KV k="Method" v={r.method ?? '—'} />
+              <KV k="Method" v={words(r.method)} />
               {r.failure_reason ? <KV k="Reason" v={r.failure_reason} /> : null}
-              <KV k="Confirmed by" v={r.confirmed_by ? `${r.confirmed_by}${r.signature_verified ? ' ✓ signed' : ''}` : '—'} />
+              <KV k="Confirmed by" v={r.confirmed_by ? `${words(r.confirmed_by)}${r.signature_verified ? ' · signature checked' : ''}` : '—'} />
               <KV k="Gateway ID" v={r.gateway_payment_id ?? r.gateway_order_id} />
               <Row gap={16}>
                 {r.receipt_no ? <LinkButton icon="download" title="Receipt" onPress={() => download(`/api/payments/${r.payment_id}/receipt`, token, `${r.receipt_no}.pdf`).catch((e) => a.setError(e.message))} /> : null}

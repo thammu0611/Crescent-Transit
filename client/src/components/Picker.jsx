@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { Children, isValidElement, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useT } from '../lib/i18n.js';
 import Icon from './Icon.jsx';
@@ -13,7 +13,7 @@ const MENU_MAX = 340;
  *
  * options: [{ value, label, lead?, hint? }]  (lead: a short badge such as a stop number)
  */
-export default function Picker({ value, onChange, options, placeholder = 'Choose', disabled, label, required, searchAt = 9 }) {
+export default function Picker({ value, onChange, options, placeholder = 'Choose', disabled, label, required, searchAt = 9, bare = false, trigger = null }) {
   const t = useT();
   const id = useId();
   const root = useRef(null);
@@ -27,6 +27,8 @@ export default function Picker({ value, onChange, options, placeholder = 'Choose
   const [place, setPlace] = useState(null);
 
   const same = (a, b) => String(a ?? '') === String(b ?? '');
+  // Every badge in the list is as wide as the longest one, so the names line up.
+  const leadChars = Math.max(0, ...options.map((o) => (o.lead == null ? 0 : String(o.lead).length)));
   const current = options.find((o) => same(o.value, value));
   const needle = q.trim().toLowerCase();
   const shown = needle ? options.filter((o) => `${o.lead ?? ''} ${o.label} ${o.hint ?? ''}`.toLowerCase().includes(needle)) : options;
@@ -80,7 +82,7 @@ export default function Picker({ value, onChange, options, placeholder = 'Choose
   };
 
   return (
-    <div ref={root} className={`picker${open ? ' is-open' : ''}`}>
+    <div ref={root} className={`picker${open ? ' is-open' : ''}${bare ? ' bare' : ''}`} style={leadChars ? { '--lead-ch': `${leadChars}ch` } : undefined}>
       <button
         ref={button}
         type="button"
@@ -93,14 +95,18 @@ export default function Picker({ value, onChange, options, placeholder = 'Choose
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); } }}
       >
-        {current?.lead != null && <span className="picker-lead">{current.lead}</span>}
-        <span className={`picker-value${current ? '' : ' placeholder'}`}>{current ? current.label : t(placeholder)}</span>
-        <Icon name="down" size={16} className="picker-chevron" />
+        {trigger ?? (
+          <>
+            {current?.lead != null && <span className="picker-lead">{current.lead}</span>}
+            <span className={`picker-value${current ? '' : ' placeholder'}`}>{current ? current.label : t(placeholder)}</span>
+            {!bare && <Icon name="down" size={16} className="picker-chevron" />}
+          </>
+        )}
       </button>
       {/* Lets the form's own "please choose" check work, as it did on the plain list. */}
       {required && <input className="picker-required" tabIndex={-1} aria-hidden="true" value={value ?? ''} onChange={() => {}} required />}
       {open && place && createPortal(
-        <div ref={menu} className="picker-menu" style={place} onKeyDown={onKey}>
+        <div ref={menu} className="picker-menu" style={leadChars ? { ...place, '--lead-ch': `${leadChars}ch` } : place} onKeyDown={onKey}>
           {options.length >= searchAt && (
             <label className="picker-search">
               <Icon name="search" size={15} />
@@ -124,5 +130,36 @@ export default function Picker({ value, onChange, options, placeholder = 'Choose
         document.body,
       )}
     </div>
+  );
+}
+
+const textOf = (node) => (Array.isArray(node) ? node.map(textOf).join('') : node == null || typeof node === 'boolean' ? '' : String(node));
+
+/**
+ * A drop-in for <select>: the same <option> children, value and onChange(event), drawn
+ * as a Picker. `bare` keeps the look of the label around it (route chips, "Change").
+ */
+export function Select({ value, onChange, children, disabled, required, placeholder, bare, trigger, 'aria-label': ariaLabel }) {
+  const options = [];
+  const walk = (kids) => Children.forEach(kids, (child) => {
+    if (!isValidElement(child)) return;
+    if (child.type === 'option') {
+      const label = textOf(child.props.children);
+      options.push({ value: child.props.value ?? label, label });
+    } else if (child.props?.children) walk(child.props.children);
+  });
+  walk(children);
+  return (
+    <Picker
+      value={value == null ? '' : String(value)}
+      onChange={(v) => onChange?.({ target: { value: String(v) } })}
+      options={options}
+      disabled={disabled}
+      required={required}
+      placeholder={placeholder}
+      label={ariaLabel}
+      bare={bare}
+      trigger={trigger}
+    />
   );
 }

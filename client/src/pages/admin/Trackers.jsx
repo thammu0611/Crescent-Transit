@@ -4,6 +4,7 @@ import { dateTime } from '../../lib/format.js';
 import { useAction, useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
 import { Badge, ErrorText, Field, Modal, Notice, RowActions, Table } from '../../components/ui.jsx';
+import { Select } from '../../components/Picker.jsx';
 
 export const PROTOCOLS = [
   ['auto', 'Not sure yet'],
@@ -142,13 +143,13 @@ function TrackerForm({ token, tracker, buses, prefill, onClose, onSaved }) {
             <input value={f.uniqueId} onChange={set('uniqueId')} disabled={Boolean(tracker)} required pattern="[A-Za-z0-9._\-]{3,40}" />
           </Field>
           <Field label="Protocol">
-            <select value={f.protocol} onChange={set('protocol')}>{PROTOCOLS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+            <Select value={f.protocol} onChange={set('protocol')}>{PROTOCOLS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
           </Field>
           <Field label="Fitted in bus">
-            <select value={f.fleetCode} onChange={set('fleetCode')}>
+            <Select value={f.fleetCode} onChange={set('fleetCode')}>
               <option value="">Not fitted yet</option>
               {free.map((b) => <option key={b.id} value={b.fleet_code}>{b.fleet_code}{b.route_code ? ` · route ${b.route_code}` : ''}</option>)}
-            </select>
+            </Select>
           </Field>
           <Field label="Label"><input value={f.label} onChange={set('label')} placeholder="e.g. Concox X3, dashboard" /></Field>
         </div>

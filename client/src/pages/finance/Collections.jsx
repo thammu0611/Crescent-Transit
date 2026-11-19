@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api, download } from '../../lib/api.js';
-import { dateTime, rupees, thisMonth } from '../../lib/format.js';
+import { PAY_STATUS, dateTime, rupees, thisMonth, words } from '../../lib/format.js';
 import { useSession } from '../../lib/session.jsx';
 import { useAsync } from '../../lib/useAsync.js';
 import GreetHeader from '../../components/GreetHeader.jsx';
@@ -41,7 +41,7 @@ export default function Collections() {
   const statement = () => download(`/api/finance/statement?month=${month}&format=csv`, token, `collection-statement-${month}.csv`).catch((e) => setError(e.message));
 
   return (
-    <main className="page app-page wide-app">
+    <main className="page app-page wide-app fin-dash">
       <GreetHeader
         title="Finance office"
         right={<a className="bell" href="#/payments" aria-label="Payments"><Icon name="card" size={20} /></a>}
@@ -86,7 +86,7 @@ export default function Collections() {
               <b className="tabular">{c?.subscribersInMonth ?? '—'}</b>
               <span>
                 <span>of <b>{c?.breakEvenSubscribers ?? '—'}</b> subscribers needed to cover the running cost</span>
-                <small>₹12,700 ÷ ₹58.58 per subscriber after fees (doc 8.9)</small>
+                <small>₹12,700 ÷ ₹58.58 per subscriber after fees</small>
               </span>
             </div>
             <div className="be-track"><i style={{ width: `${pct}%` }} /></div>
@@ -105,7 +105,7 @@ export default function Collections() {
                     <span className="feed-icon"><Icon name={p.status === 'CAPTURED' ? 'check' : p.status === 'REFUNDED' ? 'swap' : 'clock'} size={15} /></span>
                     <span>
                       <b>{p.full_name} · {rupees(p.amount_paise)}</b>
-                      <small>{p.plan_code} · {p.method ?? 'pending'} · {p.status.toLowerCase()}{p.receipt_no ? ` · ${p.receipt_no}` : ''}</small>
+                      <small>{p.plan_code} · {words(p.method ?? 'pending')} · {PAY_STATUS[p.status] ?? words(p.status)}{p.receipt_no ? ` · ${p.receipt_no}` : ''}</small>
                       <time>{dateTime(p.paid_at ?? p.created_at)}</time>
                     </span>
                   </li>

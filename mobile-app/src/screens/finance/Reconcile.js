@@ -5,7 +5,7 @@ import {
   Text, TextField, Txt,
 } from '../../components/ui.js';
 import { api, apiText, download, pickTextFile } from '../../lib/api.js';
-import { dateTime, thisMonth } from '../../lib/format.js';
+import { dateTime, thisMonth, words } from '../../lib/format.js';
 import { useAction, useAsync, useRefresh } from '../../lib/hooks.js';
 import { useSession } from '../../lib/session.js';
 import { C, F, G } from '../../theme.js';
@@ -67,7 +67,7 @@ export default function Reconcile() {
               rows={result.exceptions}
               keyOf={(r, i) => i}
               render={(r) => (
-                <ItemCard title={r.gatewayPaymentId ?? r.receiptNo ?? '—'} subtitle={r.receiptNo ? `Receipt ${r.receiptNo}` : undefined} right={<Badge tone="danger">{r.type.replaceAll('_', ' ')}</Badge>}>
+                <ItemCard title={r.gatewayPaymentId ?? r.receiptNo ?? '—'} subtitle={r.receiptNo ? `Receipt ${r.receiptNo}` : undefined} right={<Badge tone="danger">{words(r.type)}</Badge>}>
                   <Txt small>{r.detail}</Txt>
                 </ItemCard>
               )}
@@ -80,7 +80,7 @@ export default function Reconcile() {
           rows={audit.data?.slice(0, 40)}
           render={(r) => (
             <ItemCard
-              title={<Text style={{ ...F[700], color: r.action.startsWith('SECURITY') ? C.danger : C.ink }}>{r.action}</Text>}
+              title={<Text style={{ ...F[700], color: r.action.startsWith('SECURITY') ? C.danger : C.ink }}>{words(r.action)}</Text>}
               subtitle={`${dateTime(r.created_at)} · ${r.actor ?? (r.ip ? `gateway ${r.ip}` : 'system')}`}
             />
           )}

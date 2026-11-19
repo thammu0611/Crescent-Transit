@@ -6,6 +6,7 @@ import { useSession } from '../../lib/session.jsx';
 import { useAction, useAsync } from '../../lib/useAsync.js';
 import Icon from '../../components/Icon.jsx';
 import { Badge, Empty, ErrorText, Field, ListCard, Notice, Page, Panel, Segmented } from '../../components/ui.jsx';
+import { Select } from '../../components/Picker.jsx';
 
 const LATEST = 3;
 // Each kind with its own icon; urgent ones in red, the rest in amber, closed ones grey.
@@ -49,15 +50,15 @@ export default function Notices() {
             <form onSubmit={(e) => { e.preventDefault(); a.run(() => api('/api/notifications', { token, body: { ...f, routeCode: f.routeCode || undefined } }), 'Sent.').then((r) => r !== undefined && setF((x) => ({ ...x, title: '', message: '' }))); }}>
               <div className="grid2">
                 <Field label="Kind">
-                  <select value={f.kind} onChange={set('kind')}>
+                  <Select value={f.kind} onChange={set('kind')}>
                     <option value="ANNOUNCEMENT">Announcement</option><option value="ROUTE_CHANGE">Route change</option><option value="DELAY">Delay</option><option value="BREAKDOWN">Breakdown</option><option value="EMERGENCY">Emergency</option>
-                  </select>
+                  </Select>
                 </Field>
                 <Field label="To">
-                  <select value={f.routeCode} onChange={set('routeCode')}>
+                  <Select value={f.routeCode} onChange={set('routeCode')}>
                     <option value="">Everyone (notice board)</option>
                     {(routes.data ?? []).map((r) => <option key={r.code} value={r.code}>Route {r.code} · {r.name}</option>)}
-                  </select>
+                  </Select>
                 </Field>
               </div>
               <Field label="Title"><input value={f.title} onChange={set('title')} required maxLength={150} /></Field>

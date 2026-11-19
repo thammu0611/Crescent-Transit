@@ -43,3 +43,14 @@ export function etaText(eta) {
   if (eta.high <= 1) return 'Arriving';
   return `${eta.low}–${eta.high} min`;
 }
+
+/** A stored code in plain words: "SUBSCRIPTIONS_EXPIRED" -> "Subscriptions expired" (short codes like UPI stay). */
+export const words = (code) => {
+  if (code == null || code === '') return '—';
+  const s = String(code);
+  if (s.length <= 4 && s === s.toUpperCase()) return s;
+  return s.toLowerCase().replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase());
+};
+
+/** A payment's state as the finance office reads it. */
+export const PAY_STATUS = { CAPTURED: 'Paid', CREATED: 'Pending', FAILED: 'Failed', REFUNDED: 'Refunded' };
