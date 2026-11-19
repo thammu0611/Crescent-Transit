@@ -16,14 +16,6 @@ import { Badge, Empty, ListCard, SearchBox, Segmented, Stat } from '../../compon
 const RUNNING_TRIPS = '#/trips?tab=trips&status=active';
 const ALL_TRIPS = '#/trips?tab=trips';
 
-// The four shortcuts, each in its own colour from the site's palette.
-const SHORTCUTS = [
-  [ALL_TRIPS, 'clock', 'Trips', 'Drivers and trip history', 'navy'],
-  ['#/attendance', 'check', 'Attendance', 'Bus registers by date', 'sky'],
-  ['#/reports', 'chart', 'Reports', 'Charts and exports', 'indigo'],
-  ['#/notices', 'bell', 'Announce', 'Post an alert to riders', 'amber'],
-];
-
 const titleCase = (k) => k.replaceAll('_', ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
 const ACTIVITY = {
@@ -150,16 +142,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-
-        <nav className="kit-shortcuts" aria-label="Shortcuts">
-          {SHORTCUTS.map(([href, icon, label, hint, tone]) => (
-            <a key={href} className={`kit-shortcut tone-${tone}`} data-c={tone} href={href}>
-              <span className="ks-icon"><Icon name={icon} size={20} /></span>
-              <span className="ks-text"><b>{label}</b><small>{hint}</small></span>
-              <span className="ks-go"><Icon name="arrow" size={15} /></span>
-            </a>
-          ))}
-        </nav>
 
         <div className="kit-grid-2">
           <Block

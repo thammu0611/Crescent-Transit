@@ -7,6 +7,13 @@ const NARROW = '(max-width: 1060px)';
 const TRACK_PADDING = 10;
 const LINK_GAP = 2;
 
+// Each page's colour on the phone menu's icon tiles (as in a phone's Settings list).
+export const ICON_TILE = {
+  home: '#1C315E', chart: '#1C315E', map: '#2E9D5B', clock: '#E8890C', check: '#1A9AAF', route: '#5856D6', bus: '#2F6FD6',
+  bell: '#E5484D', sparkle: '#9B51E0', shield: '#2E9D5B', list: '#6B7280', qr: '#2F6FD6', users: '#D6336C', card: '#C99208',
+  wallet: '#C99208', settings: '#6B7280', arrow: '#1C315E', plus: '#2E9D5B', edit: '#6B7280',
+};
+
 const sameFit = (a, b) => a?.compact === b?.compact && a?.shown.join() === b?.shown.join();
 const outerWidth = (el) => {
   if (!el) return 0;
@@ -106,8 +113,9 @@ export default function MainNav({ links, activePath, role, open, children }) {
         {inBar.map(([p, label, , icon]) => (
           // A guest's "Sign in" is the bar's call to action.
           <a key={p} href={`#${p}`} className={linkClass(p)} aria-current={activePath === p ? 'page' : undefined}>
-            <Icon name={icon} size={16} />
-            {t(label)}
+            <span className="ios-ico" style={{ '--ico': ICON_TILE[icon] ?? '#1C315E' }}><Icon name={icon} size={16} /></span>
+            <span className="nav-label">{t(label)}</span>
+            <Icon name="arrow" size={15} className="nav-chev" />
           </a>
         ))}
         {inMore.length > 0 && (

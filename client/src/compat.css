@@ -295,3 +295,133 @@ html[data-theme='dark'] .picker-tick { color: #f7bc31; }
 .picker-search input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; outline: none; padding: 0 !important; min-height: 0 !important; font: 500 14px var(--font); color: var(--ink); }
 .picker-empty { color: var(--muted); cursor: default !important; }
 .picker-required { position: absolute; left: 50%; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+
+/* ---- Lists like a phone's Settings screen: one rounded group, a coloured icon tile per
+   row, the name, a chevron, and hairlines that start after the tile. ---------------------- */
+:root {
+  --ios-group: #ffffff; --ios-sep: rgba(60, 60, 67, 0.16); --ios-chev: rgba(60, 60, 67, 0.32);
+  --ios-active: rgba(28, 49, 94, 0.06); --ios-sheet: #f2f3f7;
+}
+html[data-theme='dark'] {
+  --ios-group: #1c2740; --ios-sep: rgba(255, 255, 255, 0.10); --ios-chev: rgba(235, 235, 245, 0.35);
+  --ios-active: rgba(255, 255, 255, 0.06); --ios-sheet: #111a2c;
+}
+.ios-ico {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+  background: var(--ico, #1c315e); color: #fff; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+}
+.ios-ico .icon { color: #fff !important; opacity: 1 !important; }
+.nav-chev { flex-shrink: 0; color: var(--ios-chev) !important; }
+/* The wide top bar keeps its plain icon-and-word links. */
+@media (min-width: 1061px) {
+  .tabs .nav-track .ios-ico, .tabs .nav-measure .ios-ico { display: contents; }
+  html body .app .topbar .tabs .nav-track .nav-chev { display: none !important; }
+}
+
+/* The stacked menu on phones and tablets. */
+@media (max-width: 1060px) {
+  html body .app .topbar .tabs.open .nav-glider { display: none !important; }
+  html body .app .topbar .tabs.open .nav-track {
+    display: flex !important; flex-direction: column; gap: 0 !important; padding: 0 !important; margin: 4px 0 6px;
+    background: var(--ios-group); border: 1px solid var(--ios-sep); border-radius: 16px; overflow: hidden;
+  }
+  html body .app .topbar .tabs.open .nav-track > a {
+    position: relative; display: flex !important; align-items: center; gap: 14px; min-height: 52px; margin: 0 !important;
+    padding: 0 14px !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important;
+    color: var(--ink) !important; font: 500 16px/1.2 var(--font) !important; letter-spacing: 0;
+  }
+  html body .app .topbar .tabs.open .nav-track > a::before { display: none !important; }
+  html body .app .topbar .tabs.open .nav-track > a:not(:last-child)::after {
+    content: '' !important; display: block !important; position: absolute; left: 58px; right: 0; bottom: 0; top: auto;
+    width: auto; height: 1px; margin: 0; border-radius: 0; background: var(--ios-sep) !important; transform: none; opacity: 1;
+  }
+  html body .app .topbar .tabs.open .nav-track > a[aria-current='page'] { background: var(--ios-active) !important; font-weight: 600 !important; }
+  html body .app .topbar .tabs.open .nav-track > a:active { background: var(--ios-active) !important; }
+  html body .app .topbar .tabs.open .nav-label { flex: 1; min-width: 0; }
+  html body .app .topbar .tabs.open .nav-chev { display: block; }
+  /* The logo sits clear of the bar's rounded end. */
+  html body .app .topbar .brand { margin-left: 4px; }
+}
+
+/* The account menu: a sheet from the bottom on phones and tablets. */
+.profile-sheet-backdrop { position: fixed; inset: 0; z-index: 5000; background: rgba(13, 21, 36, 0.45); animation: sheet-fade 0.2s ease-out; }
+html body .profile-menu.as-sheet {
+  position: fixed !important; left: 8px !important; right: 8px !important; top: auto !important;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important; width: auto !important; max-width: 560px; margin: 0 auto !important;
+  max-height: 86vh; overflow-y: auto; z-index: 5001; border-radius: 26px !important; padding: 8px 14px 14px !important;
+  background: var(--ios-sheet) !important; border: 1px solid var(--ios-sep) !important; box-shadow: 0 -10px 40px rgba(13, 21, 36, 0.25) !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; animation: sheet-up 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sheet-handle { display: block; width: 38px; height: 5px; border-radius: 3px; background: rgba(127, 127, 127, 0.4); margin: 2px auto 10px; }
+body.sheet-open { overflow: hidden; }
+@keyframes sheet-up { from { transform: translateY(28px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { html body .profile-menu.as-sheet, .profile-sheet-backdrop { animation: none; } }
+
+/* Its rows, in the same grouped style. */
+.profile-menu .ios-group { margin-top: 8px; background: var(--ios-group); border: 1px solid var(--ios-sep); border-radius: 14px; overflow: hidden; }
+html body .profile-menu .ios-group .profile-item {
+  position: relative; display: flex !important; align-items: center; gap: 12px; width: 100%; min-height: 50px; margin: 0 !important;
+  padding: 0 12px !important; border: 0 !important; border-radius: 0 !important; background: transparent !important;
+  color: var(--ink) !important; font: 500 15.5px/1.2 var(--font) !important; text-align: left; cursor: pointer;
+}
+html body .profile-menu .ios-group .profile-item:hover, html body .profile-menu .ios-group .profile-item:active { background: var(--ios-active) !important; }
+.profile-menu .ios-group .profile-item + .profile-item::before { content: ''; position: absolute; top: 0; left: 54px; right: 0; height: 1px; background: var(--ios-sep); }
+.profile-menu .ios-group .nav-label { flex: 1; min-width: 0; }
+html body .profile-menu .ios-group .profile-item.danger .nav-label { color: var(--danger, #c0392b); }
+html[data-theme='dark'] body .profile-menu .ios-group .profile-item.danger .nav-label { color: #f28b8d; }
+
+/* Tile glyphs are always white, whatever colour the row's text has. */
+html body .ios-ico .icon, html body .app .topbar .tabs .ios-ico .icon { color: #fff !important; stroke: currentColor; opacity: 1 !important; }
+@media (min-width: 1061px) { html body .app .topbar .tabs .nav-track .ios-ico .icon { color: inherit !important; } }
+/* Chevrons are bare marks, not buttons. */
+html body .profile-menu .nav-chev, html body .app .topbar .tabs .nav-chev { background: none !important; box-shadow: none !important; padding: 0 !important; border: 0 !important; width: 15px; height: 15px; }
+/* Groups stand out from the sheet, as white cards on grey. */
+html body .profile-menu .ios-group { background: var(--ios-group) !important; border: 1px solid var(--ios-sep) !important; }
+/* Language and Theme as one group too. */
+html body .profile-menu .profile-language { background: var(--ios-group) !important; margin: 0 !important; padding: 9px 12px !important; border: 1px solid var(--ios-sep); border-radius: 0; gap: 10px; }
+html body .profile-menu .profile-language:not(.profile-language + .profile-language) { margin-top: 8px !important; border-radius: 14px 14px 0 0; }
+html body .profile-menu .profile-language + .profile-language { border-top: 0; border-radius: 0 0 14px 14px; position: relative; }
+html body .profile-menu .profile-language + .profile-language::before { content: ''; position: absolute; top: 0; left: 54px; right: 0; height: 1px; background: var(--ios-sep); }
+.profile-menu .pref-name { display: inline-flex; align-items: center; gap: 12px; font-weight: 500; color: var(--ink); }
+
+/* In dark mode the top bar stays light glass, so its menu list stays light to match it. */
+@media (max-width: 1060px) {
+  html[data-theme='dark'] body .app .topbar .tabs.open .nav-track { background: rgba(255, 255, 255, 0.82) !important; border-color: rgba(28, 49, 94, 0.12) !important; }
+  html[data-theme='dark'] body .app .topbar .tabs.open .nav-track > a { color: #142548 !important; }
+  html[data-theme='dark'] body .app .topbar .tabs.open .nav-track > a:not(:last-child)::after { background: rgba(60, 60, 67, 0.16) !important; }
+  html[data-theme='dark'] body .app .topbar .tabs.open .nav-track > a[aria-current='page'] { background: rgba(28, 49, 94, 0.07) !important; }
+  html[data-theme='dark'] body .app .topbar .tabs.open .nav-chev { color: rgba(60, 60, 67, 0.35) !important; }
+}
+/* Desktop dropdown: room for the icon tile, the name and the switch on one line. */
+@media (min-width: 1061px) { html body .profile-menu:not(.as-sheet) { width: 360px !important; min-width: 360px; } }
+html body .profile-menu .profile-language { flex-wrap: nowrap; }
+
+/* Icons as before: plain line icons in the row's colour, no coloured tiles. */
+html body .ios-ico { width: 26px; height: 26px; background: none !important; box-shadow: none !important; border-radius: 0; }
+html body .ios-ico .icon, html body .app .topbar .tabs .ios-ico .icon { color: currentColor !important; }
+html body .app .topbar .tabs.open .nav-track > a[aria-current='page'] .ios-ico .icon { color: #b07b06 !important; }
+html body .profile-menu .profile-item.danger .ios-ico .icon { color: var(--danger, #c0392b) !important; }
+html[data-theme='dark'] body .profile-menu .profile-item.danger .ios-ico .icon { color: #f28b8d !important; }
+html body .profile-menu .pref-name .ios-ico .icon { color: var(--ink) !important; }
+html body .ios-ico { color: inherit !important; }
+/* Hairlines start exactly under the labels (14px padding + 26px icon + 14px gap). */
+@media (max-width: 1060px) { html body .app .topbar .tabs.open .nav-track > a:not(:last-child)::after { left: 54px !important; } }
+.profile-menu .ios-group .profile-item + .profile-item::before, html body .profile-menu .profile-language + .profile-language::before { left: 50px; }
+
+/* Every role's pages leave room for the phone tab bar. */
+@media (max-width: 900px) {
+  .screen.has-tabs { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .screen.has-tabs .live-layout { padding-bottom: 0; }
+  .bottom-tabs a span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+}
+
+
+/* Tab switchers take the top bar's shape: a fully rounded pill, with a pill on the chosen tab. */
+html body :is(.segmented, .att-tabs, .profile-switch, .sch-dir) { border-radius: 999px !important; }
+html body :is(.segmented, .att-tabs, .profile-switch, .sch-dir) > button { border-radius: 999px !important; }
+
+/* First screen: Sign up in brand gold beside the red Sign in (not a see-through outline). */
+html body .land-cta .btn.land-register { background: #f7bc31 !important; color: #1c315e !important; border: 0 !important; box-shadow: 0 10px 24px rgba(247, 188, 49, 0.28) !important; }
+html body .land-cta .btn.land-register .icon { color: #1c315e !important; }
+html body .land-cta .btn.land-register:hover { background: #f9c94f !important; }

@@ -50,7 +50,7 @@ export default function PublicHome({ navigation }) {
         {/* Sign in and Sign up together, the same two choices as on the sign-in screen. */}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Button title="Sign in" variant="hero" icon="arrow" onPress={() => navigation.navigate('Login', { mode: 'signin' })} style={{ flex: 1 }} />
-          <Button title="Sign up" variant="onDark" icon="plus" onPress={() => navigation.navigate('Login', { mode: 'register' })} style={{ flex: 1 }} />
+          <Button title="Sign up" variant="gold" icon="plus" onPress={() => navigation.navigate('Login', { mode: 'register' })} style={{ flex: 1 }} />
         </View>
       </View>
     </HeroHeader>

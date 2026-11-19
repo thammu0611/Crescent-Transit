@@ -516,13 +516,13 @@ export default function StudentAttendance({ navigation }) {
           <Text style={h2}>Check in</Text>
           <Txt muted small>If the bus didn't ask you, use one of these.</Txt>
         </View>
-        <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 4, padding: 4, borderRadius: 14, backgroundColor: C.raised, borderWidth: 1, borderColor: C.line2 }}>
+        <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 4, padding: 4, borderRadius: 999, backgroundColor: C.raised, borderWidth: 1, borderColor: C.line2 }}>
           {[['qr', 'Scan QR', 'qr'], ['code', 'Code', 'keypad'], ['gps', 'Automatic', 'locate']].map(([k, name, icon]) => {
             const sel = method === k;
             const fg = sel ? C.ink : C.muted;
             return (
               <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: sel }} onPress={() => { setMethod(k); setError(null); }}
-                style={{ flex: 1, height: 42, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: sel ? (C.dark ? '#2B3A5C' : C.card) : 'transparent', ...(sel ? shadow : null) }}>
+                style={{ flex: 1, height: 42, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: sel ? (C.dark ? '#2B3A5C' : C.card) : 'transparent', ...(sel ? shadow : null) }}>
                 <Icon name={icon} size={16} color={fg} />
                 <Text style={{ fontSize: 13.5, ...F[600], color: fg }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{name}</Text>
               </Pressable>

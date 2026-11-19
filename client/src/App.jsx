@@ -128,6 +128,14 @@ function Clock() {
 
 // The student's phone gets an app-style tab bar for the five things used daily.
 const STUDENT_TABS = [['/', 'Home', 'home'], ['/map', 'Track', 'map'], ['/schedule', 'Schedule', 'clock'], ['/attendance', 'Attendance', 'check'], ['/settings', 'Profile', 'users']];
+// Every role gets one on a phone. "more" opens the full menu; "account" opens the account sheet.
+const TABS = {
+  student: STUDENT_TABS,
+  admin: [['/', 'Dashboard', 'chart'], ['/map', 'Fleet map', 'map'], ['/trips', 'Trips', 'clock'], ['/attendance', 'Attendance', 'check'], ['more', 'More', 'menu']],
+  driver: [['/', 'My trip', 'bus'], ['account', 'Account', 'user']],
+  parent: [['/', 'My children', 'users'], ['account', 'Account', 'user']],
+};
+export const OPEN_ACCOUNT = 'ubts:open-account';
 
 const ROLE_LABEL = { student: 'Student', driver: 'Driver', admin: 'Transport admin', finance: 'Finance officer', parent: 'Parent' };
 
@@ -185,6 +193,7 @@ function Shell() {
   const wantsDriver = window.location.hash.startsWith('#/driver');
   const entry = nav.find(([p]) => p === path) ?? (role === 'guest' && wantsDriver ? NAV.guest[1] : nav[0]);
   const Screen = entry[2];
+  const tabs = !verifying && !choosing ? TABS[role] ?? null : null;
 
   // Fetch this person's other pages while the browser is idle, so the next tap has nothing to wait for.
   useEffect(() => {
@@ -246,17 +255,29 @@ function Shell() {
           </MainNav>
         </header>
       </div>
-      <div id="main-content" tabIndex={-1} className={`screen${role === 'student' ? ' with-tabs' : ''}`} key={`${role}:${entry[2] === Login ? 'auth' : entry[0]}`}>
+      <div id="main-content" tabIndex={-1} className={`screen${role === 'student' ? ' with-tabs' : ''}${tabs ? ' has-tabs' : ''}`} key={`${role}:${entry[2] === Login ? 'auth' : entry[0]}`}>
         {choosing ? <ChoosePassword /> : verifying ? <VerifyEmail /> : <Suspense fallback={<div className="page-loading" aria-busy="true" />}><Screen /></Suspense>}
       </div>
-      {role === 'student' && !verifying && !choosing && (
-        <nav className="bottom-tabs" aria-label="Student">
-          {STUDENT_TABS.map(([p, label, icon]) => (
-            <a key={p} href={`#${p}`} className={entry[0] === p ? 'active' : ''} aria-current={entry[0] === p ? 'page' : undefined}>
-              <Icon name={icon} size={21} />
-              <span>{t(label)}</span>
-            </a>
-          ))}
+      {tabs && (
+        <nav className="bottom-tabs" aria-label={t('Main')} style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+          {tabs.map(([p, label, icon]) => {
+            // "More" counts as current on any page the bar does not list.
+            const on = p === 'more' ? !tabs.some(([q]) => q === entry[0]) || menuOpen : p === entry[0];
+            const action = p === 'more' ? () => { setMenuOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } : p === 'account' ? () => window.dispatchEvent(new Event(OPEN_ACCOUNT)) : null;
+            return (
+              <a
+                key={p}
+                href={action ? '#' : `#${p}`}
+                role={action ? 'button' : undefined}
+                onClick={action ? (e) => { e.preventDefault(); action(); } : undefined}
+                className={on && p !== 'account' ? 'active' : ''}
+                aria-current={!action && on ? 'page' : undefined}
+              >
+                <Icon name={icon} size={21} />
+                <span>{t(label)}</span>
+              </a>
+            );
+          })}
         </nav>
       )}
       {role === 'student' && !verifying && !choosing && <AttendancePrompt />}

@@ -681,6 +681,7 @@ const BTN = {
   light: { bg: C.card, fg: C.ink, border: C.line },
   // On the navy hero, as on the website's first screen: the red Sign in and an outlined partner beside it.
   hero: { bg: '#A02022', fg: '#fff' },
+  gold: { bg: '#F7BC31', fg: '#1C315E' },
   onDark: { bg: 'rgba(255,255,255,0.10)', fg: '#fff', border: 'rgba(255,255,255,0.35)' },
 };
 
@@ -1167,8 +1168,9 @@ export const s = StyleSheet.create({
   option: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 12, borderRadius: R.md, marginBottom: 2 },
   optionOn: { backgroundColor: C.navy50 },
   optionCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.navyFill, alignItems: 'center', justifyContent: 'center' },
-  segmented: { backgroundColor: C.raised, borderWidth: 1, borderColor: C.line2, borderRadius: R.md, padding: 4, gap: 4 },
-  seg: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, minHeight: 40, justifyContent: 'center' },
+  // Pill shaped, like the website's top bar: a rounded track with a rounded pill on the chosen tab.
+  segmented: { backgroundColor: C.raised, borderWidth: 1, borderColor: C.line2, borderRadius: 999, padding: 4, gap: 4 },
+  seg: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999, minHeight: 40, justifyContent: 'center' },
   segOn: { backgroundColor: C.dark ? '#2B3A5C' : C.card, ...shadow, shadowOpacity: C.dark ? 0.4 : 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
   segText: { fontSize: 13.5, ...F[600], color: C.muted },
   segTextOn: { color: C.ink, ...F[700] },
